@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ContextQuery {
+    pub project_id: String,
     pub feature_area: String,
     pub task_type: String, // 'implement', 'fix', 'optimize'
     pub components: Vec<String>,
