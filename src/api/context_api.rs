@@ -18,7 +18,7 @@ pub fn create_router_with_state(state: AppState) -> Router {
     Router::new()
         .route("/health", get(health_check))
         .route("/business_rules", get(list_business_rules).post(create_business_rule))
-        .route("/context/query", post(context_query))
+        .route("/context/query", get(get_context_query).post(context_query))
         .route("/architectural_decisions", get(list_architectural_decisions).post(create_architectural_decision))
         .route("/performance_requirements", get(list_performance_requirements).post(create_performance_requirement))
         .route("/security_policies", get(list_security_policies).post(create_security_policy))
@@ -73,6 +73,18 @@ async fn create_business_rule(State(state): State<AppState>, Json(rule): Json<Bu
 
 async fn context_query(Json(_query): Json<ContextQuery>) -> Json<ContextResponse> {
     // TODO: Implement actual query logic
+    Json(ContextResponse {
+        business_rules: vec![],
+        architectural_guidance: vec![],
+        performance_requirements: vec![],
+        security_policies: vec![],
+        conventions: vec![],
+    })
+}
+
+// Add GET handler for /context/query for Copilot Agent compatibility
+pub async fn get_context_query(State(_state): State<AppState>) -> Json<ContextResponse> {
+    // You can enhance this to return real data if desired
     Json(ContextResponse {
         business_rules: vec![],
         architectural_guidance: vec![],
