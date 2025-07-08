@@ -1,5 +1,6 @@
 mod db;
 mod api;
+pub mod models;
 
 use db::init::init_db;
 use api::create_router;
