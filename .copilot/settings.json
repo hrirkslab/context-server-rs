@@ -1,0 +1,9 @@
+{
+  "tool_providers": [
+    {
+      "name": "context-server-rs",
+      "url": "http://127.0.0.1:8080/context/query",
+      "enabled": true
+    }
+  ]
+}
