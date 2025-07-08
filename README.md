@@ -63,10 +63,43 @@ For more advanced queries, use the context query API (see server docs for endpoi
 - Integrate with AI tools in your workflow.
 - Automate context-aware code suggestions.
 
-## 5. Tips
-- Ensure the MCP server is running before starting your Copilot agent or app.
-- If running on different machines, update the server URL in your integration code.
-- Secure the API if exposing beyond localhost.
+## 5. API Endpoints
+
+### Health Check
+- **GET /health**
+  - Returns: `"OK"` if the server is running.
+
+### Business Rules
+- **GET /business_rules**
+  - Returns: List of all business rules in the database.
+- **POST /business_rules**
+  - Body: JSON object matching the `BusinessRule` struct
+  - Adds a new business rule to the database.
+
+### Context Query
+- **POST /context/query**
+  - Body: JSON object matching the `ContextQuery` struct
+  - Returns: `ContextResponse` with relevant business rules, architectural guidance, performance requirements, security policies, and conventions (currently returns empty arrays; implement your query logic as needed).
+
+#### Example: Context Query Request
+```json
+{
+  "feature_area": "authentication",
+  "task_type": "implement",
+  "components": ["login", "signup", "password_reset"]
+}
+```
+
+#### Example: Context Query Response
+```json
+{
+  "business_rules": [],
+  "architectural_guidance": [],
+  "performance_requirements": [],
+  "security_policies": [],
+  "conventions": []
+}
+```
 
 ---
 
