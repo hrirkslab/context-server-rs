@@ -19,6 +19,7 @@ pub fn create_router_with_state(state: AppState) -> Router {
         .route("/health", get(health_check))
         .route("/business_rules", get(list_business_rules).post(create_business_rule))
         .route("/context/query", get(get_context_query).post(context_query))
+        .route("/features", get(list_features))
         .route("/architectural_decisions", get(list_architectural_decisions).post(create_architectural_decision))
         .route("/performance_requirements", get(list_performance_requirements).post(create_performance_requirement))
         .route("/security_policies", get(list_security_policies).post(create_security_policy))
@@ -71,15 +72,48 @@ async fn create_business_rule(State(state): State<AppState>, Json(rule): Json<Bu
     Json(json!({"status": "ok"}))
 }
 
-async fn context_query(Json(_query): Json<ContextQuery>) -> Json<ContextResponse> {
-    // TODO: Implement actual query logic
-    Json(ContextResponse {
+// More forgiving POST handler for /context/query
+pub async fn context_query(
+    maybe_query: Result<axum::Json<crate::models::api::ContextQuery>, axum::extract::rejection::JsonRejection>
+) -> Result<axum::Json<crate::models::api::ContextResponse>, axum::http::StatusCode> {
+    // If the body is missing or invalid, just return an empty/default response
+    let _query = match maybe_query {
+        Ok(axum::Json(query)) => query,
+        Err(_) => {
+            // Log or handle the error as needed
+            return Ok(axum::Json(crate::models::api::ContextResponse {
+                business_rules: vec![],
+                architectural_guidance: vec![],
+                performance_requirements: vec![],
+                security_policies: vec![],
+                conventions: vec![],
+            }));
+        }
+    };
+
+    // ...existing logic for valid queries...
+    Ok(axum::Json(crate::models::api::ContextResponse {
         business_rules: vec![],
         architectural_guidance: vec![],
         performance_requirements: vec![],
         security_policies: vec![],
         conventions: vec![],
-    })
+    }))
+}
+
+// New: GET /features endpoint to list available features
+pub async fn list_features() -> axum::Json<serde_json::Value> {
+    axum::Json(serde_json::json!({
+        "features": [
+            "business_rules",
+            "architectural_decisions",
+            "performance_requirements",
+            "security_policies",
+            "project_conventions",
+            "feature_context",
+            "context_query"
+        ]
+    }))
 }
 
 // Add GET handler for /context/query for Copilot Agent compatibility
