@@ -91,6 +91,8 @@ npx @modelcontextprotocol/inspector
 
 Once connected, clients can discover and use these MCP tools:
 
+### Core Project Management
+
 ### `query_context`
 Query project context based on feature area, task type, and components.
 
@@ -104,14 +106,8 @@ Query project context based on feature area, task type, and components.
 }
 ```
 
-**Returns:** Business rules, architectural decisions, performance requirements, security policies, and conventions relevant to your query.
-
 ### `list_projects`
 List all available projects in the context database.
-
-**Parameters:** None
-
-**Returns:** Array of all projects with their details.
 
 ### `create_project`
 Create a new project in the context database.
@@ -119,24 +115,74 @@ Create a new project in the context database.
 **Parameters:**
 ```json
 {
-  "name": "My Project",
-  "description": "Optional description",
-  "repository_url": "https://github.com/user/repo"
+  "name": "LocalChat Flutter App",
+  "description": "Privacy-first local LLM chat application",
+  "repository_url": "https://github.com/user/localchat"
 }
 ```
 
-**Returns:** The created project details.
+### Flutter-Specific Tools
 
-## 4. Using with Claude Desktop
+### `create_flutter_component`
+Create a new Flutter component and track its architecture layer.
 
-Once configured, you can ask Claude to:
+**Parameters:**
+```json
+{
+  "project_id": "your-project-id",
+  "component_name": "ChatScreen",
+  "component_type": "widget",
+  "architecture_layer": "presentation",
+  "file_path": "lib/presentation/pages/chat_screen.dart"
+}
+```
 
+**Component Types:** `widget`, `provider`, `service`, `repository`, `model`, `utility`
+**Architecture Layers:** `presentation`, `domain`, `data`, `core`
+
+### `list_flutter_components`
+List all Flutter components in a project with their architecture layers.
+
+### `validate_architecture`
+Validate Flutter Clean Architecture rules and detect dependency violations.
+
+**Returns:** List of architecture violations (e.g., presentation layer importing directly from data layer)
+
+### Development Phase Tracking
+
+### `create_development_phase`
+Create and track development phases for project management.
+
+**Parameters:**
+```json
+{
+  "project_id": "your-project-id",
+  "phase_name": "Chat UI Implementation",
+  "phase_order": 2,
+  "description": "Build the main chat interface components"
+}
+```
+
+### `list_development_phases`
+List all development phases for a project in order.
+
+## 4. Using with Claude Desktop or VS Code
+
+Once configured, you can ask Claude or your MCP-enabled IDE to:
+
+### Flutter-Specific Queries:
+- "Create a new Flutter component called ChatScreen in the presentation layer"
+- "List all Flutter components in my project and check for architecture violations"
+- "Create development phases for my LocalChat Flutter app: Setup, Chat UI, Model Management, Polish"
+- "Validate my Flutter Clean Architecture - are there any dependency violations?"
+
+### General Context Queries:
 - "Query the context for authentication implementation in my Flutter project"
-- "What are the performance requirements for list rendering in my app?"
+- "What are the performance requirements for chat rendering in my app?"
 - "Show me the architectural decisions for my project"
-- "Create a new project called 'Mobile Banking App'"
+- "Create a new project called 'LocalChat Flutter App'"
 
-Claude will automatically call the appropriate MCP tools and provide context-aware responses.
+The MCP client will automatically call the appropriate tools and provide context-aware responses.
 
 ## 5. Example MCP Interaction
 
@@ -204,11 +250,28 @@ You can add context data by:
 
 ## Key Features
 
-- ✅ **MCP Protocol Compliance**: Full Model Context Protocol implementation
-- ✅ **SQLite Storage**: Embedded database for efficient context storage
-- ✅ **Multiple Transports**: stdio transport (SSE and HTTP streaming planned)
-- ✅ **Type Safety**: JSON schema validation for all tool parameters
-- ✅ **Tool Discovery**: Automatic tool discovery by MCP clients
-- ✅ **Context Querying**: Advanced context filtering and retrieval
-- 🚧 **Claude Desktop Integration**: Ready for Claude Desktop configuration
-- 🚧 **Additional Tools**: More CRUD operations coming soon
+### ✅ **Core MCP Implementation**
+- **MCP Protocol Compliance**: Full Model Context Protocol implementation
+- **SQLite Storage**: Embedded database with config directory support (`~/config/context-server-rs/`)
+- **stdio Transport**: Standard input/output transport for MCP communication
+- **Type Safety**: JSON schema validation for all tool parameters
+- **Tool Discovery**: Automatic tool discovery by MCP clients
+
+### ✅ **Flutter-Specific Features** 
+- **Component Tracking**: Track Flutter widgets, providers, services, repositories
+- **Architecture Layer Validation**: Enforce Clean Architecture dependency rules
+- **Development Phase Management**: Track project phases (Setup → Chat UI → Model Management → Polish)
+- **Privacy-First Validation**: Monitor for external network calls and API imports (planned)
+- **Riverpod Provider Graph**: Map provider dependencies and scopes (planned)
+
+### ✅ **AI-Assisted Development**
+- **Context-Aware Code Generation**: AI agents get Flutter project structure context
+- **Architecture Violation Detection**: Real-time validation of dependency rules
+- **Project Phase Guidance**: Suggest next logical steps based on current development phase
+- **Component Organization**: Automatic tracking of presentation/domain/data/core layers
+
+### 🚧 **Coming Soon**
+- **Privacy Rule Engine**: Automated detection of external API usage
+- **Code Templates**: Generate boilerplate for widgets, providers, repositories
+- **Performance Monitoring**: Track inference times and memory usage for LLM integration
+- **Testing Context**: Store testing patterns and coverage information
