@@ -48,7 +48,7 @@ pub struct PerformanceRequirement {
     pub created_at: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityPolicy {
     pub id: String,
     pub project_id: String,
@@ -61,7 +61,7 @@ pub struct SecurityPolicy {
     pub created_at: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProjectConvention {
     pub id: String,
     pub project_id: String,
@@ -73,7 +73,7 @@ pub struct ProjectConvention {
     pub created_at: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FeatureContext {
     pub id: String,
     pub project_id: String,
