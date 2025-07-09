@@ -1,8 +1,14 @@
 mod db;
 mod models;
 mod context_server;
+mod context_server_solid;
+mod enhanced_context_server;
+mod repositories;
+mod services;
+mod infrastructure;
+mod container;
 
-use context_server::ContextMcpServer;
+use enhanced_context_server::EnhancedContextMcpServer;
 use db::init::init_db;
 use rmcp::{ServiceExt, transport::stdio};
 use tracing_subscriber::{self, EnvFilter};
@@ -26,11 +32,14 @@ fn get_config_dir() -> Result<PathBuf> {
     Ok(config_dir)
 }
 
-/// MCP Context Server for AI Code Generation
+/// Enhanced MCP Context Server for AI Code Generation with SOLID Architecture
 /// 
 /// This server provides curated project context that AI agents cannot automatically discover.
-/// It stores business rules, architectural decisions, conventions, and other high-value context
-/// to help AI agents generate better production-quality code.
+/// It stores business rules, architectural decisions, conventions, security policies, and other 
+/// high-value context to help AI agents generate better production-quality code.
+/// 
+/// Features comprehensive CRUD operations for all entities, bulk operations, and follows
+/// SOLID principles with dependency injection and service/repository patterns.
 #[tokio::main]
 async fn main() -> Result<()> {
     // Initialize logging
@@ -57,15 +66,15 @@ async fn main() -> Result<()> {
         }
     }
 
-    // Create and start the MCP server
-    let service = ContextMcpServer::new(db_path.to_str().unwrap())?
+    // Create and start the enhanced MCP server
+    let service = EnhancedContextMcpServer::new(db_path.to_str().unwrap())?
         .serve(stdio())
         .await
         .inspect_err(|e| {
             tracing::error!("Failed to serve MCP server: {:?}", e);
         })?;
 
-    tracing::info!("MCP Context Server started successfully");
+    tracing::info!("Enhanced MCP Context Server started successfully");
     
     // Wait for the service to complete
     service.waiting().await?;

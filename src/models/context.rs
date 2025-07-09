@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Project {
     pub id: String,
     pub name: String,
@@ -10,7 +10,7 @@ pub struct Project {
     pub updated_at: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BusinessRule {
     pub id: String,
     pub project_id: String,
@@ -23,7 +23,7 @@ pub struct BusinessRule {
     pub created_at: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArchitecturalDecision {
     pub id: String,
     pub project_id: String,
@@ -36,7 +36,7 @@ pub struct ArchitecturalDecision {
     pub created_at: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceRequirement {
     pub id: String,
     pub project_id: String,
@@ -48,7 +48,7 @@ pub struct PerformanceRequirement {
     pub created_at: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityPolicy {
     pub id: String,
     pub project_id: String,
@@ -61,7 +61,7 @@ pub struct SecurityPolicy {
     pub created_at: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProjectConvention {
     pub id: String,
     pub project_id: String,
@@ -73,7 +73,7 @@ pub struct ProjectConvention {
     pub created_at: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FeatureContext {
     pub id: String,
     pub project_id: String,
