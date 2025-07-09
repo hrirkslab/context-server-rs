@@ -193,6 +193,8 @@ impl ServerHandler for ContextMcpServer {
         _request: Option<PaginatedRequestParam>,
         _context: rmcp::service::RequestContext<rmcp::service::RoleServer>,
     ) -> Result<ListToolsResult, McpError> {
+        tracing::debug!("Received list_tools request");
+        
         let tools = vec![
             Tool {
                 name: "query_context".into(),
@@ -256,6 +258,7 @@ impl ServerHandler for ContextMcpServer {
             },
         ];
 
+        tracing::debug!("Returning {} tools", tools.len());
         Ok(ListToolsResult { 
             tools,
             next_cursor: None,
@@ -267,8 +270,11 @@ impl ServerHandler for ContextMcpServer {
         request: CallToolRequestParam,
         _context: rmcp::service::RequestContext<rmcp::service::RoleServer>,
     ) -> Result<CallToolResult, McpError> {
+        tracing::debug!("Received call_tool request for: {}", request.name);
+        
         match request.name.as_ref() {
             "query_context" => {
+                tracing::debug!("Processing query_context tool");
                 let args = request.arguments.unwrap_or_default();
                 let project_id = args.get("project_id")
                     .and_then(|v| v.as_str())
@@ -288,16 +294,20 @@ impl ServerHandler for ContextMcpServer {
                 let content = serde_json::to_string_pretty(&result)
                     .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
 
+                tracing::debug!("query_context completed successfully");
                 Ok(CallToolResult::success(vec![Content::text(content)]))
             }
             "list_projects" => {
+                tracing::debug!("Processing list_projects tool");
                 let projects = self.list_projects().await?;
                 let content = serde_json::to_string_pretty(&projects)
                     .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
 
+                tracing::debug!("list_projects completed successfully");
                 Ok(CallToolResult::success(vec![Content::text(content)]))
             }
             "create_project" => {
+                tracing::debug!("Processing create_project tool");
                 let args = request.arguments.unwrap_or_default();
                 let name = args.get("name")
                     .and_then(|v| v.as_str())
@@ -309,9 +319,13 @@ impl ServerHandler for ContextMcpServer {
                 let content = serde_json::to_string_pretty(&project)
                     .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
 
+                tracing::debug!("create_project completed successfully");
                 Ok(CallToolResult::success(vec![Content::text(content)]))
             }
-            _ => Err(McpError::method_not_found::<CallToolRequestMethod>()),
+            _ => {
+                tracing::warn!("Unknown tool requested: {}", request.name);
+                Err(McpError::method_not_found::<CallToolRequestMethod>())
+            }
         }
     }
 }

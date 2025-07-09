@@ -48,9 +48,28 @@ Benefits over HTTP APIs:
 ```json
 {
   "mcpServers": {
-    "context-server": {
-      "command": "C:\\path\\to\\your\\context-server-rs\\target\\release\\context-server-rs.exe",
-      "args": []
+    "context-server-rs": {
+      "command": "cargo",
+      "args": ["run"],
+      "cwd": "c:\\Users\\karki\\source\\repos\\local-chat-llm\\context-server-rs"
+    }
+  }
+}
+```
+
+### VS Code with MCP Extension Integration
+
+Add this to your VS Code settings.json for MCP extension support:
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "context-server-rs": {
+        "command": "cargo",
+        "args": ["run"],
+        "cwd": "c:\\Users\\karki\\source\\repos\\local-chat-llm\\context-server-rs"
+      }
     }
   }
 }
@@ -58,7 +77,7 @@ Benefits over HTTP APIs:
 
 ### Cursor IDE Integration
 
-Follow similar configuration for Cursor IDE's MCP integration.
+Configure similar to VS Code with MCP support.
 
 ### MCP Inspector (for testing)
 
