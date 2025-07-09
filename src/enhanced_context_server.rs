@@ -183,6 +183,18 @@ impl ServerHandler for EnhancedContextMcpServer {
                 }).as_object().unwrap().clone()),
                 annotations: None,
             },
+            Tool {
+                name: "get_business_rule".into(),
+                description: Some("Get a business rule by ID".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string", "description": "The ID of the business rule"}
+                    },
+                    "required": ["id"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
 
             // Security Policy CRUD
             Tool {
@@ -300,6 +312,18 @@ impl ServerHandler for EnhancedContextMcpServer {
                 }).as_object().unwrap().clone()),
                 annotations: None,
             },
+            Tool {
+                name: "get_flutter_component".into(),
+                description: Some("Get a Flutter component by ID".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string", "description": "The ID of the Flutter component"}
+                    },
+                    "required": ["id"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
 
             // Development Phase CRUD
             Tool {
@@ -354,6 +378,18 @@ impl ServerHandler for EnhancedContextMcpServer {
                         "project_id": {"type": "string", "description": "The ID of the project"}
                     },
                     "required": ["project_id"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "get_development_phase".into(),
+                description: Some("Get a development phase by ID".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string", "description": "The ID of the development phase"}
+                    },
+                    "required": ["id"]
                 }).as_object().unwrap().clone()),
                 annotations: None,
             },
@@ -497,6 +533,37 @@ impl ServerHandler for EnhancedContextMcpServer {
                 name: "get_server_capabilities".into(),
                 description: Some("Get comprehensive information about server features, database tables, and available tools".into()),
                 input_schema: Arc::new(serde_json::json!({"type": "object", "properties": {}}).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "clear_project_cache".into(),
+                description: Some("Clear cache and temporary data for a specific project".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "project_id": {"type": "string", "description": "The ID of the project to clear cache for"}
+                    },
+                    "required": ["project_id"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "clear_all_cache".into(),
+                description: Some("Clear all cache and temporary data (WARNING: This removes all stored data)".into()),
+                input_schema: Arc::new(serde_json::json!({"type": "object", "properties": {}}).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "get_entity".into(),
+                description: Some("Get any entity by ID and type (universal getter)".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "entity_type": {"type": "string", "enum": ["project", "business_rule", "architectural_decision", "performance_requirement", "flutter_component", "development_phase"], "description": "The type of entity to retrieve"},
+                        "id": {"type": "string", "description": "The ID of the entity"}
+                    },
+                    "required": ["entity_type", "id"]
+                }).as_object().unwrap().clone()),
                 annotations: None,
             },
         ];
