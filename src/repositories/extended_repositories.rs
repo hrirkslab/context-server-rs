@@ -16,6 +16,7 @@ pub trait PrivacyRuleRepository: Send + Sync {
 }
 
 #[async_trait]
+#[allow(dead_code)]
 pub trait PrivacyViolationRepository: Send + Sync {
     async fn create(&self, violation: &PrivacyViolation) -> Result<PrivacyViolation, McpError>;
     async fn get_by_id(&self, id: &str) -> Result<Option<PrivacyViolation>, McpError>;
@@ -30,6 +31,7 @@ pub trait PrivacyViolationRepository: Send + Sync {
 }
 
 #[async_trait]
+#[allow(dead_code)]
 pub trait ArchitectureLayerRepository: Send + Sync {
     async fn create(&self, layer_config: &ArchitectureLayerConfig) -> Result<ArchitectureLayerConfig, McpError>;
     async fn get_by_id(&self, id: &str) -> Result<Option<ArchitectureLayerConfig>, McpError>;
@@ -43,6 +45,7 @@ pub trait ArchitectureLayerRepository: Send + Sync {
 }
 
 #[async_trait]
+#[allow(dead_code)]
 pub trait ModelContextRepository: Send + Sync {
     async fn create(&self, model_context: &ModelContext) -> Result<ModelContext, McpError>;
     async fn get_by_id(&self, id: &str) -> Result<Option<ModelContext>, McpError>;

@@ -58,7 +58,7 @@ impl<FS: FlutterService> ArchitectureValidationServiceImpl<FS> {
     
     /// Validate data layer dependencies (OCP - can be extended with new rules)
     fn validate_data_layer(&self, _component: &FlutterComponent) -> Vec<String> {
-        let mut violations = Vec::new();
+        let violations = Vec::new();
         
         // Data layer validation rules would go here
         // For now, data layer has fewer restrictions
@@ -68,7 +68,7 @@ impl<FS: FlutterService> ArchitectureValidationServiceImpl<FS> {
     
     /// Validate core layer dependencies (OCP - can be extended with new rules)
     fn validate_core_layer(&self, _component: &FlutterComponent) -> Vec<String> {
-        let mut violations = Vec::new();
+        let violations = Vec::new();
         
         // Core layer validation rules would go here
         // Core layer should be independent of all other layers

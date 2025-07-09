@@ -6,6 +6,7 @@ use uuid::Uuid;
 
 /// Extended CRUD service for security policies, project conventions, and feature contexts
 #[async_trait]
+#[allow(dead_code)]
 pub trait ExtendedContextCrudService: Send + Sync {
     // Security Policy CRUD
     async fn create_security_policy(&self, project_id: &str, policy_name: &str, policy_area: Option<&str>) -> Result<SecurityPolicy, McpError>;
@@ -63,6 +64,7 @@ where
     PCR: ProjectConventionRepository,
     FCR: FeatureContextRepository,
 {
+    #[allow(dead_code)]
     pub fn new(
         security_policy_repository: SPR,
         project_convention_repository: PCR,

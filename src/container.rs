@@ -32,6 +32,7 @@ pub struct AppContainer {
     // Services (following Dependency Inversion Principle)
     pub project_service: Box<dyn ProjectService>,
     pub flutter_service: Box<dyn FlutterService>,
+    #[allow(dead_code)]
     pub development_phase_service: Box<dyn DevelopmentPhaseService>,
     pub context_query_service: Box<dyn ContextQueryService>,
     pub architecture_validation_service: Box<dyn ArchitectureValidationService>,
@@ -81,9 +82,11 @@ impl AppContainer {
 }
 
 /// Factory pattern for creating the container with proper error handling
+#[allow(dead_code)]
 pub struct ContainerFactory;
 
 impl ContainerFactory {
+    #[allow(dead_code)]
     pub fn create(db_path: &str) -> Result<AppContainer> {
         AppContainer::new(db_path)
     }

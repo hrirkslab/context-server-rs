@@ -16,10 +16,14 @@ pub trait FlutterService: Send + Sync {
         file_path: Option<&str>
     ) -> Result<FlutterComponent, McpError>;
     
+    #[allow(dead_code)]
     async fn get_component(&self, id: &str) -> Result<Option<FlutterComponent>, McpError>;
     async fn list_components(&self, project_id: &str) -> Result<Vec<FlutterComponent>, McpError>;
+    #[allow(dead_code)]
     async fn list_components_by_layer(&self, project_id: &str, layer: &str) -> Result<Vec<FlutterComponent>, McpError>;
+    #[allow(dead_code)]
     async fn update_component(&self, component: &FlutterComponent) -> Result<FlutterComponent, McpError>;
+    #[allow(dead_code)]
     async fn delete_component(&self, id: &str) -> Result<bool, McpError>;
 }
 

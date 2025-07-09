@@ -6,6 +6,7 @@ use uuid::Uuid;
 
 /// Enhanced CRUD service for business rules, architectural decisions, and performance requirements
 #[async_trait]
+#[allow(dead_code)]
 pub trait ContextCrudService: Send + Sync {
     // Business Rules CRUD
     async fn create_business_rule(&self, project_id: &str, rule_name: &str, description: Option<&str>, domain_area: Option<&str>) -> Result<BusinessRule, McpError>;
@@ -53,6 +54,7 @@ where
     ADR: ArchitecturalDecisionRepository,
     PR: PerformanceRequirementRepository,
 {
+    #[allow(dead_code)]
     pub fn new(
         business_rule_repository: BR,
         architectural_decision_repository: ADR,

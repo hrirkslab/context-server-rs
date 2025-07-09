@@ -6,6 +6,7 @@ use uuid::Uuid;
 
 /// Service for Development Phase operations following Single Responsibility Principle
 #[async_trait]
+#[allow(dead_code)]
 pub trait DevelopmentPhaseService: Send + Sync {
     async fn create_phase(
         &self, 

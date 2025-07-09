@@ -15,6 +15,7 @@ pub use flutter_service::FlutterService;
 pub use development_phase_service::DevelopmentPhaseService;
 pub use context_query_service::ContextQueryService;
 pub use architecture_validation_service::ArchitectureValidationService;
-pub use context_crud_service::ContextCrudService;
-pub use extended_context_crud_service::ExtendedContextCrudService;
-pub use flutter_advanced_crud_service::FlutterAdvancedCrudService;
+// Commented out unused services - will be re-enabled when endpoints are implemented
+// pub use context_crud_service::ContextCrudService;
+// pub use extended_context_crud_service::ExtendedContextCrudService;
+// pub use flutter_advanced_crud_service::FlutterAdvancedCrudService;

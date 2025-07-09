@@ -1,8 +1,7 @@
 use async_trait::async_trait;
 use crate::models::flutter::{
     PrivacyRule, PrivacyViolation, ArchitectureLayerConfig, ModelContext, CodeTemplate,
-    PrivacyRuleType, Severity, ViolationStatus, TemplateType,
-    PerformanceMetrics, ModelConfiguration
+    PrivacyRuleType, Severity, ViolationStatus, TemplateType
 };
 use crate::repositories::{
     PrivacyRuleRepository, PrivacyViolationRepository, ArchitectureLayerRepository,
@@ -13,6 +12,7 @@ use uuid::Uuid;
 
 /// Advanced CRUD service for Flutter-specific entities
 #[async_trait]
+#[allow(dead_code)]
 pub trait FlutterAdvancedCrudService: Send + Sync {
     // Privacy Rule CRUD
     async fn create_privacy_rule(&self, project_id: &str, rule_name: &str, rule_type: PrivacyRuleType, pattern: &str) -> Result<PrivacyRule, McpError>;
@@ -91,6 +91,7 @@ where
     MCR: ModelContextRepository,
     CTR: CodeTemplateRepository,
 {
+    #[allow(dead_code)]
     pub fn new(
         privacy_rule_repository: PRR,
         privacy_violation_repository: PVR,

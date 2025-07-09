@@ -17,6 +17,8 @@ pub struct ContextMcpServer {
 }
 
 impl ContextMcpServer {
+    // Unused - kept for reference only
+    #[allow(dead_code)]
     pub fn new(db_path: &str) -> Result<Self> {
         let conn = Connection::open(db_path)?;
         Ok(Self {

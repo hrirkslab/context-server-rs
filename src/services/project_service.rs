@@ -8,9 +8,12 @@ use uuid::Uuid;
 #[async_trait]
 pub trait ProjectService: Send + Sync {
     async fn create_project(&self, name: &str, description: Option<&str>, repository_url: Option<&str>) -> Result<Project, McpError>;
+    #[allow(dead_code)]
     async fn get_project(&self, id: &str) -> Result<Option<Project>, McpError>;
     async fn list_projects(&self) -> Result<Vec<Project>, McpError>;
+    #[allow(dead_code)]
     async fn update_project(&self, project: &Project) -> Result<Project, McpError>;
+    #[allow(dead_code)]
     async fn delete_project(&self, id: &str) -> Result<bool, McpError>;
 }
 

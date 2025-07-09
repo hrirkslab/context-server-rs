@@ -4,7 +4,6 @@ use rmcp::{
     handler::server::ServerHandler,
 };
 use crate::models::flutter::*;
-use crate::services::context_query_service::ContextQueryResult;
 use crate::container::AppContainer;
 use anyhow::Result;
 
@@ -18,6 +17,8 @@ pub struct ContextMcpServer {
 
 impl ContextMcpServer {
     /// Create a new ContextMcpServer with dependency injection
+    /// Unused - kept for reference only
+    #[allow(dead_code)]
     pub fn new(db_path: &str) -> Result<Self> {
         let container = AppContainer::new(db_path)?;
         Ok(Self { container })
