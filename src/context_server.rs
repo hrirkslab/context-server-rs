@@ -6,6 +6,7 @@ use rmcp::{
     handler::server::ServerHandler,
 };
 use crate::models::context::*;
+use crate::models::flutter::*;
 use anyhow::Result;
 use uuid::Uuid;
 
@@ -161,6 +162,240 @@ impl ContextMcpServer {
             updated_at: Some(now),
         })
     }
+
+    /// Create a Flutter component
+    async fn create_flutter_component(&self, project_id: &str, component_name: &str, component_type: &str, architecture_layer: &str, file_path: Option<&str>) -> Result<FlutterComponent, McpError> {
+        let db = self.db.lock().unwrap();
+        let id = Uuid::new_v4().to_string();
+        let now = chrono::Utc::now().to_rfc3339();
+        
+        db.execute(
+            "INSERT INTO flutter_components (id, project_id, component_name, component_type, architecture_layer, file_path, dependencies, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                &id,
+                project_id,
+                component_name,
+                component_type,
+                architecture_layer,
+                file_path,
+                "[]", // Empty JSON array for dependencies
+                &now,
+                &now,
+            ),
+        ).map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
+
+        // Parse enums from strings
+        let component_type_enum = match component_type {
+            "widget" => ComponentType::Widget,
+            "provider" => ComponentType::Provider,
+            "service" => ComponentType::Service,
+            "repository" => ComponentType::Repository,
+            "model" => ComponentType::Model,
+            "utility" => ComponentType::Utility,
+            _ => ComponentType::Widget,
+        };
+
+        let architecture_layer_enum = match architecture_layer {
+            "presentation" => crate::models::flutter::ArchitectureLayer::Presentation,
+            "domain" => crate::models::flutter::ArchitectureLayer::Domain,
+            "data" => crate::models::flutter::ArchitectureLayer::Data,
+            "core" => crate::models::flutter::ArchitectureLayer::Core,
+            _ => crate::models::flutter::ArchitectureLayer::Presentation,
+        };
+
+        Ok(FlutterComponent {
+            id,
+            project_id: project_id.to_string(),
+            component_name: component_name.to_string(),
+            component_type: component_type_enum,
+            architecture_layer: architecture_layer_enum,
+            file_path: file_path.map(|s| s.to_string()),
+            dependencies: Vec::new(),
+            riverpod_scope: None,
+            widget_type: None,
+            created_at: Some(now.clone()),
+            updated_at: Some(now),
+        })
+    }
+
+    /// List Flutter components for a project
+    async fn list_flutter_components(&self, project_id: &str) -> Result<Vec<FlutterComponent>, McpError> {
+        let db = self.db.lock().unwrap();
+        let mut components = Vec::new();
+        
+        let mut stmt = db.prepare("SELECT id, project_id, component_name, component_type, architecture_layer, file_path, dependencies, riverpod_scope, widget_type, created_at, updated_at FROM flutter_components WHERE project_id = ?").map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
+        let component_rows = stmt.query_map([project_id], |row| {
+            let component_type_str: String = row.get(3)?;
+            let architecture_layer_str: String = row.get(4)?;
+            let dependencies_str: String = row.get(6)?;
+            
+            let component_type = match component_type_str.as_str() {
+                "widget" => ComponentType::Widget,
+                "provider" => ComponentType::Provider,
+                "service" => ComponentType::Service,
+                "repository" => ComponentType::Repository,
+                "model" => ComponentType::Model,
+                "utility" => ComponentType::Utility,
+                _ => ComponentType::Widget,
+            };
+
+            let architecture_layer = match architecture_layer_str.as_str() {
+                "presentation" => crate::models::flutter::ArchitectureLayer::Presentation,
+                "domain" => crate::models::flutter::ArchitectureLayer::Domain,
+                "data" => crate::models::flutter::ArchitectureLayer::Data,
+                "core" => crate::models::flutter::ArchitectureLayer::Core,
+                _ => crate::models::flutter::ArchitectureLayer::Presentation,
+            };
+
+            let dependencies: Vec<String> = serde_json::from_str(&dependencies_str).unwrap_or_default();
+
+            Ok(FlutterComponent {
+                id: row.get(0)?,
+                project_id: row.get(1)?,
+                component_name: row.get(2)?,
+                component_type,
+                architecture_layer,
+                file_path: row.get(5)?,
+                dependencies,
+                riverpod_scope: None, // TODO: Parse from database
+                widget_type: None, // TODO: Parse from database
+                created_at: row.get(9)?,
+                updated_at: row.get(10)?,
+            })
+        }).map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
+
+        for component in component_rows {
+            match component {
+                Ok(component) => components.push(component),
+                Err(e) => tracing::warn!("Failed to parse Flutter component: {}", e),
+            }
+        }
+
+        Ok(components)
+    }
+
+    /// Create a development phase
+    async fn create_development_phase(&self, project_id: &str, phase_name: &str, phase_order: i32, description: Option<&str>) -> Result<DevelopmentPhase, McpError> {
+        let db = self.db.lock().unwrap();
+        let id = Uuid::new_v4().to_string();
+        let now = chrono::Utc::now().to_rfc3339();
+        
+        db.execute(
+            "INSERT INTO development_phases (id, project_id, phase_name, phase_order, status, description, completion_criteria, dependencies, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                &id,
+                project_id,
+                phase_name,
+                phase_order,
+                "pending",
+                description,
+                "[]", // Empty JSON array for completion criteria
+                "[]", // Empty JSON array for dependencies
+                &now,
+            ),
+        ).map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
+
+        Ok(DevelopmentPhase {
+            id,
+            project_id: project_id.to_string(),
+            phase_name: phase_name.to_string(),
+            phase_order,
+            status: PhaseStatus::Pending,
+            description: description.map(|s| s.to_string()),
+            completion_criteria: Vec::new(),
+            dependencies: Vec::new(),
+            started_at: None,
+            completed_at: None,
+            created_at: Some(now),
+        })
+    }
+
+    /// List development phases for a project
+    async fn list_development_phases(&self, project_id: &str) -> Result<Vec<DevelopmentPhase>, McpError> {
+        let db = self.db.lock().unwrap();
+        let mut phases = Vec::new();
+        
+        let mut stmt = db.prepare("SELECT id, project_id, phase_name, phase_order, status, description, completion_criteria, dependencies, started_at, completed_at, created_at FROM development_phases WHERE project_id = ? ORDER BY phase_order").map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
+        let phase_rows = stmt.query_map([project_id], |row| {
+            let status_str: String = row.get(4)?;
+            let status = match status_str.as_str() {
+                "pending" => PhaseStatus::Pending,
+                "in_progress" => PhaseStatus::InProgress,
+                "completed" => PhaseStatus::Completed,
+                "blocked" => PhaseStatus::Blocked,
+                _ => PhaseStatus::Pending,
+            };
+
+            let completion_criteria_str: String = row.get(6)?;
+            let dependencies_str: String = row.get(7)?;
+            let completion_criteria: Vec<String> = serde_json::from_str(&completion_criteria_str).unwrap_or_default();
+            let dependencies: Vec<String> = serde_json::from_str(&dependencies_str).unwrap_or_default();
+
+            Ok(DevelopmentPhase {
+                id: row.get(0)?,
+                project_id: row.get(1)?,
+                phase_name: row.get(2)?,
+                phase_order: row.get(3)?,
+                status,
+                description: row.get(5)?,
+                completion_criteria,
+                dependencies,
+                started_at: row.get(8)?,
+                completed_at: row.get(9)?,
+                created_at: row.get(10)?,
+            })
+        }).map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
+
+        for phase in phase_rows {
+            match phase {
+                Ok(phase) => phases.push(phase),
+                Err(e) => tracing::warn!("Failed to parse development phase: {}", e),
+            }
+        }
+
+        Ok(phases)
+    }
+
+    /// Validate architecture dependencies for Flutter project
+    async fn validate_architecture(&self, project_id: &str) -> Result<Vec<String>, McpError> {
+        let mut violations = Vec::new();
+        
+        // Get all components for the project
+        let components = self.list_flutter_components(project_id).await?;
+        
+        // Check architecture layer violations
+        for component in &components {
+            match component.architecture_layer {
+                crate::models::flutter::ArchitectureLayer::Presentation => {
+                    // Presentation layer should not directly import from data layer
+                    for dep in &component.dependencies {
+                        if dep.contains("data/") && !dep.contains("domain/") {
+                            violations.push(format!(
+                                "Architecture violation: {} (presentation) directly imports from data layer: {}",
+                                component.component_name, dep
+                            ));
+                        }
+                    }
+                }
+                crate::models::flutter::ArchitectureLayer::Domain => {
+                    // Domain layer should not import from presentation or data layers
+                    for dep in &component.dependencies {
+                        if dep.contains("presentation/") || dep.contains("data/") {
+                            violations.push(format!(
+                                "Architecture violation: {} (domain) imports from {}: {}",
+                                component.component_name, 
+                                if dep.contains("presentation/") { "presentation" } else { "data" },
+                                dep
+                            ));
+                        }
+                    }
+                }
+                _ => {} // Data and core layers have fewer restrictions
+            }
+        }
+        
+        Ok(violations)
+    }
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
@@ -256,6 +491,111 @@ impl ServerHandler for ContextMcpServer {
                 }).as_object().unwrap().clone()),
                 annotations: None,
             },
+            Tool {
+                name: "create_flutter_component".into(),
+                description: Some("Create a new Flutter component in the project".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "project_id": {
+                            "type": "string",
+                            "description": "The ID of the project"
+                        },
+                        "component_name": {
+                            "type": "string",
+                            "description": "The name of the component"
+                        },
+                        "component_type": {
+                            "type": "string",
+                            "enum": ["widget", "provider", "service", "repository", "model", "utility"],
+                            "description": "The type of component"
+                        },
+                        "architecture_layer": {
+                            "type": "string",
+                            "enum": ["presentation", "domain", "data", "core"],
+                            "description": "The architecture layer where this component belongs"
+                        },
+                        "file_path": {
+                            "type": "string",
+                            "description": "Optional file path for the component"
+                        }
+                    },
+                    "required": ["project_id", "component_name", "component_type", "architecture_layer"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "list_flutter_components".into(),
+                description: Some("List all Flutter components in a project".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "project_id": {
+                            "type": "string",
+                            "description": "The ID of the project"
+                        }
+                    },
+                    "required": ["project_id"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "create_development_phase".into(),
+                description: Some("Create a new development phase for tracking project progress".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "project_id": {
+                            "type": "string",
+                            "description": "The ID of the project"
+                        },
+                        "phase_name": {
+                            "type": "string",
+                            "description": "The name of the phase (e.g., 'Setup', 'Chat UI', 'Model Management')"
+                        },
+                        "phase_order": {
+                            "type": "integer",
+                            "description": "The order of this phase (1, 2, 3, etc.)"
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "Optional description of the phase"
+                        }
+                    },
+                    "required": ["project_id", "phase_name", "phase_order"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "list_development_phases".into(),
+                description: Some("List all development phases for a project".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "project_id": {
+                            "type": "string",
+                            "description": "The ID of the project"
+                        }
+                    },
+                    "required": ["project_id"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "validate_architecture".into(),
+                description: Some("Validate Flutter Clean Architecture rules and detect violations".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "project_id": {
+                            "type": "string",
+                            "description": "The ID of the project to validate"
+                        }
+                    },
+                    "required": ["project_id"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
         ];
 
         tracing::debug!("Returning {} tools", tools.len());
@@ -320,6 +660,93 @@ impl ServerHandler for ContextMcpServer {
                     .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
 
                 tracing::debug!("create_project completed successfully");
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            }
+            "create_flutter_component" => {
+                tracing::debug!("Processing create_flutter_component tool");
+                let args = request.arguments.unwrap_or_default();
+                let project_id = args.get("project_id")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("project_id is required", None))?;
+                let component_name = args.get("component_name")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("component_name is required", None))?;
+                let component_type = args.get("component_type")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("component_type is required", None))?;
+                let architecture_layer = args.get("architecture_layer")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("architecture_layer is required", None))?;
+                let file_path = args.get("file_path").and_then(|v| v.as_str());
+
+                let component = self.create_flutter_component(project_id, component_name, component_type, architecture_layer, file_path).await?;
+                let content = serde_json::to_string_pretty(&component)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+
+                tracing::debug!("create_flutter_component completed successfully");
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            }
+            "list_flutter_components" => {
+                tracing::debug!("Processing list_flutter_components tool");
+                let args = request.arguments.unwrap_or_default();
+                let project_id = args.get("project_id")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("project_id is required", None))?;
+
+                let components = self.list_flutter_components(project_id).await?;
+                let content = serde_json::to_string_pretty(&components)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+
+                tracing::debug!("list_flutter_components completed successfully");
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            }
+            "create_development_phase" => {
+                tracing::debug!("Processing create_development_phase tool");
+                let args = request.arguments.unwrap_or_default();
+                let project_id = args.get("project_id")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("project_id is required", None))?;
+                let phase_name = args.get("phase_name")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("phase_name is required", None))?;
+                let phase_order = args.get("phase_order")
+                    .and_then(|v| v.as_i64())
+                    .ok_or_else(|| McpError::invalid_params("phase_order is required", None))? as i32;
+                let description = args.get("description").and_then(|v| v.as_str());
+
+                let phase = self.create_development_phase(project_id, phase_name, phase_order, description).await?;
+                let content = serde_json::to_string_pretty(&phase)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+
+                tracing::debug!("create_development_phase completed successfully");
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            }
+            "list_development_phases" => {
+                tracing::debug!("Processing list_development_phases tool");
+                let args = request.arguments.unwrap_or_default();
+                let project_id = args.get("project_id")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("project_id is required", None))?;
+
+                let phases = self.list_development_phases(project_id).await?;
+                let content = serde_json::to_string_pretty(&phases)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+
+                tracing::debug!("list_development_phases completed successfully");
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            }
+            "validate_architecture" => {
+                tracing::debug!("Processing validate_architecture tool");
+                let args = request.arguments.unwrap_or_default();
+                let project_id = args.get("project_id")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("project_id is required", None))?;
+
+                let violations = self.validate_architecture(project_id).await?;
+                let content = serde_json::to_string_pretty(&violations)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+
+                tracing::debug!("validate_architecture completed successfully");
                 Ok(CallToolResult::success(vec![Content::text(content)]))
             }
             _ => {

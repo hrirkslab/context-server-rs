@@ -88,6 +88,100 @@ pub fn init_db(db_path: &str) -> Result<Connection> {
             created_at TEXT DEFAULT (datetime('now')),
             FOREIGN KEY (project_id) REFERENCES projects(id)
         );
+        
+        -- Flutter-specific context tables
+        CREATE TABLE IF NOT EXISTS flutter_components (
+            id TEXT PRIMARY KEY,
+            project_id TEXT NOT NULL,
+            component_name TEXT NOT NULL,
+            component_type TEXT NOT NULL, -- 'widget', 'provider', 'service', 'repository'
+            architecture_layer TEXT NOT NULL, -- 'presentation', 'domain', 'data', 'core'
+            file_path TEXT,
+            dependencies TEXT, -- JSON array of dependencies
+            riverpod_scope TEXT, -- 'global', 'scoped', 'local'
+            widget_type TEXT, -- 'StatelessWidget', 'StatefulWidget', 'ConsumerWidget'
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (project_id) REFERENCES projects(id)
+        );
+        
+        CREATE TABLE IF NOT EXISTS development_phases (
+            id TEXT PRIMARY KEY,
+            project_id TEXT NOT NULL,
+            phase_name TEXT NOT NULL, -- 'Setup', 'Chat UI', 'Model Management', 'Polish'
+            phase_order INTEGER NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending', -- 'pending', 'in_progress', 'completed', 'blocked'
+            description TEXT,
+            completion_criteria TEXT, -- JSON array of criteria
+            dependencies TEXT, -- JSON array of phase dependencies
+            started_at TEXT,
+            completed_at TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (project_id) REFERENCES projects(id)
+        );
+        
+        CREATE TABLE IF NOT EXISTS privacy_rules (
+            id TEXT PRIMARY KEY,
+            project_id TEXT NOT NULL,
+            rule_name TEXT NOT NULL,
+            rule_type TEXT NOT NULL, -- 'forbidden_import', 'required_local_storage', 'data_flow'
+            pattern TEXT NOT NULL, -- import pattern, storage key, etc.
+            description TEXT,
+            severity TEXT DEFAULT 'error', -- 'error', 'warning', 'info'
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (project_id) REFERENCES projects(id)
+        );
+        
+        CREATE TABLE IF NOT EXISTS privacy_violations (
+            id TEXT PRIMARY KEY,
+            project_id TEXT NOT NULL,
+            rule_id TEXT NOT NULL,
+            file_path TEXT NOT NULL,
+            line_number INTEGER,
+            violation_text TEXT,
+            status TEXT DEFAULT 'open', -- 'open', 'resolved', 'suppressed'
+            detected_at TEXT DEFAULT (datetime('now')),
+            resolved_at TEXT,
+            FOREIGN KEY (project_id) REFERENCES projects(id),
+            FOREIGN KEY (rule_id) REFERENCES privacy_rules(id)
+        );
+        
+        CREATE TABLE IF NOT EXISTS architecture_layers (
+            id TEXT PRIMARY KEY,
+            project_id TEXT NOT NULL,
+            layer_name TEXT NOT NULL, -- 'presentation', 'domain', 'data', 'core'
+            allowed_dependencies TEXT, -- JSON array of allowed layer dependencies
+            forbidden_imports TEXT, -- JSON array of forbidden import patterns
+            description TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (project_id) REFERENCES projects(id)
+        );
+        
+        CREATE TABLE IF NOT EXISTS model_context (
+            id TEXT PRIMARY KEY,
+            project_id TEXT NOT NULL,
+            model_name TEXT NOT NULL,
+            model_path TEXT,
+            model_type TEXT, -- 'GGUF', 'ONNX', etc.
+            model_size TEXT,
+            performance_metrics TEXT, -- JSON with inference times, memory usage
+            configuration TEXT, -- JSON with model settings
+            is_active BOOLEAN DEFAULT 0,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (project_id) REFERENCES projects(id)
+        );
+        
+        CREATE TABLE IF NOT EXISTS code_templates (
+            id TEXT PRIMARY KEY,
+            project_id TEXT NOT NULL,
+            template_name TEXT NOT NULL,
+            template_type TEXT NOT NULL, -- 'widget', 'provider', 'repository', 'test'
+            template_content TEXT NOT NULL,
+            variables TEXT, -- JSON array of template variables
+            description TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (project_id) REFERENCES projects(id)
+        );
     "#)?;
     Ok(conn)
 }
