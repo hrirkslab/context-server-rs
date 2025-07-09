@@ -1,149 +1,195 @@
-# Context Server Integration Guide for GitHub Copilot Agent and Flutter Projects
+# MCP Context Server for AI Code Generation
 
-This guide explains how to use the Rust-based Context Server as a context provider for AI agents (such as GitHub Copilot Agent) and for integration with developer tools or apps (including Flutter).
+This guide explains how to use the Rust-based Model Context Protocol (MCP) server as a context provider for AI agents (such as Claude Desktop and Cursor IDE) and for integration with developer tools.
 
-## 1. Run the Context Server
+## What is Model Context Protocol (MCP)?
 
-1. Build and start the Context Server:
+The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) is an open protocol that standardizes how applications provide context to LLMs. MCP follows a client-server architecture where:
+
+- **MCP Hosts**: Programs like Claude Desktop, IDEs, or AI tools that want to access data through MCP
+- **MCP Clients**: Protocol clients that maintain 1:1 connections with servers  
+- **MCP Servers**: Lightweight programs that expose specific capabilities through the standardized Model Context Protocol
+- **Local Data Sources**: Your computer's files, databases, and services that MCP servers can securely access
+
+## This MCP Server vs. Standard HTTP APIs
+
+Our MCP Context Server:
+- ✅ Uses the official [Model Context Protocol specification](https://spec.modelcontextprotocol.io/specification/2024-11-05/)
+- ✅ Implements MCP tools for structured data exchange
+- ✅ Supports automatic tool discovery by MCP clients
+- ✅ Uses standard MCP transports (stdio, SSE, HTTP streaming)
+- ✅ Built with the official [Rust MCP SDK (rmcp)](https://github.com/modelcontextprotocol/rust-sdk)
+
+Benefits over HTTP APIs:
+- **Standardized communication** with LLM applications
+- **Tool discovery** - clients automatically discover available tools
+- **Type safety** - JSON schemas define tool parameters
+- **Better integration** with Claude Desktop, Cursor, and other MCP clients
+
+## 1. Run the MCP Context Server
+
+1. Build and start the MCP Context Server:
    ```sh
    cargo run --release
    ```
-   The server will start at `http://127.0.0.1:8080/` by default.
+   The server will start using stdio transport (standard input/output) for MCP communication.
 
-2. Ensure the server is accessible from your Copilot agent or app (e.g., run both on the same machine or expose the server on your network).
+2. The server is now ready to accept MCP client connections.
 
-## 2. Integrate with GitHub Copilot Agent
+## 2. Connect MCP Clients
 
-The Context Server exposes a REST API for querying project context (business rules, architectural decisions, conventions, etc.).
+### Claude Desktop Integration
 
-- Configure your Copilot agent to send HTTP requests to the Context Server endpoints (e.g., `/context/query`).
-- Use the API to fetch relevant context for code generation, review, or suggestions.
-- Example request payload:
-  ```json
-  {
-    "feature_area": "authentication",
-    "task_type": "implement",
-    "components": ["login", "signup", "password_reset"]
-  }
-  ```
-- The response will include business rules, security policies, conventions, and more, tailored to the query.
+1. Add this server to your Claude Desktop configuration file:
 
-## 3. Connect from Flutter (Optional)
+**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 
-Use the `http` package in Flutter to make REST API calls to the Context Server.
-
-### Example: Querying Context
-
-Add `http` to your `pubspec.yaml`:
-```yaml
-dependencies:
-  http: ^1.2.0
-```
-
-Sample Dart code to query the Context Server:
-```dart
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-
-Future<void> fetchContext() async {
-  final response = await http.get(Uri.parse('http://127.0.0.1:8080/health'));
-  if (response.statusCode == 200) {
-    // Server is healthy
-    print('Server is healthy!');
-    
-    // Now query for context
-    final contextResponse = await http.post(
-      Uri.parse('http://127.0.0.1:8080/context/query'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'project_id': 'your-project-id',
-        'feature_area': 'authentication',
-        'task_type': 'implement',
-        'components': ['login', 'signup']
-      }),
-    );
-    
-    if (contextResponse.statusCode == 200) {
-      final contextData = jsonDecode(contextResponse.body);
-      print('Received context: $contextData');
-      // Process the context data in your app
+```json
+{
+  "mcpServers": {
+    "context-server": {
+      "command": "C:\\path\\to\\your\\context-server-rs\\target\\release\\context-server-rs.exe",
+      "args": []
     }
-  } else {
-    print('Failed to reach MCP Server: ${response.statusCode}');
   }
 }
 ```
 
-For more advanced queries, use the context query API (see server docs for endpoint details).
+### Cursor IDE Integration
 
-## 4. Use Cases
-- GitHub Copilot Agent: Fetch project context to improve code suggestions and ensure adherence to business rules and conventions.
-- Flutter or other apps: Fetch business rules, architectural decisions, and conventions for code generation or review.
-- Integrate with AI tools in your workflow.
-- Automate context-aware code suggestions.
+Follow similar configuration for Cursor IDE's MCP integration.
 
-## 5. API Endpoints
+### MCP Inspector (for testing)
 
-### Health Check
-- **GET /health**
-  - Returns: `"OK"` if the server is running.
+Use the [MCP Inspector](https://github.com/modelcontextprotocol/inspector) to test your server:
 
-### Business Rules
-- **GET /business_rules**
-  - Returns: List of all business rules in the database.
-- **POST /business_rules**
-  - Body: JSON object matching the `BusinessRule` struct
-  - Adds a new business rule to the database.
+```bash
+npx @modelcontextprotocol/inspector
+```
 
-### Context Query
-- **POST /context/query**
-  - Body: JSON object matching the `ContextQuery` struct
-  - Returns: `ContextResponse` with relevant business rules, architectural guidance, performance requirements, security policies, and conventions (currently returns empty arrays; implement your query logic as needed).
+## 3. Available MCP Tools
 
-#### Example: Context Query Request
+Once connected, clients can discover and use these MCP tools:
+
+### `query_context`
+Query project context based on feature area, task type, and components.
+
+**Parameters:**
 ```json
 {
-  "feature_area": "authentication",
+  "project_id": "your-project-id",
+  "feature_area": "authentication", 
   "task_type": "implement",
-  "components": ["login", "signup", "password_reset"]
+  "components": ["login", "signup"]
 }
 ```
 
-#### Example: Context Query Response
+**Returns:** Business rules, architectural decisions, performance requirements, security policies, and conventions relevant to your query.
+
+### `list_projects`
+List all available projects in the context database.
+
+**Parameters:** None
+
+**Returns:** Array of all projects with their details.
+
+### `create_project`
+Create a new project in the context database.
+
+**Parameters:**
 ```json
 {
-  "business_rules": [],
-  "architectural_guidance": [],
-  "performance_requirements": [],
-  "security_policies": [],
-  "conventions": []
+  "name": "My Project",
+  "description": "Optional description",
+  "repository_url": "https://github.com/user/repo"
 }
 ```
 
-## Note About Model Context Protocol (MCP)
+**Returns:** The created project details.
 
-This project is a **standard HTTP REST API server** for context management and is **not** a Model Context Protocol (MCP) server.
+## 4. Using with Claude Desktop
 
-### What is MCP?
+Once configured, you can ask Claude to:
 
-The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) is a specialized open protocol designed to standardize how applications provide context to Large Language Models (LLMs). MCP follows a client-server architecture with specific protocol requirements and capabilities such as:
+- "Query the context for authentication implementation in my Flutter project"
+- "What are the performance requirements for list rendering in my app?"
+- "Show me the architectural decisions for my project"
+- "Create a new project called 'Mobile Banking App'"
 
-- Standardized communication format between LLM clients and context servers
-- Built-in resource access and tool execution capabilities
-- Specific transports and connection management
-- Special handling for prompts and LLM sampling
+Claude will automatically call the appropriate MCP tools and provide context-aware responses.
 
-### This Context Server vs. MCP
+## 5. Example MCP Interaction
 
-Our Context Server:
-- Uses standard HTTP REST APIs for communication
-- Focuses specifically on storing and retrieving curated project context
-- Is designed as a lightweight solution for providing AI agents with high-value context
-- Uses simple JSON for data exchange
-- Does not implement the MCP protocol specification
+Here's how an MCP client like Claude Desktop interacts with our server:
 
-If you're interested in using the official Model Context Protocol, check out the [MCP Rust SDK](https://github.com/modelcontextprotocol/rust-sdk) for implementation details.
+1. **Tool Discovery**: Client discovers available tools (`query_context`, `list_projects`, `create_project`)
 
----
+2. **Context Query**: Client calls `query_context` tool:
+   ```json
+   {
+     "project_id": "flutter-shop-app",
+     "feature_area": "authentication", 
+     "task_type": "implement",
+     "components": ["login", "password_reset"]
+   }
+   ```
 
-For more details, see the MCP server API documentation or contact the maintainers.
+3. **Structured Response**: Server returns curated context:
+   ```json
+   {
+     "business_rules": [
+       {
+         "rule_name": "Email Verification Required",
+         "description": "All new accounts must verify email before activation"
+       }
+     ],
+     "security_policies": [
+       {
+         "policy_name": "Password Requirements",
+         "requirements": "Use bcrypt with 12 rounds minimum"
+       }
+     ],
+     "architectural_decisions": [
+       {
+         "decision_title": "State Management",
+         "decision": "Use BLoC pattern for authentication flows"
+       }
+     ]
+   }
+   ```
+
+4. **AI Context**: The LLM uses this context to generate appropriate code that follows your project's rules and patterns.
+
+## 6. Development and Testing
+
+### Testing the Server
+
+```bash
+# Run the server
+cargo run
+
+# Test with MCP Inspector
+npx @modelcontextprotocol/inspector
+
+# Or test with a simple stdio client
+echo '{"jsonrpc": "2.0", "method": "initialize", "params": {...}, "id": 1}' | cargo run
+```
+
+### Adding Context Data
+
+You can add context data by:
+1. Using the `create_project` MCP tool
+2. Directly inserting into the SQLite database
+3. Building additional MCP tools for data management (future enhancement)
+
+## Key Features
+
+- ✅ **MCP Protocol Compliance**: Full Model Context Protocol implementation
+- ✅ **SQLite Storage**: Embedded database for efficient context storage
+- ✅ **Multiple Transports**: stdio transport (SSE and HTTP streaming planned)
+- ✅ **Type Safety**: JSON schema validation for all tool parameters
+- ✅ **Tool Discovery**: Automatic tool discovery by MCP clients
+- ✅ **Context Querying**: Advanced context filtering and retrieval
+- 🚧 **Claude Desktop Integration**: Ready for Claude Desktop configuration
+- 🚧 **Additional Tools**: More CRUD operations coming soon

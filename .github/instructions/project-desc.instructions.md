@@ -162,37 +162,43 @@ CREATE TABLE feature_context (
 - **Why**: AI can't know external API behaviors
 - **Example**: "Payment API has 30-second timeout, implement retry with exponential backoff"
 
-## 🔌 Simple HTTP REST API Design
+## 🔌 MCP Tools and Resources Design
 
-```rust
-// HTTP REST API endpoint: POST /context/query
-// Request Body:
-pub struct ContextQuery {
-    pub project_id: String,
-    pub feature_area: String,
-    pub task_type: String, // 'implement', 'fix', 'optimize'
-    pub components: Vec<String>,
-}
+The server exposes MCP tools that clients can call to interact with the context data:
 
-// Response Body:
-pub struct ContextResponse {
-    pub business_rules: Vec<BusinessRule>,
-    pub architectural_guidance: Vec<ArchitecturalDecision>,
-    pub performance_requirements: Vec<PerformanceRequirement>,
-    pub security_policies: Vec<SecurityPolicy>,
-    pub conventions: Vec<ProjectConvention>,
-}
-```
+### Available MCP Tools
 
-The server exposes various HTTP endpoints for CRUD operations on context data:
-- `GET /health` - Health check endpoint
-- `GET /projects` - List all projects
-- `POST /projects` - Create a new project
-- `GET /projects/:project_id` - Get a specific project
-- `DELETE /projects/:project_id` - Delete a project
-- `GET /business_rules` - List all business rules
-- `POST /business_rules` - Create a new business rule
-- And many more resource-specific endpoints
+1. **query_context** - Query project context based on feature area and task type
+   ```json
+   {
+     "project_id": "string",
+     "feature_area": "string", 
+     "task_type": "implement|fix|optimize",
+     "components": ["string"]
+   }
+   ```
+
+2. **list_projects** - List all available projects
+   ```json
+   {}
+   ```
+
+3. **create_project** - Create a new project
+   ```json
+   {
+     "name": "string",
+     "description": "string (optional)",
+     "repository_url": "string (optional)"
+   }
+   ```
+
+### MCP Protocol Benefits
+
+- **Standardized Communication**: Uses the official MCP specification for LLM-context provider communication
+- **Tool Discovery**: Clients can automatically discover available tools
+- **Type Safety**: JSON schemas define tool parameters and validation
+- **Error Handling**: Standard MCP error codes and messages
+- **Transport Flexibility**: Supports stdio, SSE, HTTP streaming transports
 
 ## 📊 Context Input Methods
 
@@ -213,12 +219,10 @@ The server exposes various HTTP endpoints for CRUD operations on context data:
 
 ## 🎯 Usage Examples
 
-### HTTP Request 1: Implementing User Authentication
-```
-POST /context/query HTTP/1.1
-Host: localhost:8080
-Content-Type: application/json
-
+### MCP Tool Call 1: Implementing User Authentication
+**Tool**: `query_context`
+**Arguments**:
+```json
 {
   "project_id": "flutter-shop-app",
   "feature_area": "authentication",
@@ -227,7 +231,7 @@ Content-Type: application/json
 }
 ```
 
-**HTTP Response**:
+**MCP Tool Response**:
 ```json
 {
   "business_rules": [
@@ -245,7 +249,7 @@ Content-Type: application/json
       "requirements": "Use bcrypt with 12 rounds for password hashing"
     }
   ],
-  "conventions": [
+  "project_conventions": [
     {
       "id": "conv-789",
       "convention_type": "state_management",
@@ -260,16 +264,14 @@ Content-Type: application/json
       "target_value": "< 2 seconds"
     }
   ],
-  "architectural_guidance": []
+  "architectural_decisions": []
 }
 ```
 
-### HTTP Request 2: Optimizing List Performance
-```
-POST /context/query HTTP/1.1
-Host: localhost:8080
-Content-Type: application/json
-
+### MCP Tool Call 2: Optimizing List Performance
+**Tool**: `query_context`
+**Arguments**:
+```json
 {
   "project_id": "flutter-shop-app",
   "feature_area": "user_interface",
@@ -278,7 +280,7 @@ Content-Type: application/json
 }
 ```
 
-**HTTP Response**:
+**MCP Tool Response**:
 ```json
 {
   "performance_requirements": [
@@ -289,14 +291,14 @@ Content-Type: application/json
       "target_value": "Handle 10,000+ items smoothly"
     }
   ],
-  "architectural_guidance": [
+  "architectural_decisions": [
     {
       "id": "arch-303",
       "decision_title": "List Implementation",
       "decision": "Use ListView.builder with pagination"
     }
   ],
-  "conventions": [
+  "project_conventions": [
     {
       "id": "conv-404",
       "convention_type": "user_experience",
@@ -310,23 +312,25 @@ Content-Type: application/json
 
 ## 🚀 Implementation Strategy
 
-### Phase 1: Core Context HTTP Server (Completed)
-1. Set up SQLite with context tables via Rusqlite
-2. Implement REST API endpoints with Axum web framework
-3. Build basic JSON API for context queries
-4. Define core data models and schemas
+### Phase 1: Core MCP Server (Completed)
+1. ✅ Set up SQLite with context tables via Rusqlite
+2. ✅ Implement MCP ServerHandler with rmcp SDK
+3. ✅ Build MCP tools for context queries
+4. ✅ Define core data models and schemas
+5. ✅ Implement stdio transport for MCP communication
 
-### Phase 2: Integration (In Progress)
-1. GitHub Copilot/AI agent HTTP integration
-2. Simple web interface for manual context entry
-3. Documentation import tools
+### Phase 2: Enhanced MCP Integration (In Progress)
+1. MCP client integration testing (Claude Desktop, Cursor)
+2. Additional MCP tools for CRUD operations
+3. MCP resources for browsing context
 4. Context validation and consistency checks
 
-### Phase 3: Enhancement (Planned)
-1. Context usage analytics
-2. Automated context suggestions
-3. Team collaboration features
-4. Context versioning and history
+### Phase 3: Advanced Features (Planned)
+1. SSE transport support for web-based MCP clients
+2. Context usage analytics via MCP tools
+3. Automated context suggestions
+4. Team collaboration features
+5. Context versioning and history
 
 ## 📈 Success Metrics
 
