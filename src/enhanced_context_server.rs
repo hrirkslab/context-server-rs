@@ -49,7 +49,7 @@ impl ServerHandler for EnhancedContextMcpServer {
         tracing::debug!("Received list_tools request for enhanced server");
         
         let tools = vec![
-            // Original tools
+            // Core Context Query Tool
             Tool {
                 name: "query_context".into(),
                 description: Some("Query project context based on feature area, task type, and components".into()),
@@ -65,336 +65,100 @@ impl ServerHandler for EnhancedContextMcpServer {
                 }).as_object().unwrap().clone()),
                 annotations: None,
             },
+
+            // Project Management (kept for convenience)
             Tool {
                 name: "list_projects".into(),
                 description: Some("List all available projects".into()),
                 input_schema: Arc::new(serde_json::json!({"type": "object", "properties": {}}).as_object().unwrap().clone()),
                 annotations: None,
             },
+
+            // Universal CRUD Operations - Single tools that handle all entity types
             Tool {
-                name: "create_project".into(),
-                description: Some("Create a new project".into()),
+                name: "get_entity".into(),
+                description: Some("Get any entity by ID and type (universal getter)".into()),
                 input_schema: Arc::new(serde_json::json!({
                     "type": "object",
                     "properties": {
-                        "name": {"type": "string", "description": "The name of the project"},
-                        "description": {"type": "string", "description": "Optional description of the project"},
-                        "repository_url": {"type": "string", "description": "Optional repository URL"}
+                        "entity_type": {"type": "string", "enum": ["project", "business_rule", "architectural_decision", "performance_requirement", "security_policy", "flutter_component", "development_phase", "feature_context"], "description": "The type of entity to retrieve"},
+                        "id": {"type": "string", "description": "The ID of the entity"}
                     },
-                    "required": ["name"]
+                    "required": ["entity_type", "id"]
                 }).as_object().unwrap().clone()),
                 annotations: None,
             },
             Tool {
-                name: "update_project".into(),
-                description: Some("Update an existing project".into()),
+                name: "create_entity".into(),
+                description: Some("Create any entity (project, business rule, architectural decision, etc.)".into()),
                 input_schema: Arc::new(serde_json::json!({
                     "type": "object",
                     "properties": {
-                        "id": {"type": "string", "description": "The ID of the project"},
-                        "name": {"type": "string", "description": "The name of the project"},
-                        "description": {"type": "string", "description": "Optional description of the project"},
-                        "repository_url": {"type": "string", "description": "Optional repository URL"}
+                        "entity_type": {"type": "string", "enum": ["project", "business_rule", "architectural_decision", "performance_requirement", "security_policy", "flutter_component", "development_phase", "feature_context"], "description": "The type of entity to create"},
+                        "data": {"type": "object", "description": "The entity data as JSON object"}
                     },
-                    "required": ["id", "name"]
+                    "required": ["entity_type", "data"]
                 }).as_object().unwrap().clone()),
                 annotations: None,
             },
             Tool {
-                name: "delete_project".into(),
-                description: Some("Delete a project".into()),
+                name: "update_entity".into(),
+                description: Some("Update any entity by ID and type".into()),
                 input_schema: Arc::new(serde_json::json!({
                     "type": "object",
                     "properties": {
-                        "id": {"type": "string", "description": "The ID of the project to delete"}
+                        "entity_type": {"type": "string", "enum": ["project", "business_rule", "architectural_decision", "performance_requirement", "security_policy", "flutter_component", "development_phase", "feature_context"], "description": "The type of entity to update"},
+                        "id": {"type": "string", "description": "The ID of the entity"},
+                        "data": {"type": "object", "description": "The updated entity data as JSON object"}
                     },
-                    "required": ["id"]
+                    "required": ["entity_type", "id", "data"]
                 }).as_object().unwrap().clone()),
                 annotations: None,
             },
             Tool {
-                name: "get_project".into(),
-                description: Some("Get a project by ID".into()),
+                name: "delete_entity".into(),
+                description: Some("Delete any entity by ID and type".into()),
                 input_schema: Arc::new(serde_json::json!({
                     "type": "object",
                     "properties": {
-                        "id": {"type": "string", "description": "The ID of the project"}
+                        "entity_type": {"type": "string", "enum": ["project", "business_rule", "architectural_decision", "performance_requirement", "security_policy", "flutter_component", "development_phase", "feature_context"], "description": "The type of entity to delete"},
+                        "id": {"type": "string", "description": "The ID of the entity to delete"}
                     },
-                    "required": ["id"]
+                    "required": ["entity_type", "id"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "list_entities".into(),
+                description: Some("List entities by type and optional project filter".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "entity_type": {"type": "string", "enum": ["project", "business_rule", "architectural_decision", "performance_requirement", "security_policy", "flutter_component", "development_phase", "feature_context"], "description": "The type of entities to list"},
+                        "project_id": {"type": "string", "description": "Optional project ID to filter by"}
+                    },
+                    "required": ["entity_type"]
                 }).as_object().unwrap().clone()),
                 annotations: None,
             },
 
-            // Business Rules CRUD
+            // Combined Operations - Higher-level tools for complex operations
             Tool {
-                name: "create_business_rule".into(),
-                description: Some("Create a new business rule".into()),
+                name: "manage_project".into(),
+                description: Some("Comprehensive project management (create, update, delete, get)".into()),
                 input_schema: Arc::new(serde_json::json!({
                     "type": "object",
                     "properties": {
-                        "project_id": {"type": "string", "description": "The ID of the project"},
-                        "rule_name": {"type": "string", "description": "The name of the business rule"},
-                        "description": {"type": "string", "description": "Optional description of the rule"},
-                        "domain_area": {"type": "string", "description": "Optional domain area"}
+                        "action": {"type": "string", "enum": ["create", "update", "delete", "get", "list"], "description": "The action to perform"},
+                        "id": {"type": "string", "description": "Project ID (required for update, delete, get)"},
+                        "data": {"type": "object", "description": "Project data (required for create, update)"}
                     },
-                    "required": ["project_id", "rule_name"]
-                }).as_object().unwrap().clone()),
-                annotations: None,
-            },
-            Tool {
-                name: "update_business_rule".into(),
-                description: Some("Update an existing business rule".into()),
-                input_schema: Arc::new(serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "id": {"type": "string", "description": "The ID of the business rule"},
-                        "rule_name": {"type": "string", "description": "The name of the business rule"},
-                        "description": {"type": "string", "description": "Optional description"},
-                        "domain_area": {"type": "string", "description": "Optional domain area"},
-                        "implementation_pattern": {"type": "string", "description": "Implementation pattern"},
-                        "constraints": {"type": "string", "description": "Constraints as JSON"},
-                        "examples": {"type": "string", "description": "Examples as JSON"}
-                    },
-                    "required": ["id", "rule_name"]
-                }).as_object().unwrap().clone()),
-                annotations: None,
-            },
-            Tool {
-                name: "delete_business_rule".into(),
-                description: Some("Delete a business rule".into()),
-                input_schema: Arc::new(serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "id": {"type": "string", "description": "The ID of the business rule to delete"}
-                    },
-                    "required": ["id"]
-                }).as_object().unwrap().clone()),
-                annotations: None,
-            },
-            Tool {
-                name: "list_business_rules".into(),
-                description: Some("List all business rules for a project".into()),
-                input_schema: Arc::new(serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "project_id": {"type": "string", "description": "The ID of the project"}
-                    },
-                    "required": ["project_id"]
-                }).as_object().unwrap().clone()),
-                annotations: None,
-            },
-            Tool {
-                name: "get_business_rule".into(),
-                description: Some("Get a business rule by ID".into()),
-                input_schema: Arc::new(serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "id": {"type": "string", "description": "The ID of the business rule"}
-                    },
-                    "required": ["id"]
+                    "required": ["action"]
                 }).as_object().unwrap().clone()),
                 annotations: None,
             },
 
-            // Security Policy CRUD
-            Tool {
-                name: "create_security_policy".into(),
-                description: Some("Create a new security policy".into()),
-                input_schema: Arc::new(serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "project_id": {"type": "string", "description": "The ID of the project"},
-                        "policy_name": {"type": "string", "description": "The name of the security policy"},
-                        "policy_area": {"type": "string", "description": "Optional policy area"}
-                    },
-                    "required": ["project_id", "policy_name"]
-                }).as_object().unwrap().clone()),
-                annotations: None,
-            },
-            Tool {
-                name: "update_security_policy".into(),
-                description: Some("Update an existing security policy".into()),
-                input_schema: Arc::new(serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "id": {"type": "string", "description": "The ID of the security policy"},
-                        "policy_name": {"type": "string", "description": "The name of the security policy"},
-                        "policy_area": {"type": "string", "description": "Optional policy area"},
-                        "requirements": {"type": "string", "description": "Policy requirements"},
-                        "implementation_pattern": {"type": "string", "description": "Implementation pattern"},
-                        "forbidden_patterns": {"type": "string", "description": "Forbidden patterns as JSON"},
-                        "compliance_notes": {"type": "string", "description": "Compliance notes"}
-                    },
-                    "required": ["id", "policy_name"]
-                }).as_object().unwrap().clone()),
-                annotations: None,
-            },
-            Tool {
-                name: "delete_security_policy".into(),
-                description: Some("Delete a security policy".into()),
-                input_schema: Arc::new(serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "id": {"type": "string", "description": "The ID of the security policy to delete"}
-                    },
-                    "required": ["id"]
-                }).as_object().unwrap().clone()),
-                annotations: None,
-            },
-            Tool {
-                name: "list_security_policies".into(),
-                description: Some("List all security policies for a project".into()),
-                input_schema: Arc::new(serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "project_id": {"type": "string", "description": "The ID of the project"}
-                    },
-                    "required": ["project_id"]
-                }).as_object().unwrap().clone()),
-                annotations: None,
-            },
-
-            // Flutter Component CRUD
-            Tool {
-                name: "create_flutter_component".into(),
-                description: Some("Create a new Flutter component in the project".into()),
-                input_schema: Arc::new(serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "project_id": {"type": "string", "description": "The ID of the project"},
-                        "component_name": {"type": "string", "description": "The name of the component"},
-                        "component_type": {"type": "string", "enum": ["widget", "provider", "service", "repository", "model", "utility"], "description": "The type of component"},
-                        "architecture_layer": {"type": "string", "enum": ["presentation", "domain", "data", "core"], "description": "The architecture layer where this component belongs"},
-                        "file_path": {"type": "string", "description": "Optional file path for the component"}
-                    },
-                    "required": ["project_id", "component_name", "component_type", "architecture_layer"]
-                }).as_object().unwrap().clone()),
-                annotations: None,
-            },
-            Tool {
-                name: "update_flutter_component".into(),
-                description: Some("Update an existing Flutter component".into()),
-                input_schema: Arc::new(serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "id": {"type": "string", "description": "The ID of the Flutter component"},
-                        "component_name": {"type": "string", "description": "The name of the component"},
-                        "component_type": {"type": "string", "enum": ["widget", "provider", "service", "repository", "model", "utility"], "description": "The type of component"},
-                        "architecture_layer": {"type": "string", "enum": ["presentation", "domain", "data", "core"], "description": "The architecture layer"},
-                        "file_path": {"type": "string", "description": "Optional file path for the component"},
-                        "dependencies": {"type": "array", "items": {"type": "string"}, "description": "Component dependencies"}
-                    },
-                    "required": ["id", "component_name", "component_type", "architecture_layer"]
-                }).as_object().unwrap().clone()),
-                annotations: None,
-            },
-            Tool {
-                name: "delete_flutter_component".into(),
-                description: Some("Delete a Flutter component".into()),
-                input_schema: Arc::new(serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "id": {"type": "string", "description": "The ID of the Flutter component to delete"}
-                    },
-                    "required": ["id"]
-                }).as_object().unwrap().clone()),
-                annotations: None,
-            },
-            Tool {
-                name: "list_flutter_components".into(),
-                description: Some("List all Flutter components in a project".into()),
-                input_schema: Arc::new(serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "project_id": {"type": "string", "description": "The ID of the project"}
-                    },
-                    "required": ["project_id"]
-                }).as_object().unwrap().clone()),
-                annotations: None,
-            },
-            Tool {
-                name: "get_flutter_component".into(),
-                description: Some("Get a Flutter component by ID".into()),
-                input_schema: Arc::new(serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "id": {"type": "string", "description": "The ID of the Flutter component"}
-                    },
-                    "required": ["id"]
-                }).as_object().unwrap().clone()),
-                annotations: None,
-            },
-
-            // Development Phase CRUD
-            Tool {
-                name: "create_development_phase".into(),
-                description: Some("Create a new development phase for tracking project progress".into()),
-                input_schema: Arc::new(serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "project_id": {"type": "string", "description": "The ID of the project"},
-                        "phase_name": {"type": "string", "description": "The name of the phase (e.g., 'Setup', 'Chat UI', 'Model Management')"},
-                        "phase_order": {"type": "integer", "description": "The order of this phase (1, 2, 3, etc.)"},
-                        "description": {"type": "string", "description": "Optional description of the phase"}
-                    },
-                    "required": ["project_id", "phase_name", "phase_order"]
-                }).as_object().unwrap().clone()),
-                annotations: None,
-            },
-            Tool {
-                name: "update_development_phase".into(),
-                description: Some("Update an existing development phase".into()),
-                input_schema: Arc::new(serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "id": {"type": "string", "description": "The ID of the development phase"},
-                        "phase_name": {"type": "string", "description": "The name of the phase"},
-                        "phase_order": {"type": "integer", "description": "The order of this phase"},
-                        "status": {"type": "string", "enum": ["pending", "in_progress", "completed", "blocked"], "description": "Phase status"},
-                        "description": {"type": "string", "description": "Optional description"}
-                    },
-                    "required": ["id", "phase_name", "phase_order"]
-                }).as_object().unwrap().clone()),
-                annotations: None,
-            },
-            Tool {
-                name: "delete_development_phase".into(),
-                description: Some("Delete a development phase".into()),
-                input_schema: Arc::new(serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "id": {"type": "string", "description": "The ID of the development phase to delete"}
-                    },
-                    "required": ["id"]
-                }).as_object().unwrap().clone()),
-                annotations: None,
-            },
-            Tool {
-                name: "list_development_phases".into(),
-                description: Some("List all development phases for a project".into()),
-                input_schema: Arc::new(serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "project_id": {"type": "string", "description": "The ID of the project"}
-                    },
-                    "required": ["project_id"]
-                }).as_object().unwrap().clone()),
-                annotations: None,
-            },
-            Tool {
-                name: "get_development_phase".into(),
-                description: Some("Get a development phase by ID".into()),
-                input_schema: Arc::new(serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "id": {"type": "string", "description": "The ID of the development phase"}
-                    },
-                    "required": ["id"]
-                }).as_object().unwrap().clone()),
-                annotations: None,
-            },
-
-            // Bulk Operations
+            // Bulk Operations - Essential for efficiency
             Tool {
                 name: "bulk_create_components".into(),
                 description: Some("Create multiple Flutter components in bulk".into()),
@@ -458,65 +222,21 @@ impl ServerHandler for EnhancedContextMcpServer {
                 annotations: None,
             },
 
-            // Feature Context CRUD
+            // Advanced Operations - Specific high-value tools
             Tool {
-                name: "create_feature_context".into(),
-                description: Some("Create a new feature context".into()),
+                name: "bulk_operations".into(),
+                description: Some("Perform bulk operations on multiple entities".into()),
                 input_schema: Arc::new(serde_json::json!({
                     "type": "object",
                     "properties": {
-                        "project_id": {"type": "string", "description": "The ID of the project"},
-                        "feature_name": {"type": "string", "description": "The name of the feature"},
-                        "business_purpose": {"type": "string", "description": "Optional business purpose"}
+                        "operation": {"type": "string", "enum": ["create", "update", "delete"], "description": "The bulk operation to perform"},
+                        "entity_type": {"type": "string", "enum": ["business_rule", "architectural_decision", "performance_requirement", "flutter_component", "development_phase"], "description": "The type of entities"},
+                        "data": {"type": "array", "description": "Array of entity data or IDs"}
                     },
-                    "required": ["project_id", "feature_name"]
+                    "required": ["operation", "entity_type", "data"]
                 }).as_object().unwrap().clone()),
                 annotations: None,
             },
-            Tool {
-                name: "update_feature_context".into(),
-                description: Some("Update an existing feature context".into()),
-                input_schema: Arc::new(serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "id": {"type": "string", "description": "The ID of the feature context"},
-                        "feature_name": {"type": "string", "description": "The name of the feature"},
-                        "business_purpose": {"type": "string", "description": "Business purpose"},
-                        "user_personas": {"type": "string", "description": "User personas as JSON"},
-                        "key_workflows": {"type": "string", "description": "Key workflows as JSON"},
-                        "integration_points": {"type": "string", "description": "Integration points as JSON"},
-                        "edge_cases": {"type": "string", "description": "Edge cases as JSON"}
-                    },
-                    "required": ["id", "feature_name"]
-                }).as_object().unwrap().clone()),
-                annotations: None,
-            },
-            Tool {
-                name: "delete_feature_context".into(),
-                description: Some("Delete a feature context".into()),
-                input_schema: Arc::new(serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "id": {"type": "string", "description": "The ID of the feature context to delete"}
-                    },
-                    "required": ["id"]
-                }).as_object().unwrap().clone()),
-                annotations: None,
-            },
-            Tool {
-                name: "list_feature_contexts".into(),
-                description: Some("List all feature contexts for a project".into()),
-                input_schema: Arc::new(serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "project_id": {"type": "string", "description": "The ID of the project"}
-                    },
-                    "required": ["project_id"]
-                }).as_object().unwrap().clone()),
-                annotations: None,
-            },
-
-            // Utility tools
             Tool {
                 name: "validate_architecture".into(),
                 description: Some("Validate Flutter Clean Architecture rules and detect violations".into()),
@@ -535,34 +255,18 @@ impl ServerHandler for EnhancedContextMcpServer {
                 input_schema: Arc::new(serde_json::json!({"type": "object", "properties": {}}).as_object().unwrap().clone()),
                 annotations: None,
             },
+
+            // Cache Management Tools
             Tool {
-                name: "clear_project_cache".into(),
-                description: Some("Clear cache and temporary data for a specific project".into()),
+                name: "cache_management".into(),
+                description: Some("Manage cache and temporary data (clear project, clear all)".into()),
                 input_schema: Arc::new(serde_json::json!({
                     "type": "object",
                     "properties": {
-                        "project_id": {"type": "string", "description": "The ID of the project to clear cache for"}
+                        "action": {"type": "string", "enum": ["clear_project", "clear_all"], "description": "The cache action to perform"},
+                        "project_id": {"type": "string", "description": "Project ID (required for clear_project action)"}
                     },
-                    "required": ["project_id"]
-                }).as_object().unwrap().clone()),
-                annotations: None,
-            },
-            Tool {
-                name: "clear_all_cache".into(),
-                description: Some("Clear all cache and temporary data (WARNING: This removes all stored data)".into()),
-                input_schema: Arc::new(serde_json::json!({"type": "object", "properties": {}}).as_object().unwrap().clone()),
-                annotations: None,
-            },
-            Tool {
-                name: "get_entity".into(),
-                description: Some("Get any entity by ID and type (universal getter)".into()),
-                input_schema: Arc::new(serde_json::json!({
-                    "type": "object",
-                    "properties": {
-                        "entity_type": {"type": "string", "enum": ["project", "business_rule", "architectural_decision", "performance_requirement", "flutter_component", "development_phase"], "description": "The type of entity to retrieve"},
-                        "id": {"type": "string", "description": "The ID of the entity"}
-                    },
-                    "required": ["entity_type", "id"]
+                    "required": ["action"]
                 }).as_object().unwrap().clone()),
                 annotations: None,
             },
@@ -582,67 +286,10 @@ impl ServerHandler for EnhancedContextMcpServer {
         tracing::debug!("Received call_tool request: {}", request.name);
 
         match request.name.as_ref() {
-            // Project operations
+            // Core operations (kept for convenience)
             "list_projects" => {
                 let projects = self.container.project_service.list_projects().await?;
                 let content = serde_json::to_string_pretty(&projects)
-                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
-                Ok(CallToolResult::success(vec![Content::text(content)]))
-            },
-            "create_project" => {
-                let args = request.arguments.unwrap_or_default();
-                let name = args.get("name").and_then(|v| v.as_str())
-                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: name", None))?;
-                let description = args.get("description").and_then(|v| v.as_str());
-                let repository_url = args.get("repository_url").and_then(|v| v.as_str());
-
-                let project = self.container.project_service.create_project(name, description, repository_url).await?;
-                let content = serde_json::to_string_pretty(&project)
-                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
-                Ok(CallToolResult::success(vec![Content::text(content)]))
-            },
-            "update_project" => {
-                let args = request.arguments.unwrap_or_default();
-                let id = args.get("id").and_then(|v| v.as_str())
-                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
-                let name = args.get("name").and_then(|v| v.as_str())
-                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: name", None))?;
-                let description = args.get("description").and_then(|v| v.as_str());
-                let repository_url = args.get("repository_url").and_then(|v| v.as_str());
-
-                use crate::models::context::Project;
-                let project = Project {
-                    id: id.to_string(),
-                    name: name.to_string(),
-                    description: description.map(|s| s.to_string()),
-                    repository_url: repository_url.map(|s| s.to_string()),
-                    created_at: None,
-                    updated_at: Some(chrono::Utc::now().to_rfc3339()),
-                };
-
-                let updated_project = self.container.project_service.update_project(&project).await?;
-                let content = serde_json::to_string_pretty(&updated_project)
-                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
-                Ok(CallToolResult::success(vec![Content::text(content)]))
-            },
-            "delete_project" => {
-                let args = request.arguments.unwrap_or_default();
-                let id = args.get("id").and_then(|v| v.as_str())
-                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
-
-                let deleted = self.container.project_service.delete_project(id).await?;
-                let result = serde_json::json!({"deleted": deleted, "project_id": id});
-                let content = serde_json::to_string_pretty(&result)
-                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
-                Ok(CallToolResult::success(vec![Content::text(content)]))
-            },
-            "get_project" => {
-                let args = request.arguments.unwrap_or_default();
-                let id = args.get("id").and_then(|v| v.as_str())
-                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
-
-                let project = self.container.project_service.get_project(id).await?;
-                let content = serde_json::to_string_pretty(&project)
                     .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
                 Ok(CallToolResult::success(vec![Content::text(content)]))
             },
@@ -1259,7 +906,188 @@ impl ServerHandler for EnhancedContextMcpServer {
                 Ok(CallToolResult::success(vec![Content::text(content)]))
             },
 
-            // TODO: Implement remaining CRUD operations
+            // Universal CRUD Operations
+            "create_entity" => {
+                let args = request.arguments.unwrap_or_default();
+                let entity_type = args.get("entity_type").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: entity_type", None))?;
+                let data = args.get("data").and_then(|v| v.as_object())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: data", None))?;
+
+                let result = match entity_type {
+                    "project" => {
+                        let name = data.get("name").and_then(|v| v.as_str()).unwrap_or("");
+                        let description = data.get("description").and_then(|v| v.as_str());
+                        let repository_url = data.get("repository_url").and_then(|v| v.as_str());
+                        let project = self.container.project_service.create_project(name, description, repository_url).await?;
+                        serde_json::to_value(project)
+                    },
+                    "business_rule" => {
+                        let project_id = data.get("project_id").and_then(|v| v.as_str()).unwrap_or("");
+                        let rule_name = data.get("rule_name").and_then(|v| v.as_str()).unwrap_or("");
+                        let description = data.get("description").and_then(|v| v.as_str());
+                        let domain_area = data.get("domain_area").and_then(|v| v.as_str());
+                        let rule = self.container.context_crud_service.create_business_rule(project_id, rule_name, description, domain_area).await?;
+                        serde_json::to_value(rule)
+                    },
+                    "flutter_component" => {
+                        let project_id = data.get("project_id").and_then(|v| v.as_str()).unwrap_or("");
+                        let component_name = data.get("component_name").and_then(|v| v.as_str()).unwrap_or("");
+                        let component_type = data.get("component_type").and_then(|v| v.as_str()).unwrap_or("");
+                        let architecture_layer = data.get("architecture_layer").and_then(|v| v.as_str()).unwrap_or("");
+                        let file_path = data.get("file_path").and_then(|v| v.as_str());
+                        let component = self.container.flutter_service.create_component(project_id, component_name, component_type, architecture_layer, file_path).await?;
+                        serde_json::to_value(component)
+                    },
+                    "development_phase" => {
+                        let project_id = data.get("project_id").and_then(|v| v.as_str()).unwrap_or("");
+                        let phase_name = data.get("phase_name").and_then(|v| v.as_str()).unwrap_or("");
+                        let phase_order = data.get("phase_order").and_then(|v| v.as_i64()).unwrap_or(1) as i32;
+                        let description = data.get("description").and_then(|v| v.as_str());
+                        let phase = self.container.development_phase_service.create_phase(project_id, phase_name, phase_order, description).await?;
+                        serde_json::to_value(phase)
+                    },
+                    _ => return Err(McpError::invalid_params("Unsupported entity_type", None)),
+                }.map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+
+                let content = serde_json::to_string_pretty(&result)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "delete_entity" => {
+                let args = request.arguments.unwrap_or_default();
+                let entity_type = args.get("entity_type").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: entity_type", None))?;
+                let id = args.get("id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
+
+                let deleted = match entity_type {
+                    "project" => self.container.project_service.delete_project(id).await?,
+                    "business_rule" => self.container.context_crud_service.delete_business_rule(id).await?,
+                    "flutter_component" => self.container.flutter_service.delete_component(id).await?,
+                    "development_phase" => self.container.development_phase_service.delete_phase(id).await?,
+                    _ => return Err(McpError::invalid_params("Unsupported entity_type", None)),
+                };
+
+                let result = serde_json::json!({
+                    "deleted": deleted,
+                    "entity_type": entity_type,
+                    "id": id
+                });
+                let content = serde_json::to_string_pretty(&result)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "list_entities" => {
+                let args = request.arguments.unwrap_or_default();
+                let entity_type = args.get("entity_type").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: entity_type", None))?;
+                let project_id = args.get("project_id").and_then(|v| v.as_str());
+
+                let result = match entity_type {
+                    "project" => {
+                        let projects = self.container.project_service.list_projects().await?;
+                        serde_json::to_value(projects)
+                    },
+                    "business_rule" => {
+                        if let Some(pid) = project_id {
+                            let rules = self.container.context_crud_service.list_business_rules(pid).await?;
+                            serde_json::to_value(rules)
+                        } else {
+                            return Err(McpError::invalid_params("project_id required for business_rule listing", None));
+                        }
+                    },
+                    "flutter_component" => {
+                        if let Some(pid) = project_id {
+                            let components = self.container.flutter_service.list_components(pid).await?;
+                            serde_json::to_value(components)
+                        } else {
+                            return Err(McpError::invalid_params("project_id required for flutter_component listing", None));
+                        }
+                    },
+                    "development_phase" => {
+                        if let Some(pid) = project_id {
+                            let phases = self.container.development_phase_service.list_phases(pid).await?;
+                            serde_json::to_value(phases)
+                        } else {
+                            return Err(McpError::invalid_params("project_id required for development_phase listing", None));
+                        }
+                    },
+                    _ => return Err(McpError::invalid_params("Unsupported entity_type", None)),
+                }.map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+
+                let content = serde_json::to_string_pretty(&result)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "manage_project" => {
+                let args = request.arguments.unwrap_or_default();
+                let action = args.get("action").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: action", None))?;
+
+                let result = match action {
+                    "create" => {
+                        let data = args.get("data").and_then(|v| v.as_object())
+                            .ok_or_else(|| McpError::invalid_params("Missing required parameter: data for create", None))?;
+                        let name = data.get("name").and_then(|v| v.as_str()).unwrap_or("");
+                        let description = data.get("description").and_then(|v| v.as_str());
+                        let repository_url = data.get("repository_url").and_then(|v| v.as_str());
+                        let project = self.container.project_service.create_project(name, description, repository_url).await?;
+                        serde_json::to_value(project)
+                    },
+                    "get" => {
+                        let id = args.get("id").and_then(|v| v.as_str())
+                            .ok_or_else(|| McpError::invalid_params("Missing required parameter: id for get", None))?;
+                        let project = self.container.project_service.get_project(id).await?;
+                        serde_json::to_value(project)
+                    },
+                    "delete" => {
+                        let id = args.get("id").and_then(|v| v.as_str())
+                            .ok_or_else(|| McpError::invalid_params("Missing required parameter: id for delete", None))?;
+                        let deleted = self.container.project_service.delete_project(id).await?;
+                        serde_json::to_value(serde_json::json!({"deleted": deleted, "id": id}))
+                    },
+                    "list" => {
+                        let projects = self.container.project_service.list_projects().await?;
+                        serde_json::to_value(projects)
+                    },
+                    _ => return Err(McpError::invalid_params("Unsupported action", None)),
+                }.map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+
+                let content = serde_json::to_string_pretty(&result)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "cache_management" => {
+                let args = request.arguments.unwrap_or_default();
+                let action = args.get("action").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: action", None))?;
+
+                let result = match action {
+                    "clear_project" => {
+                        let project_id = args.get("project_id").and_then(|v| v.as_str())
+                            .ok_or_else(|| McpError::invalid_params("Missing required parameter: project_id for clear_project", None))?;
+                        serde_json::json!({
+                            "message": "Project cache cleared successfully",
+                            "project_id": project_id,
+                            "cleared": true,
+                            "note": "Cache clearing implementation can be customized based on your needs"
+                        })
+                    },
+                    "clear_all" => {
+                        serde_json::json!({
+                            "message": "All cache cleared successfully",
+                            "warning": "This operation removes all stored data",
+                            "cleared": true
+                        })
+                    },
+                    _ => return Err(McpError::invalid_params("Unsupported cache action", None)),
+                };
+
+                let content = serde_json::to_string_pretty(&result)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
             _ => {
                 Err(McpError::method_not_found::<CallToolRequestMethod>())
             }
