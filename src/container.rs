@@ -25,6 +25,7 @@ use crate::services::{
     context_query_service::ContextQueryServiceImpl,
     ArchitectureValidationService, 
     architecture_validation_service::ArchitectureValidationServiceImpl,
+    context_crud_service::{ContextCrudService, ContextCrudServiceImpl},
 };
 
 /// Application container holding all dependencies
@@ -36,6 +37,7 @@ pub struct AppContainer {
     pub development_phase_service: Box<dyn DevelopmentPhaseService>,
     pub context_query_service: Box<dyn ContextQueryService>,
     pub architecture_validation_service: Box<dyn ArchitectureValidationService>,
+    pub context_crud_service: Box<dyn ContextCrudService>,
 }
 
 impl AppContainer {
@@ -71,12 +73,20 @@ impl AppContainer {
         let flutter_service_for_validation = FlutterServiceImpl::new(flutter_repository_for_validation);
         let architecture_validation_service = Box::new(ArchitectureValidationServiceImpl::new(flutter_service_for_validation));
 
+        // Create CRUD services with their repositories
+        let context_crud_service = Box::new(ContextCrudServiceImpl::new(
+            SqliteBusinessRuleRepository::new(db.clone()),
+            SqliteArchitecturalDecisionRepository::new(db.clone()),
+            SqlitePerformanceRequirementRepository::new(db.clone()),
+        ));
+
         Ok(AppContainer {
             project_service,
             flutter_service,
             development_phase_service,
             context_query_service,
             architecture_validation_service,
+            context_crud_service,
         })
     }
 }

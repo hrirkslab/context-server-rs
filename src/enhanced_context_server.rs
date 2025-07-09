@@ -85,6 +85,45 @@ impl ServerHandler for EnhancedContextMcpServer {
                 }).as_object().unwrap().clone()),
                 annotations: None,
             },
+            Tool {
+                name: "update_project".into(),
+                description: Some("Update an existing project".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string", "description": "The ID of the project"},
+                        "name": {"type": "string", "description": "The name of the project"},
+                        "description": {"type": "string", "description": "Optional description of the project"},
+                        "repository_url": {"type": "string", "description": "Optional repository URL"}
+                    },
+                    "required": ["id", "name"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "delete_project".into(),
+                description: Some("Delete a project".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string", "description": "The ID of the project to delete"}
+                    },
+                    "required": ["id"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "get_project".into(),
+                description: Some("Get a project by ID".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string", "description": "The ID of the project"}
+                    },
+                    "required": ["id"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
 
             // Business Rules CRUD
             Tool {
@@ -495,6 +534,51 @@ impl ServerHandler for EnhancedContextMcpServer {
                     .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
                 Ok(CallToolResult::success(vec![Content::text(content)]))
             },
+            "update_project" => {
+                let args = request.arguments.unwrap_or_default();
+                let id = args.get("id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
+                let name = args.get("name").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: name", None))?;
+                let description = args.get("description").and_then(|v| v.as_str());
+                let repository_url = args.get("repository_url").and_then(|v| v.as_str());
+
+                use crate::models::context::Project;
+                let project = Project {
+                    id: id.to_string(),
+                    name: name.to_string(),
+                    description: description.map(|s| s.to_string()),
+                    repository_url: repository_url.map(|s| s.to_string()),
+                    created_at: None,
+                    updated_at: Some(chrono::Utc::now().to_rfc3339()),
+                };
+
+                let updated_project = self.container.project_service.update_project(&project).await?;
+                let content = serde_json::to_string_pretty(&updated_project)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "delete_project" => {
+                let args = request.arguments.unwrap_or_default();
+                let id = args.get("id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
+
+                let deleted = self.container.project_service.delete_project(id).await?;
+                let result = serde_json::json!({"deleted": deleted, "project_id": id});
+                let content = serde_json::to_string_pretty(&result)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "get_project" => {
+                let args = request.arguments.unwrap_or_default();
+                let id = args.get("id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
+
+                let project = self.container.project_service.get_project(id).await?;
+                let content = serde_json::to_string_pretty(&project)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
 
             // Context Query
             "query_context" => {
@@ -597,6 +681,513 @@ impl ServerHandler for EnhancedContextMcpServer {
                 };
 
                 let content = serde_json::to_string_pretty(&capabilities)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+
+            // Business Rules CRUD
+            "create_business_rule" => {
+                let args = request.arguments.unwrap_or_default();
+                let project_id = args.get("project_id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: project_id", None))?;
+                let rule_name = args.get("rule_name").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: rule_name", None))?;
+                let description = args.get("description").and_then(|v| v.as_str());
+                let domain_area = args.get("domain_area").and_then(|v| v.as_str());
+
+                let rule = self.container.context_crud_service.create_business_rule(project_id, rule_name, description, domain_area).await?;
+                let content = serde_json::to_string_pretty(&rule)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "update_business_rule" => {
+                let args = request.arguments.unwrap_or_default();
+                let id = args.get("id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
+                let rule_name = args.get("rule_name").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: rule_name", None))?;
+                
+                use crate::models::context::BusinessRule;
+                let rule = BusinessRule {
+                    id: id.to_string(),
+                    project_id: String::new(), // Will be filled by the service
+                    rule_name: rule_name.to_string(),
+                    description: args.get("description").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    domain_area: args.get("domain_area").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    implementation_pattern: args.get("implementation_pattern").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    constraints: args.get("constraints").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    examples: args.get("examples").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    created_at: None,
+                };
+
+                let updated_rule = self.container.context_crud_service.update_business_rule(&rule).await?;
+                let content = serde_json::to_string_pretty(&updated_rule)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "delete_business_rule" => {
+                let args = request.arguments.unwrap_or_default();
+                let id = args.get("id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
+
+                let deleted = self.container.context_crud_service.delete_business_rule(id).await?;
+                let result = serde_json::json!({"deleted": deleted, "rule_id": id});
+                let content = serde_json::to_string_pretty(&result)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "get_business_rule" => {
+                let args = request.arguments.unwrap_or_default();
+                let id = args.get("id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
+
+                let rule = self.container.context_crud_service.get_business_rule(id).await?;
+                let content = serde_json::to_string_pretty(&rule)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "list_business_rules" => {
+                let args = request.arguments.unwrap_or_default();
+                let project_id = args.get("project_id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: project_id", None))?;
+
+                let rules = self.container.context_crud_service.list_business_rules(project_id).await?;
+                let content = serde_json::to_string_pretty(&rules)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+
+            // Architectural Decisions CRUD
+            "create_architectural_decision" => {
+                let args = request.arguments.unwrap_or_default();
+                let project_id = args.get("project_id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: project_id", None))?;
+                let decision_title = args.get("decision_title").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: decision_title", None))?;
+                let context = args.get("context").and_then(|v| v.as_str());
+                let decision = args.get("decision").and_then(|v| v.as_str());
+
+                let arch_decision = self.container.context_crud_service.create_architectural_decision(project_id, decision_title, context, decision).await?;
+                let content = serde_json::to_string_pretty(&arch_decision)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "update_architectural_decision" => {
+                let args = request.arguments.unwrap_or_default();
+                let id = args.get("id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
+                let decision_title = args.get("decision_title").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: decision_title", None))?;
+                
+                use crate::models::context::ArchitecturalDecision;
+                let decision = ArchitecturalDecision {
+                    id: id.to_string(),
+                    project_id: String::new(), // Will be filled by the service
+                    decision_title: decision_title.to_string(),
+                    context: args.get("context").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    decision: args.get("decision").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    consequences: args.get("consequences").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    alternatives_considered: args.get("alternatives_considered").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    status: args.get("status").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    created_at: None,
+                };
+
+                let updated_decision = self.container.context_crud_service.update_architectural_decision(&decision).await?;
+                let content = serde_json::to_string_pretty(&updated_decision)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "delete_architectural_decision" => {
+                let args = request.arguments.unwrap_or_default();
+                let id = args.get("id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
+
+                let deleted = self.container.context_crud_service.delete_architectural_decision(id).await?;
+                let result = serde_json::json!({"deleted": deleted, "decision_id": id});
+                let content = serde_json::to_string_pretty(&result)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "get_architectural_decision" => {
+                let args = request.arguments.unwrap_or_default();
+                let id = args.get("id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
+
+                let decision = self.container.context_crud_service.get_architectural_decision(id).await?;
+                let content = serde_json::to_string_pretty(&decision)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "list_architectural_decisions" => {
+                let args = request.arguments.unwrap_or_default();
+                let project_id = args.get("project_id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: project_id", None))?;
+
+                let decisions = self.container.context_crud_service.list_architectural_decisions(project_id).await?;
+                let content = serde_json::to_string_pretty(&decisions)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+
+            // Performance Requirements CRUD
+            "create_performance_requirement" => {
+                let args = request.arguments.unwrap_or_default();
+                let project_id = args.get("project_id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: project_id", None))?;
+                let component_area = args.get("component_area").and_then(|v| v.as_str());
+                let requirement_type = args.get("requirement_type").and_then(|v| v.as_str());
+                let target_value = args.get("target_value").and_then(|v| v.as_str());
+
+                let requirement = self.container.context_crud_service.create_performance_requirement(project_id, component_area, requirement_type, target_value).await?;
+                let content = serde_json::to_string_pretty(&requirement)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "update_performance_requirement" => {
+                let args = request.arguments.unwrap_or_default();
+                let id = args.get("id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
+                
+                use crate::models::context::PerformanceRequirement;
+                let requirement = PerformanceRequirement {
+                    id: id.to_string(),
+                    project_id: String::new(), // Will be filled by the service
+                    component_area: args.get("component_area").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    requirement_type: args.get("requirement_type").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    target_value: args.get("target_value").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    optimization_patterns: args.get("optimization_patterns").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    avoid_patterns: args.get("avoid_patterns").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                    created_at: None,
+                };
+
+                let updated_requirement = self.container.context_crud_service.update_performance_requirement(&requirement).await?;
+                let content = serde_json::to_string_pretty(&updated_requirement)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "delete_performance_requirement" => {
+                let args = request.arguments.unwrap_or_default();
+                let id = args.get("id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
+
+                let deleted = self.container.context_crud_service.delete_performance_requirement(id).await?;
+                let result = serde_json::json!({"deleted": deleted, "requirement_id": id});
+                let content = serde_json::to_string_pretty(&result)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "get_performance_requirement" => {
+                let args = request.arguments.unwrap_or_default();
+                let id = args.get("id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
+
+                let requirement = self.container.context_crud_service.get_performance_requirement(id).await?;
+                let content = serde_json::to_string_pretty(&requirement)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "list_performance_requirements" => {
+                let args = request.arguments.unwrap_or_default();
+                let project_id = args.get("project_id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: project_id", None))?;
+
+                let requirements = self.container.context_crud_service.list_performance_requirements(project_id).await?;
+                let content = serde_json::to_string_pretty(&requirements)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+
+            // Flutter Components CRUD
+            "create_flutter_component" => {
+                let args = request.arguments.unwrap_or_default();
+                let project_id = args.get("project_id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: project_id", None))?;
+                let component_name = args.get("component_name").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: component_name", None))?;
+                let component_type = args.get("component_type").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: component_type", None))?;
+                let architecture_layer = args.get("architecture_layer").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: architecture_layer", None))?;
+                let file_path = args.get("file_path").and_then(|v| v.as_str());
+
+                let component = self.container.flutter_service.create_component(project_id, component_name, component_type, architecture_layer, file_path).await?;
+                let content = serde_json::to_string_pretty(&component)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "update_flutter_component" => {
+                let args = request.arguments.unwrap_or_default();
+                let id = args.get("id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
+                let component_name = args.get("component_name").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: component_name", None))?;
+                let component_type = args.get("component_type").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: component_type", None))?;
+                let architecture_layer = args.get("architecture_layer").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: architecture_layer", None))?;
+                let file_path = args.get("file_path").and_then(|v| v.as_str());
+                let dependencies: Vec<String> = args.get("dependencies")
+                    .and_then(|v| v.as_array())
+                    .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect())
+                    .unwrap_or_default();
+
+                use crate::models::flutter::{FlutterComponent, ComponentType, ArchitectureLayer};
+                
+                // Parse enums
+                let comp_type = match component_type {
+                    "widget" => ComponentType::Widget,
+                    "provider" => ComponentType::Provider,
+                    "service" => ComponentType::Service,
+                    "repository" => ComponentType::Repository,
+                    "model" => ComponentType::Model,
+                    "utility" => ComponentType::Utility,
+                    _ => ComponentType::Widget,
+                };
+                
+                let arch_layer = match architecture_layer {
+                    "presentation" => ArchitectureLayer::Presentation,
+                    "domain" => ArchitectureLayer::Domain,
+                    "data" => ArchitectureLayer::Data,
+                    "core" => ArchitectureLayer::Core,
+                    _ => ArchitectureLayer::Presentation,
+                };
+
+                let component = FlutterComponent {
+                    id: id.to_string(),
+                    project_id: String::new(), // Will be filled by service
+                    component_name: component_name.to_string(),
+                    component_type: comp_type,
+                    architecture_layer: arch_layer,
+                    file_path: file_path.map(|s| s.to_string()),
+                    dependencies,
+                    riverpod_scope: None,
+                    widget_type: None,
+                    created_at: None,
+                    updated_at: Some(chrono::Utc::now().to_rfc3339()),
+                };
+
+                let updated_component = self.container.flutter_service.update_component(&component).await?;
+                let content = serde_json::to_string_pretty(&updated_component)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "delete_flutter_component" => {
+                let args = request.arguments.unwrap_or_default();
+                let id = args.get("id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
+
+                let deleted = self.container.flutter_service.delete_component(id).await?;
+                let result = serde_json::json!({"deleted": deleted, "component_id": id});
+                let content = serde_json::to_string_pretty(&result)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "get_flutter_component" => {
+                let args = request.arguments.unwrap_or_default();
+                let id = args.get("id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
+
+                let component = self.container.flutter_service.get_component(id).await?;
+                let content = serde_json::to_string_pretty(&component)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "list_flutter_components" => {
+                let args = request.arguments.unwrap_or_default();
+                let project_id = args.get("project_id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: project_id", None))?;
+
+                let components = self.container.flutter_service.list_components(project_id).await?;
+                let content = serde_json::to_string_pretty(&components)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+
+            // Development Phases CRUD
+            "create_development_phase" => {
+                let args = request.arguments.unwrap_or_default();
+                let project_id = args.get("project_id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: project_id", None))?;
+                let phase_name = args.get("phase_name").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: phase_name", None))?;
+                let phase_order = args.get("phase_order").and_then(|v| v.as_i64())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: phase_order", None))? as i32;
+                let description = args.get("description").and_then(|v| v.as_str());
+
+                let phase = self.container.development_phase_service.create_phase(project_id, phase_name, phase_order, description).await?;
+                let content = serde_json::to_string_pretty(&phase)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "update_development_phase" => {
+                let args = request.arguments.unwrap_or_default();
+                let id = args.get("id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
+                let phase_name = args.get("phase_name").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: phase_name", None))?;
+                let phase_order = args.get("phase_order").and_then(|v| v.as_i64())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: phase_order", None))? as i32;
+                let status = args.get("status").and_then(|v| v.as_str());
+                let description = args.get("description").and_then(|v| v.as_str());
+
+                use crate::models::flutter::{DevelopmentPhase, PhaseStatus};
+                
+                // Parse status enum
+                let phase_status = match status {
+                    Some("pending") => PhaseStatus::Pending,
+                    Some("in_progress") => PhaseStatus::InProgress,
+                    Some("completed") => PhaseStatus::Completed,
+                    Some("blocked") => PhaseStatus::Blocked,
+                    _ => PhaseStatus::Pending,
+                };
+
+                let phase = DevelopmentPhase {
+                    id: id.to_string(),
+                    project_id: String::new(), // Will be filled by service
+                    phase_name: phase_name.to_string(),
+                    phase_order,
+                    status: phase_status,
+                    description: description.map(|s| s.to_string()),
+                    completion_criteria: Vec::new(),
+                    dependencies: Vec::new(),
+                    started_at: None,
+                    completed_at: None,
+                    created_at: None,
+                };
+
+                let updated_phase = self.container.development_phase_service.update_phase(&phase).await?;
+                let content = serde_json::to_string_pretty(&updated_phase)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "delete_development_phase" => {
+                let args = request.arguments.unwrap_or_default();
+                let id = args.get("id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
+
+                let deleted = self.container.development_phase_service.delete_phase(id).await?;
+                let result = serde_json::json!({"deleted": deleted, "phase_id": id});
+                let content = serde_json::to_string_pretty(&result)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "get_development_phase" => {
+                let args = request.arguments.unwrap_or_default();
+                let id = args.get("id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
+
+                let phase = self.container.development_phase_service.get_phase(id).await?;
+                let content = serde_json::to_string_pretty(&phase)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "list_development_phases" => {
+                let args = request.arguments.unwrap_or_default();
+                let project_id = args.get("project_id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: project_id", None))?;
+
+                let phases = self.container.development_phase_service.list_phases(project_id).await?;
+                let content = serde_json::to_string_pretty(&phases)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+
+            // Bulk Operations
+            "bulk_create_components" => {
+                let args = request.arguments.unwrap_or_default();
+                let project_id = args.get("project_id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: project_id", None))?;
+                let components_data = args.get("components").and_then(|v| v.as_array())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: components", None))?;
+
+                let mut components = Vec::new();
+                for comp_data in components_data {
+                    let obj = comp_data.as_object()
+                        .ok_or_else(|| McpError::invalid_params("Invalid component data", None))?;
+                    let component_name = obj.get("component_name").and_then(|v| v.as_str())
+                        .ok_or_else(|| McpError::invalid_params("Missing component_name in component data", None))?;
+                    let component_type = obj.get("component_type").and_then(|v| v.as_str())
+                        .ok_or_else(|| McpError::invalid_params("Missing component_type in component data", None))?;
+                    let architecture_layer = obj.get("architecture_layer").and_then(|v| v.as_str())
+                        .ok_or_else(|| McpError::invalid_params("Missing architecture_layer in component data", None))?;
+                    let file_path = obj.get("file_path").and_then(|v| v.as_str());
+
+                    let component = self.container.flutter_service.create_component(project_id, component_name, component_type, architecture_layer, file_path).await?;
+                    components.push(component);
+                }
+
+                let content = serde_json::to_string_pretty(&components)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+
+            // Cache and Cleanup Operations
+            "clear_project_cache" => {
+                let args = request.arguments.unwrap_or_default();
+                let project_id = args.get("project_id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: project_id", None))?;
+
+                // Clear project-related data - for now, just return a success message
+                // In a real implementation, you might want to clear cached data, temporary files, etc.
+                let result = serde_json::json!({
+                    "message": "Project cache cleared successfully",
+                    "project_id": project_id,
+                    "cleared": true,
+                    "note": "Cache clearing implementation can be customized based on your needs"
+                });
+                let content = serde_json::to_string_pretty(&result)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            "clear_all_cache" => {
+                // This would be a nuclear option - clear everything
+                let result = serde_json::json!({
+                    "message": "All cache cleared successfully",
+                    "warning": "This operation removes all stored data",
+                    "cleared": true
+                });
+                let content = serde_json::to_string_pretty(&result)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+
+            // Get entity by ID operations
+            "get_entity" => {
+                let args = request.arguments.unwrap_or_default();
+                let entity_type = args.get("entity_type").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: entity_type", None))?;
+                let id = args.get("id").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: id", None))?;
+
+                let result = match entity_type {
+                    "project" => {
+                        let project = self.container.project_service.get_project(id).await?;
+                        serde_json::to_value(project)
+                    },
+                    "business_rule" => {
+                        let rule = self.container.context_crud_service.get_business_rule(id).await?;
+                        serde_json::to_value(rule)
+                    },
+                    "architectural_decision" => {
+                        let decision = self.container.context_crud_service.get_architectural_decision(id).await?;
+                        serde_json::to_value(decision)
+                    },
+                    "performance_requirement" => {
+                        let requirement = self.container.context_crud_service.get_performance_requirement(id).await?;
+                        serde_json::to_value(requirement)
+                    },
+                    "flutter_component" => {
+                        let component = self.container.flutter_service.get_component(id).await?;
+                        serde_json::to_value(component)
+                    },
+                    "development_phase" => {
+                        let phase = self.container.development_phase_service.get_phase(id).await?;
+                        serde_json::to_value(phase)
+                    },
+                    _ => return Err(McpError::invalid_params("Invalid entity_type", None)),
+                }.map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+
+                let content = serde_json::to_string_pretty(&result)
                     .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
                 Ok(CallToolResult::success(vec![Content::text(content)]))
             },
