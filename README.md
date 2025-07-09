@@ -1,10 +1,10 @@
-# MCP Server Integration Guide for GitHub Copilot Agent and Flutter Projects
+# Context Server Integration Guide for GitHub Copilot Agent and Flutter Projects
 
-This guide explains how to use the Rust-based Model-Context-Provider (MCP) server as a context provider for AI agents (such as GitHub Copilot Agent) and for integration with developer tools or apps (including Flutter).
+This guide explains how to use the Rust-based Context Server as a context provider for AI agents (such as GitHub Copilot Agent) and for integration with developer tools or apps (including Flutter).
 
-## 1. Run the MCP Server
+## 1. Run the Context Server
 
-1. Build and start the MCP server:
+1. Build and start the Context Server:
    ```sh
    cargo run --release
    ```
@@ -14,9 +14,9 @@ This guide explains how to use the Rust-based Model-Context-Provider (MCP) serve
 
 ## 2. Integrate with GitHub Copilot Agent
 
-The MCP server exposes a REST API for querying project context (business rules, architectural decisions, conventions, etc.).
+The Context Server exposes a REST API for querying project context (business rules, architectural decisions, conventions, etc.).
 
-- Configure your Copilot agent to send HTTP requests to the MCP server endpoints (e.g., `/context/query`).
+- Configure your Copilot agent to send HTTP requests to the Context Server endpoints (e.g., `/context/query`).
 - Use the API to fetch relevant context for code generation, review, or suggestions.
 - Example request payload:
   ```json
@@ -30,7 +30,7 @@ The MCP server exposes a REST API for querying project context (business rules, 
 
 ## 3. Connect from Flutter (Optional)
 
-Use the `http` package in Flutter to make REST API calls to the MCP server.
+Use the `http` package in Flutter to make REST API calls to the Context Server.
 
 ### Example: Querying Context
 
@@ -40,7 +40,7 @@ dependencies:
   http: ^1.2.0
 ```
 
-Sample Dart code to query the MCP server:
+Sample Dart code to query the Context Server:
 ```dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -48,7 +48,26 @@ import 'package:http/http.dart' as http;
 Future<void> fetchContext() async {
   final response = await http.get(Uri.parse('http://127.0.0.1:8080/health'));
   if (response.statusCode == 200) {
-    print('MCP Server is healthy: ${response.body}');
+    // Server is healthy
+    print('Server is healthy!');
+    
+    // Now query for context
+    final contextResponse = await http.post(
+      Uri.parse('http://127.0.0.1:8080/context/query'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'project_id': 'your-project-id',
+        'feature_area': 'authentication',
+        'task_type': 'implement',
+        'components': ['login', 'signup']
+      }),
+    );
+    
+    if (contextResponse.statusCode == 200) {
+      final contextData = jsonDecode(contextResponse.body);
+      print('Received context: $contextData');
+      // Process the context data in your app
+    }
   } else {
     print('Failed to reach MCP Server: ${response.statusCode}');
   }
@@ -100,6 +119,30 @@ For more advanced queries, use the context query API (see server docs for endpoi
   "conventions": []
 }
 ```
+
+## Note About Model Context Protocol (MCP)
+
+This project is a **standard HTTP REST API server** for context management and is **not** a Model Context Protocol (MCP) server.
+
+### What is MCP?
+
+The [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) is a specialized open protocol designed to standardize how applications provide context to Large Language Models (LLMs). MCP follows a client-server architecture with specific protocol requirements and capabilities such as:
+
+- Standardized communication format between LLM clients and context servers
+- Built-in resource access and tool execution capabilities
+- Specific transports and connection management
+- Special handling for prompts and LLM sampling
+
+### This Context Server vs. MCP
+
+Our Context Server:
+- Uses standard HTTP REST APIs for communication
+- Focuses specifically on storing and retrieving curated project context
+- Is designed as a lightweight solution for providing AI agents with high-value context
+- Uses simple JSON for data exchange
+- Does not implement the MCP protocol specification
+
+If you're interested in using the official Model Context Protocol, check out the [MCP Rust SDK](https://github.com/modelcontextprotocol/rust-sdk) for implementation details.
 
 ---
 

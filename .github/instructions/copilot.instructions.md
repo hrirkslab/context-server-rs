@@ -1,17 +1,17 @@
 # GitHub Copilot Instructions
 
 ## Project Overview
-We're building a Model-Context-Provider (MCP) server using Rust that saves project context to a database. The server will:
+We're building a Context Server using Rust that saves project context to a database. The server will:
 
 1. Extract and process code context from projects
 2. Store the context in a database for efficient retrieval
-3. Provide APIs for accessing the stored context
+3. Provide HTTP APIs for accessing the stored context
 4. Support real-time updates when code changes
 
 ## Technical Stack
 - **Language**: Rust
-- **Database**: Consider PostgreSQL, SQLite, or a document DB depending on scale requirements
-- **API**: RESTful and/or gRPC
+- **Database**: SQLite (embedded database)
+- **API**: RESTful HTTP API using Axum
 - **Concurrency**: Utilize Rust's async/await with Tokio runtime
 
 ## Code Structure

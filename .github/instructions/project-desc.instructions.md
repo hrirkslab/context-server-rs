@@ -1,8 +1,10 @@
-# 🧠 Minimal Context Server for AI Code Generation
+# 🧠 MCP Context Server for AI Code Generation
 
 ## 📘 Project Overview
 
-A **lightweight, focused context server** that captures and maintains only the essential project information that AI agents (like GitHub Copilot) cannot automatically discover or infer. This server provides **curated, high-value context** that enables AI agents to generate production-quality code without duplicating built-in AI capabilities.
+A **lightweight, focused Model Context Protocol (MCP) server** that captures and maintains only the essential project information that AI agents (like GitHub Copilot) cannot automatically discover or infer. This server provides **curated, high-value context** that enables AI agents to generate production-quality code without duplicating built-in AI capabilities. 
+
+**Implementation:** This is a proper MCP server implementation using the official [Rust MCP SDK (rmcp)](https://github.com/modelcontextprotocol/rust-sdk), following the [Model Context Protocol specification](https://modelcontextprotocol.io/introduction).
 
 ## 🎯 Core Principle
 
@@ -115,18 +117,23 @@ CREATE TABLE feature_context (
 );
 ```
 
-## 🏗️ Minimal Architecture
+## 🏗️ MCP Architecture
 
 ```
 ┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐
-│   Manual Input      │    │   Context Server    │    │   AI Agent Query    │
-│   (Developers)      │───▶│   (SQLite, embedded)│───▶│   (GitHub Copilot)  │
-└─────────────────────┘    └─────────────────────┘    └─────────────────────┘
+│   Manual Input      │    │   MCP Context       │    │   MCP Client        │
+│   (Developers)      │───▶│   Server            │───▶│   (Claude Desktop,  │
+│                     │    │   (Model Context    │    │   Cursor IDE, etc.) │
+│                     │    │   Protocol)         │    │                     │
+└─────────────────────┘    │   (SQLite, embedded)│    └─────────────────────┘
+                           └─────────────────────┘    
 ```
 
-> **Note:**
-> - The context server now uses an embedded SQLite database (via the `rusqlite` crate) for all data storage and querying. This removes the need for an external database server and simplifies deployment.
-> - SQLite supports efficient search, indexing, and navigation of structured data, making it a better choice than file-based storage with `serde` for this use case.
+> **MCP Implementation:**
+> - Uses the official Rust MCP SDK (rmcp) for protocol compliance
+> - Communicates via standard input/output (stdio) transport
+> - Provides MCP tools for querying and managing context
+> - SQLite embedded database for efficient storage and querying
 
 ## 📝 Key Context Categories
 
@@ -155,16 +162,19 @@ CREATE TABLE feature_context (
 - **Why**: AI can't know external API behaviors
 - **Example**: "Payment API has 30-second timeout, implement retry with exponential backoff"
 
-## 🔌 Simple API Design
+## 🔌 Simple HTTP REST API Design
 
 ```rust
-// Minimal API for AI agents to query context
+// HTTP REST API endpoint: POST /context/query
+// Request Body:
 pub struct ContextQuery {
+    pub project_id: String,
     pub feature_area: String,
     pub task_type: String, // 'implement', 'fix', 'optimize'
     pub components: Vec<String>,
 }
 
+// Response Body:
 pub struct ContextResponse {
     pub business_rules: Vec<BusinessRule>,
     pub architectural_guidance: Vec<ArchitecturalDecision>,
@@ -173,6 +183,16 @@ pub struct ContextResponse {
     pub conventions: Vec<ProjectConvention>,
 }
 ```
+
+The server exposes various HTTP endpoints for CRUD operations on context data:
+- `GET /health` - Health check endpoint
+- `GET /projects` - List all projects
+- `POST /projects` - Create a new project
+- `GET /projects/:project_id` - Get a specific project
+- `DELETE /projects/:project_id` - Delete a project
+- `GET /business_rules` - List all business rules
+- `POST /business_rules` - Create a new business rule
+- And many more resource-specific endpoints
 
 ## 📊 Context Input Methods
 
@@ -193,50 +213,116 @@ pub struct ContextResponse {
 
 ## 🎯 Usage Examples
 
-### Query 1: Implementing User Authentication
-```json
+### HTTP Request 1: Implementing User Authentication
+```
+POST /context/query HTTP/1.1
+Host: localhost:8080
+Content-Type: application/json
+
 {
+  "project_id": "flutter-shop-app",
   "feature_area": "authentication",
   "task_type": "implement",
   "components": ["login", "signup", "password_reset"]
 }
 ```
 
-**Response Context**:
-- Business rule: "Email verification required before account activation"
-- Security policy: "Use bcrypt with 12 rounds for password hashing"
-- Convention: "Use AuthenticationBloc for state management"
-- Performance: "Login should complete within 2 seconds"
-
-### Query 2: Optimizing List Performance
+**HTTP Response**:
 ```json
 {
+  "business_rules": [
+    {
+      "id": "br-123",
+      "rule_name": "Email Verification",
+      "description": "Email verification required before account activation",
+      "domain_area": "authentication"
+    }
+  ],
+  "security_policies": [
+    {
+      "id": "sp-456",
+      "policy_name": "Password Hashing",
+      "requirements": "Use bcrypt with 12 rounds for password hashing"
+    }
+  ],
+  "conventions": [
+    {
+      "id": "conv-789",
+      "convention_type": "state_management",
+      "convention_rule": "Use AuthenticationBloc for state management"
+    }
+  ],
+  "performance_requirements": [
+    {
+      "id": "perf-101",
+      "component_area": "login",
+      "requirement_type": "response_time",
+      "target_value": "< 2 seconds"
+    }
+  ],
+  "architectural_guidance": []
+}
+```
+
+### HTTP Request 2: Optimizing List Performance
+```
+POST /context/query HTTP/1.1
+Host: localhost:8080
+Content-Type: application/json
+
+{
+  "project_id": "flutter-shop-app",
   "feature_area": "user_interface",
   "task_type": "optimize",
   "components": ["product_list", "infinite_scroll"]
 }
 ```
 
-**Response Context**:
-- Performance requirement: "List should handle 10,000+ items smoothly"
-- Architectural decision: "Use ListView.builder with pagination"
-- Convention: "Implement pull-to-refresh pattern consistently"
+**HTTP Response**:
+```json
+{
+  "performance_requirements": [
+    {
+      "id": "perf-202",
+      "component_area": "product_list",
+      "requirement_type": "performance",
+      "target_value": "Handle 10,000+ items smoothly"
+    }
+  ],
+  "architectural_guidance": [
+    {
+      "id": "arch-303",
+      "decision_title": "List Implementation",
+      "decision": "Use ListView.builder with pagination"
+    }
+  ],
+  "conventions": [
+    {
+      "id": "conv-404",
+      "convention_type": "user_experience",
+      "convention_rule": "Implement pull-to-refresh pattern consistently"
+    }
+  ],
+  "business_rules": [],
+  "security_policies": []
+}
+```
 
 ## 🚀 Implementation Strategy
 
-### Phase 1: Core Context Database
-1. Set up SQLite with context tables
-2. Create simple web interface for manual entry
-3. Build basic API for context queries
-4. Implement context templates for common patterns
+### Phase 1: Core Context HTTP Server (Completed)
+1. Set up SQLite with context tables via Rusqlite
+2. Implement REST API endpoints with Axum web framework
+3. Build basic JSON API for context queries
+4. Define core data models and schemas
 
-### Phase 2: Integration
-1. GitHub Copilot/AI agent integration
-2. Code review context extraction
+### Phase 2: Integration (In Progress)
+1. GitHub Copilot/AI agent HTTP integration
+2. Simple web interface for manual context entry
 3. Documentation import tools
 4. Context validation and consistency checks
 
-### Phase 3: Enhancement
+### Phase 3: Enhancement (Planned)
 1. Context usage analytics
 2. Automated context suggestions
 3. Team collaboration features
