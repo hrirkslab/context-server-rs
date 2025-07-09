@@ -185,6 +185,62 @@ pub enum TemplateType {
     Model,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServerCapabilitiesInfo {
+    pub server_info: ServerMetadata,
+    pub features: Vec<FeatureInfo>,
+    pub database_tables: Vec<TableInfo>,
+    pub mcp_tools: Vec<ToolInfo>,
+    pub usage_examples: Vec<UsageExample>,
+    pub recommended_workflow: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServerMetadata {
+    pub name: String,
+    pub version: String,
+    pub description: String,
+    pub config_directory: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FeatureInfo {
+    pub name: String,
+    pub description: String,
+    pub status: FeatureStatus,
+    pub tools: Vec<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum FeatureStatus {
+    Implemented,
+    Framework,    // Database structure exists, tools being added
+    Planned,      // Not yet implemented
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TableInfo {
+    pub name: String,
+    pub description: String,
+    pub primary_fields: Vec<String>,
+    pub example_use: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ToolInfo {
+    pub name: String,
+    pub description: String,
+    pub category: String,
+    pub required_params: Vec<String>,
+    pub example_use: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UsageExample {
+    pub scenario: String,
+    pub steps: Vec<String>,
+}
+
 // Implement Display traits for enum serialization
 impl std::fmt::Display for ComponentType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -217,6 +273,16 @@ impl std::fmt::Display for PhaseStatus {
             PhaseStatus::InProgress => write!(f, "in_progress"),
             PhaseStatus::Completed => write!(f, "completed"),
             PhaseStatus::Blocked => write!(f, "blocked"),
+        }
+    }
+}
+
+impl std::fmt::Display for FeatureStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            FeatureStatus::Implemented => write!(f, "implemented"),
+            FeatureStatus::Framework => write!(f, "framework"),
+            FeatureStatus::Planned => write!(f, "planned"),
         }
     }
 }

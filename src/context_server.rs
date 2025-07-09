@@ -396,6 +396,172 @@ impl ContextMcpServer {
         
         Ok(violations)
     }
+
+    /// Get server capabilities and available features
+    async fn get_server_capabilities(&self) -> Result<ServerCapabilitiesInfo, McpError> {
+        Ok(ServerCapabilitiesInfo {
+            server_info: ServerMetadata {
+                name: "context-server-rs".to_string(),
+                version: "0.1.0".to_string(),
+                description: "Flutter-specific MCP Context Server for AI-assisted development".to_string(),
+                config_directory: "~/config/context-server-rs/".to_string(),
+            },
+            features: vec![
+                FeatureInfo {
+                    name: "Flutter Clean Architecture Enforcement".to_string(),
+                    description: "Track components by architecture layer and validate dependency rules".to_string(),
+                    status: FeatureStatus::Implemented,
+                    tools: vec!["create_flutter_component".to_string(), "list_flutter_components".to_string(), "validate_architecture".to_string()],
+                },
+                FeatureInfo {
+                    name: "Development Phase Tracking".to_string(),
+                    description: "Manage project phases with order, dependencies, and completion criteria".to_string(),
+                    status: FeatureStatus::Implemented,
+                    tools: vec!["create_development_phase".to_string(), "list_development_phases".to_string()],
+                },
+                FeatureInfo {
+                    name: "Privacy-First Validation".to_string(),
+                    description: "Monitor for external network calls and enforce local-only constraints".to_string(),
+                    status: FeatureStatus::Framework,
+                    tools: vec!["create_privacy_rule".to_string(), "list_privacy_violations".to_string()],
+                },
+                FeatureInfo {
+                    name: "Code Generation Templates".to_string(),
+                    description: "Generate boilerplate for widgets, providers, repositories".to_string(),
+                    status: FeatureStatus::Planned,
+                    tools: vec!["generate_widget_template".to_string(), "generate_provider_template".to_string()],
+                },
+                FeatureInfo {
+                    name: "LLM Model Context".to_string(),
+                    description: "Track model configurations, performance metrics, and inference patterns".to_string(),
+                    status: FeatureStatus::Framework,
+                    tools: vec!["create_model_context".to_string(), "list_model_metrics".to_string()],
+                },
+            ],
+            database_tables: vec![
+                TableInfo {
+                    name: "projects".to_string(),
+                    description: "Core project information and metadata".to_string(),
+                    primary_fields: vec!["id".to_string(), "name".to_string(), "description".to_string()],
+                    example_use: "Store basic project info for LocalChat Flutter app".to_string(),
+                },
+                TableInfo {
+                    name: "flutter_components".to_string(),
+                    description: "Flutter widgets, providers, services tracked by architecture layer".to_string(),
+                    primary_fields: vec!["component_name".to_string(), "component_type".to_string(), "architecture_layer".to_string()],
+                    example_use: "Track ChatScreen widget in presentation layer".to_string(),
+                },
+                TableInfo {
+                    name: "development_phases".to_string(),
+                    description: "Project phases with order, status, and completion criteria".to_string(),
+                    primary_fields: vec!["phase_name".to_string(), "phase_order".to_string(), "status".to_string()],
+                    example_use: "Track Setup → Chat UI → Model Management → Polish phases".to_string(),
+                },
+                TableInfo {
+                    name: "privacy_rules".to_string(),
+                    description: "Rules for detecting external API calls and privacy violations".to_string(),
+                    primary_fields: vec!["rule_name".to_string(), "rule_type".to_string(), "pattern".to_string()],
+                    example_use: "Detect http imports or external network calls".to_string(),
+                },
+                TableInfo {
+                    name: "business_rules".to_string(),
+                    description: "Domain-specific business logic and implementation patterns".to_string(),
+                    primary_fields: vec!["rule_name".to_string(), "domain_area".to_string(), "implementation_pattern".to_string()],
+                    example_use: "Store chat message validation rules".to_string(),
+                },
+                TableInfo {
+                    name: "architectural_decisions".to_string(),
+                    description: "ADRs (Architecture Decision Records) for the project".to_string(),
+                    primary_fields: vec!["decision_title".to_string(), "context".to_string(), "decision".to_string()],
+                    example_use: "Document decision to use Riverpod for state management".to_string(),
+                },
+                TableInfo {
+                    name: "model_context".to_string(),
+                    description: "LLM model configurations, performance metrics, and settings".to_string(),
+                    primary_fields: vec!["model_name".to_string(), "model_type".to_string(), "performance_metrics".to_string()],
+                    example_use: "Track Llama model performance and configuration".to_string(),
+                },
+            ],
+            mcp_tools: vec![
+                ToolInfo {
+                    name: "query_context".to_string(),
+                    description: "Query project context by feature area and task type".to_string(),
+                    category: "Core".to_string(),
+                    required_params: vec!["project_id".to_string(), "feature_area".to_string(), "task_type".to_string()],
+                    example_use: "Get authentication context for implementation".to_string(),
+                },
+                ToolInfo {
+                    name: "create_flutter_component".to_string(),
+                    description: "Create Flutter component with architecture layer tracking".to_string(),
+                    category: "Flutter".to_string(),
+                    required_params: vec!["project_id".to_string(), "component_name".to_string(), "component_type".to_string(), "architecture_layer".to_string()],
+                    example_use: "Create ChatScreen widget in presentation layer".to_string(),
+                },
+                ToolInfo {
+                    name: "list_flutter_components".to_string(),
+                    description: "List all Flutter components with their architecture layers".to_string(),
+                    category: "Flutter".to_string(),
+                    required_params: vec!["project_id".to_string()],
+                    example_use: "Get overview of all widgets, providers, services".to_string(),
+                },
+                ToolInfo {
+                    name: "validate_architecture".to_string(),
+                    description: "Check for Clean Architecture dependency violations".to_string(),
+                    category: "Flutter".to_string(),
+                    required_params: vec!["project_id".to_string()],
+                    example_use: "Ensure presentation layer doesn't import data layer".to_string(),
+                },
+                ToolInfo {
+                    name: "create_development_phase".to_string(),
+                    description: "Create project development phase with order and dependencies".to_string(),
+                    category: "Project Management".to_string(),
+                    required_params: vec!["project_id".to_string(), "phase_name".to_string(), "phase_order".to_string()],
+                    example_use: "Create 'Chat UI' phase after 'Setup' phase".to_string(),
+                },
+                ToolInfo {
+                    name: "list_development_phases".to_string(),
+                    description: "List all project phases in order with status".to_string(),
+                    category: "Project Management".to_string(),
+                    required_params: vec!["project_id".to_string()],
+                    example_use: "See current project progress and next steps".to_string(),
+                },
+                ToolInfo {
+                    name: "get_server_capabilities".to_string(),
+                    description: "Get comprehensive information about server features, database tables, and available tools".to_string(),
+                    category: "Core".to_string(),
+                    required_params: vec![],
+                    example_use: "Discover available features and tools on the server".to_string(),
+                },
+            ],
+            usage_examples: vec! [
+                UsageExample {
+                    scenario: "Setting up LocalChat Flutter Project".to_string(),
+                    steps: vec! [
+                        "Create project: 'LocalChat Flutter App'".to_string(),
+                        "Create phases: Setup → Chat UI → Model Management → Polish".to_string(),
+                        "Add components: ChatScreen (widget), ChatProvider (provider), MessageRepository (repository)".to_string(),
+                        "Validate architecture to ensure clean dependency flow".to_string(),
+                    ],
+                },
+                UsageExample {
+                    scenario: "AI-Assisted Component Creation".to_string(),
+                    steps: vec! [
+                        "Ask AI: 'Create a new chat message widget'".to_string(),
+                        "AI calls create_flutter_component with proper layer".to_string(),
+                        "AI queries existing components for consistency".to_string(),
+                        "AI validates architecture rules before suggesting code".to_string(),
+                    ],
+                },
+            ],
+            recommended_workflow: vec! [
+                "1. Create project with create_project".to_string(),
+                "2. Set up development phases with create_development_phase".to_string(),
+                "3. Add Flutter components as you build with create_flutter_component".to_string(),
+                "4. Regularly validate architecture with validate_architecture".to_string(),
+                "5. Query context when building new features with query_context".to_string(),
+            ],
+        })
+    }
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
@@ -596,6 +762,15 @@ impl ServerHandler for ContextMcpServer {
                 }).as_object().unwrap().clone()),
                 annotations: None,
             },
+            Tool {
+                name: "get_server_capabilities".into(),
+                description: Some("Get comprehensive information about server features, database tables, and available tools".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {}
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
         ];
 
         tracing::debug!("Returning {} tools", tools.len());
@@ -747,6 +922,16 @@ impl ServerHandler for ContextMcpServer {
                     .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
 
                 tracing::debug!("validate_architecture completed successfully");
+                Ok(CallToolResult::success(vec![Content::text(content)]))
+            }
+            "get_server_capabilities" => {
+                tracing::debug!("Processing get_server_capabilities tool");
+                
+                let capabilities = self.get_server_capabilities().await?;
+                let content = serde_json::to_string_pretty(&capabilities)
+                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+
+                tracing::debug!("get_server_capabilities completed successfully");
                 Ok(CallToolResult::success(vec![Content::text(content)]))
             }
             _ => {
