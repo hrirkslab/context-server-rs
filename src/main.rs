@@ -1,6 +1,11 @@
 mod db;
 mod models;
 mod context_server;
+mod context_server_solid;
+mod repositories;
+mod services;
+mod infrastructure;
+mod container;
 
 use context_server::ContextMcpServer;
 use db::init::init_db;
