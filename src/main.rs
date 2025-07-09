@@ -7,6 +7,24 @@ use db::init::init_db;
 use rmcp::{ServiceExt, transport::stdio};
 use tracing_subscriber::{self, EnvFilter};
 use anyhow::Result;
+use std::path::PathBuf;
+use std::fs;
+
+/// Get the config directory path for the context server
+fn get_config_dir() -> Result<PathBuf> {
+    let home_dir = dirs::home_dir()
+        .ok_or_else(|| anyhow::anyhow!("Could not determine home directory"))?;
+    
+    let config_dir = home_dir.join("config").join("context-server-rs");
+    
+    // Create the config directory if it doesn't exist
+    if !config_dir.exists() {
+        fs::create_dir_all(&config_dir)?;
+        tracing::info!("Created config directory: {}", config_dir.display());
+    }
+    
+    Ok(config_dir)
+}
 
 /// MCP Context Server for AI Code Generation
 /// 
@@ -24,10 +42,15 @@ async fn main() -> Result<()> {
 
     tracing::info!("Starting MCP Context Server");
 
+    // Get config directory and database path
+    let config_dir = get_config_dir()?;
+    let db_path = config_dir.join("context.db");
+    
+    tracing::info!("Using config directory: {}", config_dir.display());
+    
     // Initialize SQLite database
-    let db_path = "context.db";
-    match init_db(db_path) {
-        Ok(_) => tracing::info!("Database initialized at {}", db_path),
+    match init_db(db_path.to_str().unwrap()) {
+        Ok(_) => tracing::info!("Database initialized at {}", db_path.display()),
         Err(e) => {
             tracing::error!("Failed to initialize DB: {}", e);
             return Err(e.into());
@@ -35,7 +58,7 @@ async fn main() -> Result<()> {
     }
 
     // Create and start the MCP server
-    let service = ContextMcpServer::new(db_path)?
+    let service = ContextMcpServer::new(db_path.to_str().unwrap())?
         .serve(stdio())
         .await
         .inspect_err(|e| {
