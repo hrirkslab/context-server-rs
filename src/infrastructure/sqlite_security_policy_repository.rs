@@ -90,7 +90,7 @@ impl SecurityPolicyRepository for SqliteSecurityPolicyRepository {
         })?;
 
         db.execute(
-            "UPDATE security_policies SET project_id = ?2, policy_name = ?3, policy_area = ?4, requirements = ?5, implementation_pattern = ?6, forbidden_patterns = ?7, compliance_notes = ?8, created_at = ?9 WHERE id = ?1",
+            "UPDATE security_policies SET project_id = ?2, policy_name = ?3, policy_area = ?4, requirements = ?5, implementation_pattern = ?6, forbidden_patterns = ?7, compliance_notes = ?8, updated_at = CURRENT_TIMESTAMP WHERE id = ?1",
             params![
                 security_policy.id,
                 security_policy.project_id,
