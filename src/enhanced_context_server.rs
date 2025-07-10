@@ -6,7 +6,7 @@ use rmcp::{
 };
 use crate::container::AppContainer;
 use anyhow::Result;
-use crate::models::flutter::{ServerCapabilitiesInfo, ServerMetadata, FeatureInfo, FeatureStatus, TableInfo, ToolInfo, UsageExample};
+use crate::models::framework::{ServerCapabilitiesInfo, ServerMetadata, FeatureInfo, FeatureStatus, TableInfo, ToolInfo, UsageExample};
 
 /// Enhanced MCP Context Server with SOLID principles and comprehensive CRUD operations
 #[derive(Clone)]
@@ -35,7 +35,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                 name: "enhanced-context-server-rs".to_string(),
                 version: "0.2.0".to_string(),
             },
-            instructions: Some("Enhanced Context Server with comprehensive CRUD operations for AI Code Generation. Provides curated project context including business rules, architectural decisions, security policies, project conventions, feature contexts, and Flutter-specific components.".to_string()),
+            instructions: Some("Enhanced Context Server with comprehensive CRUD operations for AI Code Generation. Provides curated project context including business rules, architectural decisions, security policies, project conventions, feature contexts, and framework-agnostic components.".to_string()),
         }
     }
 
@@ -79,7 +79,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                 input_schema: Arc::new(serde_json::json!({
                     "type": "object",
                     "properties": {
-                        "entity_type": {"type": "string", "enum": ["project", "business_rule", "architectural_decision", "performance_requirement", "security_policy", "flutter_component", "development_phase", "feature_context"], "description": "The type of entity to retrieve"},
+                        "entity_type": {"type": "string", "enum": ["project", "business_rule", "architectural_decision", "performance_requirement", "security_policy", "framework_component", "development_phase", "feature_context"], "description": "The type of entity to retrieve"},
                         "id": {"type": "string", "description": "The ID of the entity"}
                     },
                     "required": ["entity_type", "id"]
@@ -92,7 +92,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                 input_schema: Arc::new(serde_json::json!({
                     "type": "object",
                     "properties": {
-                        "entity_type": {"type": "string", "enum": ["project", "business_rule", "architectural_decision", "performance_requirement", "security_policy", "flutter_component", "development_phase", "feature_context"], "description": "The type of entity to create"},
+                        "entity_type": {"type": "string", "enum": ["project", "business_rule", "architectural_decision", "performance_requirement", "security_policy", "framework_component", "development_phase", "feature_context"], "description": "The type of entity to create"},
                         "data": {"type": "object", "description": "The entity data as JSON object"}
                     },
                     "required": ["entity_type", "data"]
@@ -105,7 +105,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                 input_schema: Arc::new(serde_json::json!({
                     "type": "object",
                     "properties": {
-                        "entity_type": {"type": "string", "enum": ["project", "business_rule", "architectural_decision", "performance_requirement", "security_policy", "flutter_component", "development_phase", "feature_context"], "description": "The type of entity to update"},
+                        "entity_type": {"type": "string", "enum": ["project", "business_rule", "architectural_decision", "performance_requirement", "security_policy", "framework_component", "development_phase", "feature_context"], "description": "The type of entity to update"},
                         "id": {"type": "string", "description": "The ID of the entity"},
                         "data": {"type": "object", "description": "The updated entity data as JSON object"}
                     },
@@ -119,7 +119,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                 input_schema: Arc::new(serde_json::json!({
                     "type": "object",
                     "properties": {
-                        "entity_type": {"type": "string", "enum": ["project", "business_rule", "architectural_decision", "performance_requirement", "security_policy", "flutter_component", "development_phase", "feature_context"], "description": "The type of entity to delete"},
+                        "entity_type": {"type": "string", "enum": ["project", "business_rule", "architectural_decision", "performance_requirement", "security_policy", "framework_component", "development_phase", "feature_context"], "description": "The type of entity to delete"},
                         "id": {"type": "string", "description": "The ID of the entity to delete"}
                     },
                     "required": ["entity_type", "id"]
@@ -132,9 +132,9 @@ impl ServerHandler for EnhancedContextMcpServer {
                 input_schema: Arc::new(serde_json::json!({
                     "type": "object",
                     "properties": {
-                        "entity_type": {"type": "string", "enum": ["project", "business_rule", "architectural_decision", "performance_requirement", "security_policy", "flutter_component", "development_phase", "feature_context"], "description": "The type of entities to list"},
+                        "entity_type": {"type": "string", "enum": ["project", "business_rule", "architectural_decision", "performance_requirement", "security_policy", "framework_component", "development_phase", "feature_context"], "description": "The type of entities to list"},
                         "project_id": {"type": "string", "description": "Optional project ID to filter by"},
-                        "architecture_layer": {"type": "string", "description": "Optional architecture layer to filter framework components by (only applies to flutter_component entity type)"}
+                        "architecture_layer": {"type": "string", "description": "Optional architecture layer to filter framework components by (only applies to framework_component entity type)"}
                     },
                     "required": ["entity_type"]
                 }).as_object().unwrap().clone()),
@@ -160,7 +160,7 @@ impl ServerHandler for EnhancedContextMcpServer {
             // Bulk Operations - Essential for efficiency
             Tool {
                 name: "bulk_create_components".into(),
-                description: Some("Create multiple Flutter components in bulk".into()),
+                description: Some("Create multiple framework components in bulk".into()),
                 input_schema: Arc::new(serde_json::json!({
                     "type": "object",
                     "properties": {
@@ -185,7 +185,7 @@ impl ServerHandler for EnhancedContextMcpServer {
             },
             Tool {
                 name: "bulk_update_components".into(),
-                description: Some("Update multiple Flutter components in bulk".into()),
+                description: Some("Update multiple framework components in bulk".into()),
                 input_schema: Arc::new(serde_json::json!({
                     "type": "object",
                     "properties": {
@@ -210,7 +210,7 @@ impl ServerHandler for EnhancedContextMcpServer {
             },
             Tool {
                 name: "bulk_delete_components".into(),
-                description: Some("Delete multiple Flutter components in bulk".into()),
+                description: Some("Delete multiple framework components in bulk".into()),
                 input_schema: Arc::new(serde_json::json!({
                     "type": "object",
                     "properties": {
@@ -229,7 +229,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                     "type": "object",
                     "properties": {
                         "operation": {"type": "string", "enum": ["create", "update", "delete"], "description": "The bulk operation to perform"},
-                        "entity_type": {"type": "string", "enum": ["business_rule", "architectural_decision", "performance_requirement", "flutter_component", "development_phase"], "description": "The type of entities"},
+                        "entity_type": {"type": "string", "enum": ["business_rule", "architectural_decision", "performance_requirement", "framework_component", "development_phase"], "description": "The type of entities"},
                         "data": {"type": "array", "description": "Array of entity data or IDs"}
                     },
                     "required": ["operation", "entity_type", "data"]
@@ -238,7 +238,7 @@ impl ServerHandler for EnhancedContextMcpServer {
             },
             Tool {
                 name: "validate_architecture".into(),
-                description: Some("Validate Flutter Clean Architecture rules and detect violations".into()),
+                description: Some("Validate Clean Architecture rules and detect violations".into()),
                 input_schema: Arc::new(serde_json::json!({
                     "type": "object",
                     "properties": {
@@ -375,9 +375,9 @@ impl ServerHandler for EnhancedContextMcpServer {
                     ],
                     usage_examples: vec![
                         UsageExample {
-                            scenario: "Setting up a new Flutter project".to_string(),
+                            scenario: "Setting up a new project".to_string(),
                             steps: vec![
-                                "1. create_project with Flutter details".to_string(),
+                                "1. create_project with project details".to_string(),
                                 "2. create_development_phase for each milestone".to_string(),
                                 "3. bulk_create_components for initial architecture".to_string(),
                                 "4. Define business_rules for domain logic".to_string(),
@@ -387,7 +387,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                     recommended_workflow: vec![
                         "Start with create_project".to_string(),
                         "Define development phases".to_string(),
-                        "Set up Flutter components structure".to_string(),
+                        "Set up framework components structure".to_string(),
                         "Add business rules and constraints".to_string(),
                         "Use query_context for AI assistance".to_string(),
                     ],
@@ -404,7 +404,7 @@ impl ServerHandler for EnhancedContextMcpServer {
 
             // Performance Requirements CRUD operations are now handled by universal CRUD handlers
 
-            // Flutter Components CRUD
+            // Framework Components CRUD
             // Removed legacy Flutter component handlers - now using universal entity handlers
 
             // Development Phases CRUD
@@ -496,7 +496,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                         let requirement = self.container.context_crud_service.get_performance_requirement(id).await?;
                         serde_json::to_value(requirement)
                     },
-                    "flutter_component" => {
+                    "framework_component" => {
                         let component = self.container.framework_service.get_component(id).await?;
                         serde_json::to_value(component)
                     },
@@ -622,7 +622,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                         let arch_decision = self.container.context_crud_service.create_architectural_decision(project_id, decision_title, context, decision).await?;
                         serde_json::to_value(arch_decision).map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?
                     },
-                    "flutter_component" => {
+                    "framework_component" => {
                         let project_id = data.get("project_id").and_then(|v| v.as_str())
                             .ok_or_else(|| McpError::invalid_params("Missing required parameter: project_id", None))?;
                         let component_name = data.get("component_name").and_then(|v| v.as_str())
@@ -708,7 +708,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                         let updated_rule = self.container.context_crud_service.update_business_rule(&rule).await?;
                         serde_json::to_value(updated_rule).map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?
                     },
-                    "flutter_component" => {
+                    "framework_component" => {
                         let component_name = data.get("component_name").and_then(|v| v.as_str())
                             .ok_or_else(|| McpError::invalid_params("Missing required parameter: component_name", None))?;
                         let component_type = data.get("component_type").and_then(|v| v.as_str())
@@ -772,7 +772,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                         let deleted = self.container.context_crud_service.delete_architectural_decision(id).await?;
                         serde_json::json!({"deleted": deleted, "decision_id": id})
                     },
-                    "flutter_component" => {
+                    "framework_component" => {
                         let deleted = self.container.framework_service.delete_component(id).await?;
                         serde_json::json!({"deleted": deleted, "component_id": id})
                     },
@@ -819,7 +819,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                             return Err(McpError::invalid_params("Missing required parameter: project_id for architectural_decision listing", None))
                         }
                     },
-                    "flutter_component" => {
+                    "framework_component" => {
                         if let Some(pid) = project_id {
                             let components = if let Some(layer) = architecture_layer {
                                 // Use list_components_by_layer if architecture_layer is specified
@@ -830,7 +830,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                             };
                             serde_json::to_value(components).map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?
                         } else {
-                            return Err(McpError::invalid_params("Missing required parameter: project_id for flutter_component listing", None))
+                            return Err(McpError::invalid_params("Missing required parameter: project_id for framework_component listing", None))
                         }
                     },
                     "development_phase" => {
@@ -853,7 +853,7 @@ impl ServerHandler for EnhancedContextMcpServer {
             // Cache Management
             // Removed duplicate cache_management handler
             
-            // Bulk Operations for Flutter Components
+            // Bulk Operations for Framework Components
             // Removed duplicate bulk_create_components handler
             
             "bulk_update_components" => {

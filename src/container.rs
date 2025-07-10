@@ -6,7 +6,6 @@ use anyhow::Result;
 // Infrastructure layer
 use crate::infrastructure::{
     SqliteProjectRepository,
-    SqliteFlutterRepository,
     SqliteDevelopmentPhaseRepository,
     SqliteBusinessRuleRepository,
     SqliteArchitecturalDecisionRepository,
@@ -18,8 +17,6 @@ use crate::infrastructure::{
 use crate::services::{
     ProjectService, 
     project_service::ProjectServiceImpl,
-    FlutterService, 
-    flutter_service::FlutterServiceImpl,
     DevelopmentPhaseService, 
     development_phase_service::DevelopmentPhaseServiceImpl,
     ContextQueryService, 
@@ -35,7 +32,6 @@ use crate::services::{
 pub struct AppContainer {
     // Services (following Dependency Inversion Principle)
     pub project_service: Box<dyn ProjectService>,
-    pub flutter_service: Box<dyn FlutterService>,
     #[allow(dead_code)]
     pub development_phase_service: Box<dyn DevelopmentPhaseService>,
     pub context_query_service: Box<dyn ContextQueryService>,
@@ -52,7 +48,6 @@ impl AppContainer {
 
         // Create repositories (infrastructure layer)
         let project_repository = SqliteProjectRepository::new(db.clone());
-        let flutter_repository = SqliteFlutterRepository::new(db.clone());
         let development_phase_repository = SqliteDevelopmentPhaseRepository::new(db.clone());
         let business_rule_repository = SqliteBusinessRuleRepository::new(db.clone());
         let architectural_decision_repository = SqliteArchitecturalDecisionRepository::new(db.clone());
@@ -60,8 +55,6 @@ impl AppContainer {
 
         // Create services (application layer) - dependency injection
         let project_service = Box::new(ProjectServiceImpl::new(project_repository));
-        
-        let flutter_service = Box::new(FlutterServiceImpl::new(flutter_repository));
         
         let development_phase_service = Box::new(DevelopmentPhaseServiceImpl::new(development_phase_repository));
         
@@ -71,11 +64,11 @@ impl AppContainer {
             performance_requirement_repository,
         ));
         
-        // Create a clone of flutter_service for architecture validation
-        // Note: In a real application, you might want to use Arc<dyn FlutterService> instead
-        let flutter_repository_for_validation = SqliteFlutterRepository::new(db.clone());
-        let flutter_service_for_validation = FlutterServiceImpl::new(flutter_repository_for_validation);
-        let architecture_validation_service = Box::new(ArchitectureValidationServiceImpl::new(flutter_service_for_validation));
+        // Create framework service for architecture validation
+        // Note: In a real application, you might want to use Arc<dyn FrameworkService> instead
+        let framework_repository_for_validation = SqliteFrameworkRepository::new(db.clone());
+        let framework_service_for_validation = FrameworkServiceImpl::new(framework_repository_for_validation);
+        let architecture_validation_service = Box::new(ArchitectureValidationServiceImpl::new(framework_service_for_validation));
 
         // Create CRUD services with their repositories
         let context_crud_service = Box::new(ContextCrudServiceImpl::new(
@@ -90,7 +83,6 @@ impl AppContainer {
 
         Ok(AppContainer {
             project_service,
-            flutter_service,
             development_phase_service,
             context_query_service,
             architecture_validation_service,

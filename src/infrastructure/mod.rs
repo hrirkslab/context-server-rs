@@ -13,7 +13,6 @@ pub mod sqlite_framework_repository;
 
 // Re-export implementations
 pub use sqlite_project_repository::SqliteProjectRepository;
-pub use sqlite_flutter_repository::SqliteFlutterRepository;
 pub use sqlite_development_phase_repository::SqliteDevelopmentPhaseRepository;
 pub use sqlite_business_rule_repository::SqliteBusinessRuleRepository;
 pub use sqlite_architectural_decision_repository::SqliteArchitecturalDecisionRepository;
