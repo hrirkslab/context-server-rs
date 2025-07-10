@@ -230,7 +230,19 @@ impl ServerHandler for EnhancedContextMcpServer {
                     "properties": {
                         "operation": {"type": "string", "enum": ["create", "update", "delete"], "description": "The bulk operation to perform"},
                         "entity_type": {"type": "string", "enum": ["business_rule", "architectural_decision", "performance_requirement", "framework_component", "development_phase"], "description": "The type of entities"},
-                        "data": {"type": "array", "description": "Array of entity data or IDs"}
+                        "data": {
+                            "type": "array", 
+                            "description": "Array of entity data or IDs",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {"type": "string", "description": "Entity ID (required for update and delete operations)"},
+                                    "name": {"type": "string", "description": "Entity name (for create and update operations)"},
+                                    "description": {"type": "string", "description": "Entity description (for create and update operations)"}
+                                },
+                                "additionalProperties": true
+                            }
+                        }
                     },
                     "required": ["operation", "entity_type", "data"]
                 }).as_object().unwrap().clone()),
@@ -937,6 +949,119 @@ impl ServerHandler for EnhancedContextMcpServer {
                 let content = serde_json::to_string_pretty(&result)
                     .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
                 Ok(CallToolResult::success(vec![Content::text(content)]))
+            },
+            
+            "bulk_operations" => {
+                let args = request.arguments.unwrap_or_default();
+                let operation = args.get("operation").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: operation", None))?;
+                let entity_type = args.get("entity_type").and_then(|v| v.as_str())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: entity_type", None))?;
+                let data = args.get("data").and_then(|v| v.as_array())
+                    .ok_or_else(|| McpError::invalid_params("Missing required parameter: data", None))?;
+                
+                match (operation, entity_type) {
+                    ("create", "framework_component") => {
+                        let mut results = Vec::new();
+                        for item in data {
+                            let obj = item.as_object()
+                                .ok_or_else(|| McpError::invalid_params("Invalid component data", None))?;
+                            let project_id = obj.get("project_id").and_then(|v| v.as_str())
+                                .ok_or_else(|| McpError::invalid_params("Missing project_id in component data", None))?;
+                            let component_name = obj.get("name").and_then(|v| v.as_str())
+                                .ok_or_else(|| McpError::invalid_params("Missing name in component data", None))?;
+                            let component_type = obj.get("component_type").and_then(|v| v.as_str())
+                                .ok_or_else(|| McpError::invalid_params("Missing component_type in component data", None))?;
+                            let architecture_layer = obj.get("architecture_layer").and_then(|v| v.as_str())
+                                .ok_or_else(|| McpError::invalid_params("Missing architecture_layer in component data", None))?;
+                            let file_path = obj.get("file_path").and_then(|v| v.as_str());
+                            
+                            let component = self.container.framework_service.create_component(
+                                project_id, component_name, component_type, architecture_layer, file_path, None
+                            ).await?;
+                            results.push(component);
+                        }
+                        let content = serde_json::to_string_pretty(&results)
+                            .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                        Ok(CallToolResult::success(vec![Content::text(content)]))
+                    },
+                    ("update", "framework_component") => {
+                        let mut results = Vec::new();
+                        for item in data {
+                            let obj = item.as_object()
+                                .ok_or_else(|| McpError::invalid_params("Invalid component data", None))?;
+                            let id = obj.get("id").and_then(|v| v.as_str())
+                                .ok_or_else(|| McpError::invalid_params("Missing id in component data", None))?;
+                            
+                            // First retrieve the component
+                            let mut component = match self.container.framework_service.get_component(id).await? {
+                                Some(c) => c,
+                                None => return Err(McpError::invalid_params(format!("Component with id {} not found", id), None)),
+                            };
+                            
+                            // Update fields if provided
+                            if let Some(name) = obj.get("name").and_then(|v| v.as_str()) {
+                                component.component_name = name.to_string();
+                            }
+                            if let Some(component_type) = obj.get("component_type").and_then(|v| v.as_str()) {
+                                component.component_type = component_type.to_string();
+                            }
+                            if let Some(layer) = obj.get("architecture_layer").and_then(|v| v.as_str()) {
+                                component.architecture_layer = layer.to_string();
+                            }
+                            if let Some(file_path) = obj.get("file_path").and_then(|v| v.as_str()) {
+                                component.file_path = Some(file_path.to_string());
+                            }
+                            
+                            // Update the component
+                            let updated_component = self.container.framework_service.update_component(&component).await?;
+                            results.push(updated_component);
+                        }
+                        let content = serde_json::to_string_pretty(&results)
+                            .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                        Ok(CallToolResult::success(vec![Content::text(content)]))
+                    },
+                    ("delete", "framework_component") => {
+                        let mut ids = Vec::new();
+                        for item in data {
+                            if let Some(obj) = item.as_object() {
+                                if let Some(id) = obj.get("id").and_then(|v| v.as_str()) {
+                                    ids.push(id.to_string());
+                                }
+                            }
+                        }
+                        
+                        let mut deleted_count = 0;
+                        let mut failed_ids = Vec::new();
+                        
+                        for id in &ids {
+                            match self.container.framework_service.delete_component(id).await {
+                                Ok(true) => deleted_count += 1,
+                                Ok(false) => failed_ids.push(id.clone()),
+                                Err(e) => {
+                                    tracing::error!("Error deleting component {}: {}", id, e);
+                                    failed_ids.push(id.clone());
+                                }
+                            }
+                        }
+                        
+                        let result = serde_json::json!({
+                            "deleted_count": deleted_count,
+                            "component_ids": ids,
+                            "failed_ids": failed_ids,
+                            "success": deleted_count == ids.len()
+                        });
+                        let content = serde_json::to_string_pretty(&result)
+                            .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                        Ok(CallToolResult::success(vec![Content::text(content)]))
+                    },
+                    _ => {
+                        Err(McpError::invalid_params(
+                            format!("Unsupported operation '{}' or entity type '{}'", operation, entity_type),
+                            None
+                        ))
+                    }
+                }
             },
             
             // Project Management
