@@ -133,7 +133,8 @@ impl ServerHandler for EnhancedContextMcpServer {
                     "type": "object",
                     "properties": {
                         "entity_type": {"type": "string", "enum": ["project", "business_rule", "architectural_decision", "performance_requirement", "security_policy", "flutter_component", "development_phase", "feature_context"], "description": "The type of entities to list"},
-                        "project_id": {"type": "string", "description": "Optional project ID to filter by"}
+                        "project_id": {"type": "string", "description": "Optional project ID to filter by"},
+                        "architecture_layer": {"type": "string", "description": "Optional architecture layer to filter framework components by (only applies to flutter_component entity type)"}
                     },
                     "required": ["entity_type"]
                 }).as_object().unwrap().clone()),
@@ -730,6 +731,8 @@ impl ServerHandler for EnhancedContextMcpServer {
                         
                         // Update the component fields
                         component.component_name = component_name.to_string();
+                        component.component_type = component_type.to_string();
+                        component.architecture_layer = architecture_layer.to_string();
                         
                         if let Some(fp) = file_path {
                             component.file_path = Some(fp.to_string());
@@ -793,6 +796,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                 let entity_type = args.get("entity_type").and_then(|v| v.as_str())
                     .ok_or_else(|| McpError::invalid_params("Missing required parameter: entity_type", None))?;
                 let project_id = args.get("project_id").and_then(|v| v.as_str());
+                let architecture_layer = args.get("architecture_layer").and_then(|v| v.as_str());
                 
                 let result = match entity_type {
                     "project" => {
@@ -817,7 +821,13 @@ impl ServerHandler for EnhancedContextMcpServer {
                     },
                     "flutter_component" => {
                         if let Some(pid) = project_id {
-                            let components = self.container.framework_service.list_components(pid).await?;
+                            let components = if let Some(layer) = architecture_layer {
+                                // Use list_components_by_layer if architecture_layer is specified
+                                self.container.framework_service.list_components_by_layer(pid, layer).await?
+                            } else {
+                                // Use list_components if no layer is specified
+                                self.container.framework_service.list_components(pid).await?
+                            };
                             serde_json::to_value(components).map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?
                         } else {
                             return Err(McpError::invalid_params("Missing required parameter: project_id for flutter_component listing", None))
