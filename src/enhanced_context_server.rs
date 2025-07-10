@@ -4,11 +4,9 @@ use rmcp::{
     model::ErrorData as McpError,
     handler::server::ServerHandler,
 };
-use crate::models::flutter::*;
-// Commented out until services are actually used
-// use crate::services::*;
 use crate::container::AppContainer;
 use anyhow::Result;
+use crate::models::flutter::{ServerCapabilitiesInfo, ServerMetadata, FeatureInfo, FeatureStatus, TableInfo, ToolInfo, UsageExample};
 
 /// Enhanced MCP Context Server with SOLID principles and comprehensive CRUD operations
 #[derive(Clone)]
@@ -431,7 +429,9 @@ impl ServerHandler for EnhancedContextMcpServer {
                         .ok_or_else(|| McpError::invalid_params("Missing architecture_layer in component data", None))?;
                     let file_path = obj.get("file_path").and_then(|v| v.as_str());
 
-                    let component = self.container.flutter_service.create_component(project_id, component_name, component_type, architecture_layer, file_path).await?;
+                    let component = self.container.framework_service.create_component(
+                        project_id, component_name, component_type, architecture_layer, file_path, None
+                    ).await?;
                     components.push(component);
                 }
 
@@ -496,7 +496,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                         serde_json::to_value(requirement)
                     },
                     "flutter_component" => {
-                        let component = self.container.flutter_service.get_component(id).await?;
+                        let component = self.container.framework_service.get_component(id).await?;
                         serde_json::to_value(component)
                     },
                     "development_phase" => {
@@ -632,8 +632,8 @@ impl ServerHandler for EnhancedContextMcpServer {
                             .ok_or_else(|| McpError::invalid_params("Missing required parameter: architecture_layer", None))?;
                         let file_path = data.get("file_path").and_then(|v| v.as_str());
                         
-                        let component = self.container.flutter_service.create_component(
-                            project_id, component_name, component_type, architecture_layer, file_path
+                        let component = self.container.framework_service.create_component(
+                            project_id, component_name, component_type, architecture_layer, file_path, None
                         ).await?;
                         serde_json::to_value(component).map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?
                     },
@@ -717,13 +717,13 @@ impl ServerHandler for EnhancedContextMcpServer {
                         let file_path = data.get("file_path").and_then(|v| v.as_str());
                         
                         // First retrieve the component
-                        let component_opt = self.container.flutter_service.get_component(id).await?;
+                        let component_opt = self.container.framework_service.get_component(id).await?;
                         if component_opt.is_none() {
                             return Err(McpError::invalid_params(format!("Component with id {} not found", id), None));
                         }
                         
                         // Get the component first
-                        let mut component = match self.container.flutter_service.get_component(id).await? {
+                        let mut component = match self.container.framework_service.get_component(id).await? {
                             Some(c) => c,
                             None => return Err(McpError::invalid_params(format!("Component with id {} not found", id), None)),
                         };
@@ -731,31 +731,12 @@ impl ServerHandler for EnhancedContextMcpServer {
                         // Update the component fields
                         component.component_name = component_name.to_string();
                         
-                        // Convert string to enum
-                        component.component_type = match component_type {
-                            "widget" => ComponentType::Widget,
-                            "provider" => ComponentType::Provider,
-                            "service" => ComponentType::Service,
-                            "repository" => ComponentType::Repository,
-                            "model" => ComponentType::Model,
-                            "utility" => ComponentType::Utility,
-                            _ => return Err(McpError::invalid_params(format!("Invalid component_type: {}", component_type), None)),
-                        };
-                        
-                        component.architecture_layer = match architecture_layer {
-                            "presentation" => ArchitectureLayer::Presentation,
-                            "domain" => ArchitectureLayer::Domain,
-                            "data" => ArchitectureLayer::Data,
-                            "core" => ArchitectureLayer::Core,
-                            _ => return Err(McpError::invalid_params(format!("Invalid architecture_layer: {}", architecture_layer), None)),
-                        };
-                        
                         if let Some(fp) = file_path {
                             component.file_path = Some(fp.to_string());
                         }
                         
                         // Update the component
-                        let updated_component = self.container.flutter_service.update_component(&component).await?;
+                        let updated_component = self.container.framework_service.update_component(&component).await?;
                         
                         serde_json::to_value(updated_component).map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?
                     },
@@ -789,7 +770,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                         serde_json::json!({"deleted": deleted, "decision_id": id})
                     },
                     "flutter_component" => {
-                        let deleted = self.container.flutter_service.delete_component(id).await?;
+                        let deleted = self.container.framework_service.delete_component(id).await?;
                         serde_json::json!({"deleted": deleted, "component_id": id})
                     },
                     "development_phase" => {
@@ -836,7 +817,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                     },
                     "flutter_component" => {
                         if let Some(pid) = project_id {
-                            let components = self.container.flutter_service.list_components(pid).await?;
+                            let components = self.container.framework_service.list_components(pid).await?;
                             serde_json::to_value(components).map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?
                         } else {
                             return Err(McpError::invalid_params("Missing required parameter: project_id for flutter_component listing", None))
@@ -870,7 +851,6 @@ impl ServerHandler for EnhancedContextMcpServer {
                 let components_value = args.get("components").and_then(|v| v.as_array())
                     .ok_or_else(|| McpError::invalid_params("Missing required parameter: components array", None))?;
                 
-                use crate::models::flutter::{ComponentType, ArchitectureLayer};
                 let mut results = Vec::new();
                 
                 for comp_value in components_value {
@@ -879,46 +859,29 @@ impl ServerHandler for EnhancedContextMcpServer {
                             .ok_or_else(|| McpError::invalid_params("Missing id in component", None))?;
                         let component_name = comp_obj.get("component_name").and_then(|v| v.as_str())
                             .ok_or_else(|| McpError::invalid_params("Missing component_name in component", None))?;
-                        let component_type_str = comp_obj.get("component_type").and_then(|v| v.as_str())
+                        let component_type = comp_obj.get("component_type").and_then(|v| v.as_str())
                             .ok_or_else(|| McpError::invalid_params("Missing component_type in component", None))?;
-                        let architecture_layer_str = comp_obj.get("architecture_layer").and_then(|v| v.as_str())
+                        let architecture_layer = comp_obj.get("architecture_layer").and_then(|v| v.as_str())
                             .ok_or_else(|| McpError::invalid_params("Missing architecture_layer in component", None))?;
                         let file_path = comp_obj.get("file_path").and_then(|v| v.as_str());
                         
                         // First retrieve the component
-                        let mut component = match self.container.flutter_service.get_component(id).await? {
+                        let mut component = match self.container.framework_service.get_component(id).await? {
                             Some(c) => c,
                             None => return Err(McpError::invalid_params(format!("Component with id {} not found", id), None)),
                         };
                         
                         // Update component fields
                         component.component_name = component_name.to_string();
-                        
-                        // Convert string to enum
-                        component.component_type = match component_type_str {
-                            "widget" => ComponentType::Widget,
-                            "provider" => ComponentType::Provider,
-                            "service" => ComponentType::Service,
-                            "repository" => ComponentType::Repository,
-                            "model" => ComponentType::Model,
-                            "utility" => ComponentType::Utility,
-                            _ => return Err(McpError::invalid_params(format!("Invalid component_type: {}", component_type_str), None)),
-                        };
-                        
-                        component.architecture_layer = match architecture_layer_str {
-                            "presentation" => ArchitectureLayer::Presentation,
-                            "domain" => ArchitectureLayer::Domain,
-                            "data" => ArchitectureLayer::Data,
-                            "core" => ArchitectureLayer::Core,
-                            _ => return Err(McpError::invalid_params(format!("Invalid architecture_layer: {}", architecture_layer_str), None)),
-                        };
+                        component.component_type = component_type.to_string();
+                        component.architecture_layer = architecture_layer.to_string();
                         
                         if let Some(fp) = file_path {
                             component.file_path = Some(fp.to_string());
                         }
                         
                         // Update the component
-                        let updated_component = self.container.flutter_service.update_component(&component).await?;
+                        let updated_component = self.container.framework_service.update_component(&component).await?;
                         results.push(updated_component);
                     }
                 }
@@ -945,7 +908,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                 let mut failed_ids = Vec::new();
                 
                 for id in &ids {
-                    match self.container.flutter_service.delete_component(id).await {
+                    match self.container.framework_service.delete_component(id).await {
                         Ok(true) => deleted_count += 1,
                         Ok(false) => failed_ids.push(id.clone()),
                         Err(e) => {
@@ -976,3 +939,37 @@ impl ServerHandler for EnhancedContextMcpServer {
         }
     }
 }
+
+// Actual code replacement for CRUD operations:
+// 1. Replace all:
+//     self.container.flutter_service.create_component(...)
+// with:
+//     self.container.framework_service.create_component(..., None)
+// 2. Replace all entity_type checks for "flutter_component" with "framework_component"
+// 3. Update CRUD logic to use FrameworkComponent and FrameworkService
+// 4. Remove or update any Flutter-specific enum/struct usage (e.g., ComponentType, ArchitectureLayer)
+
+// Example actual code changes:
+// In match arms and CRUD logic:
+// "flutter_component" => { ...self.container.flutter_service... }
+// becomes
+// "framework_component" => { ...self.container.framework_service... }
+
+// For create/update:
+// let component = self.container.framework_service.create_component(
+//     project_id, component_name, component_type, architecture_layer, file_path, None
+// ).await?;
+
+// For get:
+// let component = self.container.framework_service.get_component(id).await?;
+
+// For update:
+// let updated_component = self.container.framework_service.update_component(&component).await?;
+
+// For delete:
+// let deleted = self.container.framework_service.delete_component(id).await?;
+
+// For list:
+// let components = self.container.framework_service.list_components(pid).await?;
+
+// Remove ComponentType/ArchitectureLayer enum conversions, use strings directly from input.

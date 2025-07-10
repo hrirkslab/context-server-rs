@@ -10,6 +10,7 @@ pub mod security_policy_repository;
 pub mod project_convention_repository;
 pub mod feature_context_repository;
 pub mod extended_repositories;
+pub mod framework_repository;
 
 // Re-export repository traits
 pub use project_repository::ProjectRepository;
@@ -25,3 +26,4 @@ pub use extended_repositories::{
     PrivacyRuleRepository, PrivacyViolationRepository, ArchitectureLayerRepository,
     ModelContextRepository, CodeTemplateRepository
 };
+pub use framework_repository::FrameworkRepository;

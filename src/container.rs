@@ -11,6 +11,7 @@ use crate::infrastructure::{
     SqliteBusinessRuleRepository,
     SqliteArchitecturalDecisionRepository,
     SqlitePerformanceRequirementRepository,
+    SqliteFrameworkRepository,
 };
 
 // Service layer
@@ -26,6 +27,8 @@ use crate::services::{
     ArchitectureValidationService, 
     architecture_validation_service::ArchitectureValidationServiceImpl,
     context_crud_service::{ContextCrudService, ContextCrudServiceImpl},
+    FrameworkService,
+    framework_service::FrameworkServiceImpl,
 };
 
 /// Application container holding all dependencies
@@ -38,6 +41,7 @@ pub struct AppContainer {
     pub context_query_service: Box<dyn ContextQueryService>,
     pub architecture_validation_service: Box<dyn ArchitectureValidationService>,
     pub context_crud_service: Box<dyn ContextCrudService>,
+    pub framework_service: Box<dyn FrameworkService>,
 }
 
 impl AppContainer {
@@ -80,6 +84,10 @@ impl AppContainer {
             SqlitePerformanceRequirementRepository::new(db.clone()),
         ));
 
+        // Create framework service
+        let framework_repository = SqliteFrameworkRepository::new(db.clone());
+        let framework_service = Box::new(FrameworkServiceImpl::new(framework_repository));
+
         Ok(AppContainer {
             project_service,
             flutter_service,
@@ -87,6 +95,7 @@ impl AppContainer {
             context_query_service,
             architecture_validation_service,
             context_crud_service,
+            framework_service,
         })
     }
 }
