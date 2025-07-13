@@ -632,9 +632,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                     }
                     _ => return Err(McpError::invalid_params("Invalid entity_type", None)),
                 }
-                .map_err(|e| {
-                    McpError::internal_error(format!("Serialization error: {e}"), None)
-                })?;
+                .map_err(|e| McpError::internal_error(format!("Serialization error: {e}"), None))?;
 
                 let content = serde_json::to_string_pretty(&result).map_err(|e| {
                     McpError::internal_error(format!("Serialization error: {e}"), None)
@@ -1089,7 +1087,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                             self.container.framework_service.get_component(id).await?;
                         if component_opt.is_none() {
                             return Err(McpError::invalid_params(
-                                    format!("Component with id {id} not found"),
+                                format!("Component with id {id} not found"),
                                 None,
                             ));
                         }
