@@ -95,14 +95,12 @@ impl<FS: FrameworkService> ArchitectureValidationService for ArchitectureValidat
     }
 
     async fn validate_component_dependencies(&self, component: &FrameworkComponent) -> Result<Vec<String>, McpError> {
-        let violations = match component.architecture_layer.as_str() {
-            "presentation" => self.validate_presentation_layer(component),
-            "domain" => self.validate_domain_layer(component),
-            "data" => self.validate_data_layer(component),
-            "core" => self.validate_core_layer(component),
-            _ => {
-                vec![format!("Unknown architecture layer: {}", component.architecture_layer)]
-            }
+        let violations = match ArchitectureLayer::from_str(&component.architecture_layer) {
+            Ok(ArchitectureLayer::Presentation) => self.validate_presentation_layer(component),
+            Ok(ArchitectureLayer::Domain) => self.validate_domain_layer(component),
+            Ok(ArchitectureLayer::Data) => self.validate_data_layer(component),
+            Ok(ArchitectureLayer::Core) => self.validate_core_layer(component),
+            Err(err) => vec![err],
         };
         
         Ok(violations)
