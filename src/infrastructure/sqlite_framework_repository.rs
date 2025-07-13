@@ -29,7 +29,7 @@ impl FrameworkRepository for SqliteFrameworkRepository {
             .unwrap_or_default();
 
         let dependencies_json = serde_json::to_string(&component.dependencies)
-            .unwrap_or_else(|_| "[]".to_string());
+            .map_err(|e| McpError::internal_error(format!("Failed to serialize dependencies: {}", e), None))?;
 
         db.execute(
             "INSERT INTO framework_components (id, project_id, component_name, component_type, architecture_layer, file_path, dependencies, metadata, created_at, updated_at) 
