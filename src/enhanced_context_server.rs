@@ -1075,36 +1075,3 @@ impl ServerHandler for EnhancedContextMcpServer {
     }
 }
 
-// Actual code replacement for CRUD operations:
-// 1. Replace all:
-//     self.container.flutter_service.create_component(...)
-// with:
-//     self.container.framework_service.create_component(..., None)
-// 2. Replace all entity_type checks for "flutter_component" with "framework_component"
-// 3. Update CRUD logic to use FrameworkComponent and FrameworkService
-// 4. Remove or update any Flutter-specific enum/struct usage (e.g., ComponentType, ArchitectureLayer)
-
-// Example actual code changes:
-// In match arms and CRUD logic:
-// "flutter_component" => { ...self.container.flutter_service... }
-// becomes
-// "framework_component" => { ...self.container.framework_service... }
-
-// For create/update:
-// let component = self.container.framework_service.create_component(
-//     project_id, component_name, component_type, architecture_layer, file_path, None
-// ).await?;
-
-// For get:
-// let component = self.container.framework_service.get_component(id).await?;
-
-// For update:
-// let updated_component = self.container.framework_service.update_component(&component).await?;
-
-// For delete:
-// let deleted = self.container.framework_service.delete_component(id).await?;
-
-// For list:
-// let components = self.container.framework_service.list_components(pid).await?;
-
-// Remove ComponentType/ArchitectureLayer enum conversions, use strings directly from input.
