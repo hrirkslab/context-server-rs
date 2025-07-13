@@ -275,3 +275,33 @@ You can add context data by:
 - **Code Templates**: Generate boilerplate for widgets, providers, repositories
 - **Performance Monitoring**: Track inference times and memory usage for LLM integration
 - **Testing Context**: Store testing patterns and coverage information
+
+## Examples and Troubleshooting
+
+### 📖 **API Usage Examples**
+See [`examples/api_usage.md`](examples/api_usage.md) for comprehensive examples including:
+- Project creation and management
+- Entity creation (business rules, components, decisions)
+- Bulk operations
+- Context queries
+- Error handling patterns
+
+### 🔧 **Troubleshooting Guide**
+See [`examples/troubleshooting.md`](examples/troubleshooting.md) for solutions to common issues:
+- **"Missing required parameter: data for create"** - Parameter format solutions
+- **"FOREIGN KEY constraint failed"** - Entity relationship requirements
+- **Best practices** for avoiding common API errors
+
+### 💡 **Quick Start Examples**
+
+**Create a project and add components:**
+```json
+// 1. Create project
+{"action": "create", "data": {"name": "My Flutter App"}}
+
+// 2. Add business rule  
+{"entity_type": "business_rule", "data": {"project_id": "proj-123", "rule_name": "User Login"}}
+
+// 3. Add component
+{"entity_type": "framework_component", "data": {"project_id": "proj-123", "component_name": "LoginForm"}}
+```

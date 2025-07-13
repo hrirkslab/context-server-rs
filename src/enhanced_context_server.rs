@@ -649,18 +649,28 @@ impl ServerHandler for EnhancedContextMcpServer {
 
                 let result = match action {
                     "create" => {
-                        let data =
-                            args.get("data")
-                                .and_then(|v| v.as_object())
-                                .ok_or_else(|| {
-                                    McpError::invalid_params(
-                                        "Missing required parameter: data for create",
-                                        None,
-                                    )
-                                })?;
-                        let name = data.get("name").and_then(|v| v.as_str()).unwrap_or("");
-                        let description = data.get("description").and_then(|v| v.as_str());
-                        let repository_url = data.get("repository_url").and_then(|v| v.as_str());
+                        // Try to get data from 'data' field first, then fall back to direct args
+                        let (name, description, repository_url) = if let Some(data) = args.get("data").and_then(|v| v.as_object()) {
+                            // Data is in nested 'data' object
+                            let name = data.get("name").and_then(|v| v.as_str()).unwrap_or("");
+                            let description = data.get("description").and_then(|v| v.as_str());
+                            let repository_url = data.get("repository_url").and_then(|v| v.as_str());
+                            (name, description, repository_url)
+                        } else {
+                            // Try direct args for convenience
+                            let name = args.get("name").and_then(|v| v.as_str()).unwrap_or("");
+                            let description = args.get("description").and_then(|v| v.as_str());
+                            let repository_url = args.get("repository_url").and_then(|v| v.as_str());
+                            (name, description, repository_url)
+                        };
+
+                        if name.is_empty() {
+                            return Err(McpError::invalid_params(
+                                "Missing required parameter: name (either in 'data' object or as direct parameter)",
+                                None,
+                            ));
+                        }
+
                         let project = self
                             .container
                             .project_service
@@ -691,12 +701,10 @@ impl ServerHandler for EnhancedContextMcpServer {
                     }
                     _ => return Err(McpError::invalid_params("Unsupported action", None)),
                 }
-                .map_err(|e| {
-                    McpError::internal_error(format!("Serialization error: {}", e), None)
-                })?;
+                .map_err(|e| McpError::internal_error(format!("Serialization error: {e}"), None))?;
 
                 let content = serde_json::to_string_pretty(&result).map_err(|e| {
-                    McpError::internal_error(format!("Serialization error: {}", e), None)
+                    McpError::internal_error(format!("Serialization error: {e}"), None)
                 })?;
                 Ok(CallToolResult::success(vec![Content::text(content)]))
             }
