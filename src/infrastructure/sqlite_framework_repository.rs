@@ -24,7 +24,8 @@ impl FrameworkRepository for SqliteFrameworkRepository {
         )?;
 
         let metadata_json = component.metadata.as_ref()
-            .map(|m| serde_json::to_string(m).unwrap_or_default())
+            .map(|m| serde_json::to_string(m).map_err(|e| McpError::internal_error(format!("Failed to serialize metadata: {}", e), None)))
+            .transpose()?
             .unwrap_or_default();
 
         let dependencies_json = serde_json::to_string(&component.dependencies)
