@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  context-server:
+    build: .
+    container_name: mcp-context-server
+    restart: unless-stopped
+    volumes:
+      - context_data:/app/config
+    environment:
+      - RUST_LOG=info
+      - DATABASE_PATH=/app/config/context.db
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "echo", '{"jsonrpc":"2.0","id":1,"method":"ping"}']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  context_data:
+    driver: local

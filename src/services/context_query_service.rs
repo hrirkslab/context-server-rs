@@ -1,6 +1,10 @@
+use crate::models::context::{
+    ArchitecturalDecision, BusinessRule, PerformanceRequirement, ProjectConvention, SecurityPolicy,
+};
+use crate::repositories::{
+    ArchitecturalDecisionRepository, BusinessRuleRepository, PerformanceRequirementRepository,
+};
 use async_trait::async_trait;
-use crate::models::context::{BusinessRule, ArchitecturalDecision, PerformanceRequirement, SecurityPolicy, ProjectConvention};
-use crate::repositories::{BusinessRuleRepository, ArchitecturalDecisionRepository, PerformanceRequirementRepository};
 use rmcp::model::ErrorData as McpError;
 
 /// Result of context query
@@ -17,17 +21,17 @@ pub struct ContextQueryResult {
 #[async_trait]
 pub trait ContextQueryService: Send + Sync {
     async fn query_context(
-        &self, 
-        project_id: &str, 
-        feature_area: &str, 
-        task_type: &str, 
-        components: &[String]
+        &self,
+        project_id: &str,
+        feature_area: &str,
+        task_type: &str,
+        components: &[String],
     ) -> Result<ContextQueryResult, McpError>;
 }
 
 /// Implementation of ContextQueryService
-pub struct ContextQueryServiceImpl<BR, ADR, PR> 
-where 
+pub struct ContextQueryServiceImpl<BR, ADR, PR>
+where
     BR: BusinessRuleRepository,
     ADR: ArchitecturalDecisionRepository,
     PR: PerformanceRequirementRepository,
@@ -38,7 +42,7 @@ where
 }
 
 impl<BR, ADR, PR> ContextQueryServiceImpl<BR, ADR, PR>
-where 
+where
     BR: BusinessRuleRepository,
     ADR: ArchitecturalDecisionRepository,
     PR: PerformanceRequirementRepository,
@@ -58,30 +62,33 @@ where
 
 #[async_trait]
 impl<BR, ADR, PR> ContextQueryService for ContextQueryServiceImpl<BR, ADR, PR>
-where 
+where
     BR: BusinessRuleRepository,
     ADR: ArchitecturalDecisionRepository,
     PR: PerformanceRequirementRepository,
 {
     async fn query_context(
-        &self, 
-        project_id: &str, 
-        feature_area: &str, 
-        _task_type: &str, 
-        _components: &[String]
+        &self,
+        project_id: &str,
+        feature_area: &str,
+        _task_type: &str,
+        _components: &[String],
     ) -> Result<ContextQueryResult, McpError> {
         // Query business rules for the feature area
-        let business_rules = self.business_rule_repository
+        let business_rules = self
+            .business_rule_repository
             .find_by_domain_area(project_id, feature_area)
             .await?;
 
         // Query architectural decisions
-        let architectural_decisions = self.architectural_decision_repository
+        let architectural_decisions = self
+            .architectural_decision_repository
             .find_by_project_id(project_id)
             .await?;
 
         // Query performance requirements
-        let performance_requirements = self.performance_requirement_repository
+        let performance_requirements = self
+            .performance_requirement_repository
             .find_by_project_id(project_id)
             .await?;
 

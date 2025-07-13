@@ -1,6 +1,6 @@
-use async_trait::async_trait;
 use crate::models::framework::FrameworkComponent;
 use crate::repositories::FrameworkRepository;
+use async_trait::async_trait;
 use rmcp::model::ErrorData as McpError;
 
 /// Service for generic framework/language component operations
@@ -18,8 +18,15 @@ pub trait FrameworkService: Send + Sync {
 
     async fn get_component(&self, id: &str) -> Result<Option<FrameworkComponent>, McpError>;
     async fn list_components(&self, project_id: &str) -> Result<Vec<FrameworkComponent>, McpError>;
-    async fn list_components_by_layer(&self, project_id: &str, layer: &str) -> Result<Vec<FrameworkComponent>, McpError>;
-    async fn update_component(&self, component: &FrameworkComponent) -> Result<FrameworkComponent, McpError>;
+    async fn list_components_by_layer(
+        &self,
+        project_id: &str,
+        layer: &str,
+    ) -> Result<Vec<FrameworkComponent>, McpError>;
+    async fn update_component(
+        &self,
+        component: &FrameworkComponent,
+    ) -> Result<FrameworkComponent, McpError>;
     async fn delete_component(&self, id: &str) -> Result<bool, McpError>;
 }
 
@@ -69,11 +76,20 @@ impl<R: FrameworkRepository + Send + Sync> FrameworkService for FrameworkService
         self.repository.find_by_project_id(project_id).await
     }
 
-    async fn list_components_by_layer(&self, project_id: &str, layer: &str) -> Result<Vec<FrameworkComponent>, McpError> {
-        self.repository.find_by_architecture_layer(project_id, layer).await
+    async fn list_components_by_layer(
+        &self,
+        project_id: &str,
+        layer: &str,
+    ) -> Result<Vec<FrameworkComponent>, McpError> {
+        self.repository
+            .find_by_architecture_layer(project_id, layer)
+            .await
     }
 
-    async fn update_component(&self, component: &FrameworkComponent) -> Result<FrameworkComponent, McpError> {
+    async fn update_component(
+        &self,
+        component: &FrameworkComponent,
+    ) -> Result<FrameworkComponent, McpError> {
         let mut updated_component = component.clone();
         updated_component.updated_at = Some(chrono::Utc::now().to_rfc3339());
         self.repository.update(&updated_component).await

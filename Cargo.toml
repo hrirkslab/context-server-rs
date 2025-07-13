@@ -1,7 +1,14 @@
 [package]
 name = "context-server-rs"
-version = "0.1.0"
-edition = "2024"
+version = "0.2.0"
+edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+description = "Production-ready MCP Context Server for AI Code Generation"
+license = "MIT"
+repository = "https://github.com/hrirkslab/context-server-rs"
+readme = "README.md"
+keywords = ["mcp", "ai", "context", "code-generation"]
+categories = ["development-tools", "web-programming"]
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }
@@ -16,3 +23,17 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 chrono = { version = "0.4", features = ["serde"] }
 dirs = "6.0.0"
 async-trait = "0.1"
+
+[dev-dependencies]
+tokio-test = "0.4"
+tempfile = "3.0"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.dev]
+debug = true
+opt-level = 0

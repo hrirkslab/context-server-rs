@@ -1,13 +1,18 @@
-use async_trait::async_trait;
 use crate::models::context::Project;
 use crate::repositories::ProjectRepository;
+use async_trait::async_trait;
 use rmcp::model::ErrorData as McpError;
 use uuid::Uuid;
 
 /// Service for Project operations following Single Responsibility Principle
 #[async_trait]
 pub trait ProjectService: Send + Sync {
-    async fn create_project(&self, name: &str, description: Option<&str>, repository_url: Option<&str>) -> Result<Project, McpError>;
+    async fn create_project(
+        &self,
+        name: &str,
+        description: Option<&str>,
+        repository_url: Option<&str>,
+    ) -> Result<Project, McpError>;
     #[allow(dead_code)]
     async fn get_project(&self, id: &str) -> Result<Option<Project>, McpError>;
     async fn list_projects(&self) -> Result<Vec<Project>, McpError>;
@@ -30,10 +35,15 @@ impl<R: ProjectRepository> ProjectServiceImpl<R> {
 
 #[async_trait]
 impl<R: ProjectRepository> ProjectService for ProjectServiceImpl<R> {
-    async fn create_project(&self, name: &str, description: Option<&str>, repository_url: Option<&str>) -> Result<Project, McpError> {
+    async fn create_project(
+        &self,
+        name: &str,
+        description: Option<&str>,
+        repository_url: Option<&str>,
+    ) -> Result<Project, McpError> {
         let id = Uuid::new_v4().to_string();
         let now = chrono::Utc::now().to_rfc3339();
-        
+
         let project = Project {
             id,
             name: name.to_string(),

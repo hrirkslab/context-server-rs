@@ -1,13 +1,9 @@
-use std::sync::{Arc, Mutex};
-use rusqlite::Connection;
-use rmcp::{
-    model::*,
-    model::ErrorData as McpError,
-    handler::server::ServerHandler,
-};
 use crate::models::context::*;
 use crate::models::flutter::*;
 use anyhow::Result;
+use rmcp::{handler::server::ServerHandler, model::ErrorData as McpError, model::*};
+use rusqlite::Connection;
+use std::sync::{Arc, Mutex};
 use uuid::Uuid;
 
 /// MCP Context Server that provides curated project context to AI agents
@@ -27,25 +23,33 @@ impl ContextMcpServer {
     }
 
     /// Query context based on feature area and task type
-    async fn query_context(&self, project_id: &str, feature_area: &str, _task_type: &str, _components: &[String]) -> Result<ContextQueryResult, McpError> {
+    async fn query_context(
+        &self,
+        project_id: &str,
+        feature_area: &str,
+        _task_type: &str,
+        _components: &[String],
+    ) -> Result<ContextQueryResult, McpError> {
         let db = self.db.lock().unwrap();
-        
+
         // Query business rules
         let mut business_rules = Vec::new();
         let mut stmt = db.prepare("SELECT id, project_id, rule_name, description, domain_area, implementation_pattern, constraints, examples, created_at FROM business_rules WHERE project_id = ? AND (domain_area = ? OR domain_area IS NULL)").map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
-        let rules = stmt.query_map([project_id, feature_area], |row| {
-            Ok(BusinessRule {
-                id: row.get(0)?,
-                project_id: row.get(1)?,
-                rule_name: row.get(2)?,
-                description: row.get(3)?,
-                domain_area: row.get(4)?,
-                implementation_pattern: row.get(5)?,
-                constraints: row.get(6)?,
-                examples: row.get(7)?,
-                created_at: row.get(8)?,
+        let rules = stmt
+            .query_map([project_id, feature_area], |row| {
+                Ok(BusinessRule {
+                    id: row.get(0)?,
+                    project_id: row.get(1)?,
+                    rule_name: row.get(2)?,
+                    description: row.get(3)?,
+                    domain_area: row.get(4)?,
+                    implementation_pattern: row.get(5)?,
+                    constraints: row.get(6)?,
+                    examples: row.get(7)?,
+                    created_at: row.get(8)?,
+                })
             })
-        }).map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
+            .map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
 
         for rule in rules {
             match rule {
@@ -57,19 +61,21 @@ impl ContextMcpServer {
         // Query architectural decisions
         let mut architectural_decisions = Vec::new();
         let mut stmt = db.prepare("SELECT id, project_id, decision_title, context, decision, consequences, alternatives_considered, status, created_at FROM architectural_decisions WHERE project_id = ?").map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
-        let decisions = stmt.query_map([project_id], |row| {
-            Ok(ArchitecturalDecision {
-                id: row.get(0)?,
-                project_id: row.get(1)?,
-                decision_title: row.get(2)?,
-                context: row.get(3)?,
-                decision: row.get(4)?,
-                consequences: row.get(5)?,
-                alternatives_considered: row.get(6)?,
-                status: row.get(7)?,
-                created_at: row.get(8)?,
+        let decisions = stmt
+            .query_map([project_id], |row| {
+                Ok(ArchitecturalDecision {
+                    id: row.get(0)?,
+                    project_id: row.get(1)?,
+                    decision_title: row.get(2)?,
+                    context: row.get(3)?,
+                    decision: row.get(4)?,
+                    consequences: row.get(5)?,
+                    alternatives_considered: row.get(6)?,
+                    status: row.get(7)?,
+                    created_at: row.get(8)?,
+                })
             })
-        }).map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
+            .map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
 
         for decision in decisions {
             match decision {
@@ -81,18 +87,20 @@ impl ContextMcpServer {
         // Query performance requirements
         let mut performance_requirements = Vec::new();
         let mut stmt = db.prepare("SELECT id, project_id, component_area, requirement_type, target_value, optimization_patterns, avoid_patterns, created_at FROM performance_requirements WHERE project_id = ?").map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
-        let requirements = stmt.query_map([project_id], |row| {
-            Ok(PerformanceRequirement {
-                id: row.get(0)?,
-                project_id: row.get(1)?,
-                component_area: row.get(2)?,
-                requirement_type: row.get(3)?,
-                target_value: row.get(4)?,
-                optimization_patterns: row.get(5)?,
-                avoid_patterns: row.get(6)?,
-                created_at: row.get(7)?,
+        let requirements = stmt
+            .query_map([project_id], |row| {
+                Ok(PerformanceRequirement {
+                    id: row.get(0)?,
+                    project_id: row.get(1)?,
+                    component_area: row.get(2)?,
+                    requirement_type: row.get(3)?,
+                    target_value: row.get(4)?,
+                    optimization_patterns: row.get(5)?,
+                    avoid_patterns: row.get(6)?,
+                    created_at: row.get(7)?,
+                })
             })
-        }).map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
+            .map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
 
         for requirement in requirements {
             match requirement {
@@ -114,18 +122,20 @@ impl ContextMcpServer {
     async fn list_projects(&self) -> Result<Vec<Project>, McpError> {
         let db = self.db.lock().unwrap();
         let mut projects = Vec::new();
-        
+
         let mut stmt = db.prepare("SELECT id, name, description, repository_url, created_at, updated_at FROM projects").map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
-        let project_rows = stmt.query_map([], |row| {
-            Ok(Project {
-                id: row.get(0)?,
-                name: row.get(1)?,
-                description: row.get(2)?,
-                repository_url: row.get(3)?,
-                created_at: row.get(4)?,
-                updated_at: row.get(5)?,
+        let project_rows = stmt
+            .query_map([], |row| {
+                Ok(Project {
+                    id: row.get(0)?,
+                    name: row.get(1)?,
+                    description: row.get(2)?,
+                    repository_url: row.get(3)?,
+                    created_at: row.get(4)?,
+                    updated_at: row.get(5)?,
+                })
             })
-        }).map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
+            .map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
 
         for project in project_rows {
             match project {
@@ -138,11 +148,16 @@ impl ContextMcpServer {
     }
 
     /// Create a new project
-    async fn create_project(&self, name: &str, description: Option<&str>, repository_url: Option<&str>) -> Result<Project, McpError> {
+    async fn create_project(
+        &self,
+        name: &str,
+        description: Option<&str>,
+        repository_url: Option<&str>,
+    ) -> Result<Project, McpError> {
         let db = self.db.lock().unwrap();
         let id = Uuid::new_v4().to_string();
         let now = chrono::Utc::now().to_rfc3339();
-        
+
         db.execute(
             "INSERT INTO projects (id, name, description, repository_url, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
             (
@@ -166,11 +181,18 @@ impl ContextMcpServer {
     }
 
     /// Create a Flutter component
-    async fn create_flutter_component(&self, project_id: &str, component_name: &str, component_type: &str, architecture_layer: &str, file_path: Option<&str>) -> Result<FlutterComponent, McpError> {
+    async fn create_flutter_component(
+        &self,
+        project_id: &str,
+        component_name: &str,
+        component_type: &str,
+        architecture_layer: &str,
+        file_path: Option<&str>,
+    ) -> Result<FlutterComponent, McpError> {
         let db = self.db.lock().unwrap();
         let id = Uuid::new_v4().to_string();
         let now = chrono::Utc::now().to_rfc3339();
-        
+
         db.execute(
             "INSERT INTO flutter_components (id, project_id, component_name, component_type, architecture_layer, file_path, dependencies, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
@@ -221,50 +243,56 @@ impl ContextMcpServer {
     }
 
     /// List Flutter components for a project
-    async fn list_flutter_components(&self, project_id: &str) -> Result<Vec<FlutterComponent>, McpError> {
+    async fn list_flutter_components(
+        &self,
+        project_id: &str,
+    ) -> Result<Vec<FlutterComponent>, McpError> {
         let db = self.db.lock().unwrap();
         let mut components = Vec::new();
-        
+
         let mut stmt = db.prepare("SELECT id, project_id, component_name, component_type, architecture_layer, file_path, dependencies, riverpod_scope, widget_type, created_at, updated_at FROM flutter_components WHERE project_id = ?").map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
-        let component_rows = stmt.query_map([project_id], |row| {
-            let component_type_str: String = row.get(3)?;
-            let architecture_layer_str: String = row.get(4)?;
-            let dependencies_str: String = row.get(6)?;
-            
-            let component_type = match component_type_str.as_str() {
-                "widget" => ComponentType::Widget,
-                "provider" => ComponentType::Provider,
-                "service" => ComponentType::Service,
-                "repository" => ComponentType::Repository,
-                "model" => ComponentType::Model,
-                "utility" => ComponentType::Utility,
-                _ => ComponentType::Widget,
-            };
+        let component_rows = stmt
+            .query_map([project_id], |row| {
+                let component_type_str: String = row.get(3)?;
+                let architecture_layer_str: String = row.get(4)?;
+                let dependencies_str: String = row.get(6)?;
 
-            let architecture_layer = match architecture_layer_str.as_str() {
-                "presentation" => crate::models::flutter::ArchitectureLayer::Presentation,
-                "domain" => crate::models::flutter::ArchitectureLayer::Domain,
-                "data" => crate::models::flutter::ArchitectureLayer::Data,
-                "core" => crate::models::flutter::ArchitectureLayer::Core,
-                _ => crate::models::flutter::ArchitectureLayer::Presentation,
-            };
+                let component_type = match component_type_str.as_str() {
+                    "widget" => ComponentType::Widget,
+                    "provider" => ComponentType::Provider,
+                    "service" => ComponentType::Service,
+                    "repository" => ComponentType::Repository,
+                    "model" => ComponentType::Model,
+                    "utility" => ComponentType::Utility,
+                    _ => ComponentType::Widget,
+                };
 
-            let dependencies: Vec<String> = serde_json::from_str(&dependencies_str).unwrap_or_default();
+                let architecture_layer = match architecture_layer_str.as_str() {
+                    "presentation" => crate::models::flutter::ArchitectureLayer::Presentation,
+                    "domain" => crate::models::flutter::ArchitectureLayer::Domain,
+                    "data" => crate::models::flutter::ArchitectureLayer::Data,
+                    "core" => crate::models::flutter::ArchitectureLayer::Core,
+                    _ => crate::models::flutter::ArchitectureLayer::Presentation,
+                };
 
-            Ok(FlutterComponent {
-                id: row.get(0)?,
-                project_id: row.get(1)?,
-                component_name: row.get(2)?,
-                component_type,
-                architecture_layer,
-                file_path: row.get(5)?,
-                dependencies,
-                riverpod_scope: None, // TODO: Parse from database
-                widget_type: None, // TODO: Parse from database
-                created_at: row.get(9)?,
-                updated_at: row.get(10)?,
+                let dependencies: Vec<String> =
+                    serde_json::from_str(&dependencies_str).unwrap_or_default();
+
+                Ok(FlutterComponent {
+                    id: row.get(0)?,
+                    project_id: row.get(1)?,
+                    component_name: row.get(2)?,
+                    component_type,
+                    architecture_layer,
+                    file_path: row.get(5)?,
+                    dependencies,
+                    riverpod_scope: None, // TODO: Parse from database
+                    widget_type: None,    // TODO: Parse from database
+                    created_at: row.get(9)?,
+                    updated_at: row.get(10)?,
+                })
             })
-        }).map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
+            .map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
 
         for component in component_rows {
             match component {
@@ -277,11 +305,17 @@ impl ContextMcpServer {
     }
 
     /// Create a development phase
-    async fn create_development_phase(&self, project_id: &str, phase_name: &str, phase_order: i32, description: Option<&str>) -> Result<DevelopmentPhase, McpError> {
+    async fn create_development_phase(
+        &self,
+        project_id: &str,
+        phase_name: &str,
+        phase_order: i32,
+        description: Option<&str>,
+    ) -> Result<DevelopmentPhase, McpError> {
         let db = self.db.lock().unwrap();
         let id = Uuid::new_v4().to_string();
         let now = chrono::Utc::now().to_rfc3339();
-        
+
         db.execute(
             "INSERT INTO development_phases (id, project_id, phase_name, phase_order, status, description, completion_criteria, dependencies, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
@@ -313,40 +347,47 @@ impl ContextMcpServer {
     }
 
     /// List development phases for a project
-    async fn list_development_phases(&self, project_id: &str) -> Result<Vec<DevelopmentPhase>, McpError> {
+    async fn list_development_phases(
+        &self,
+        project_id: &str,
+    ) -> Result<Vec<DevelopmentPhase>, McpError> {
         let db = self.db.lock().unwrap();
         let mut phases = Vec::new();
-        
+
         let mut stmt = db.prepare("SELECT id, project_id, phase_name, phase_order, status, description, completion_criteria, dependencies, started_at, completed_at, created_at FROM development_phases WHERE project_id = ? ORDER BY phase_order").map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
-        let phase_rows = stmt.query_map([project_id], |row| {
-            let status_str: String = row.get(4)?;
-            let status = match status_str.as_str() {
-                "pending" => PhaseStatus::Pending,
-                "in_progress" => PhaseStatus::InProgress,
-                "completed" => PhaseStatus::Completed,
-                "blocked" => PhaseStatus::Blocked,
-                _ => PhaseStatus::Pending,
-            };
+        let phase_rows = stmt
+            .query_map([project_id], |row| {
+                let status_str: String = row.get(4)?;
+                let status = match status_str.as_str() {
+                    "pending" => PhaseStatus::Pending,
+                    "in_progress" => PhaseStatus::InProgress,
+                    "completed" => PhaseStatus::Completed,
+                    "blocked" => PhaseStatus::Blocked,
+                    _ => PhaseStatus::Pending,
+                };
 
-            let completion_criteria_str: String = row.get(6)?;
-            let dependencies_str: String = row.get(7)?;
-            let completion_criteria: Vec<String> = serde_json::from_str(&completion_criteria_str).unwrap_or_default();
-            let dependencies: Vec<String> = serde_json::from_str(&dependencies_str).unwrap_or_default();
+                let completion_criteria_str: String = row.get(6)?;
+                let dependencies_str: String = row.get(7)?;
+                let completion_criteria: Vec<String> =
+                    serde_json::from_str(&completion_criteria_str).unwrap_or_default();
+                let dependencies: Vec<String> =
+                    serde_json::from_str(&dependencies_str).unwrap_or_default();
 
-            Ok(DevelopmentPhase {
-                id: row.get(0)?,
-                project_id: row.get(1)?,
-                phase_name: row.get(2)?,
-                phase_order: row.get(3)?,
-                status,
-                description: row.get(5)?,
-                completion_criteria,
-                dependencies,
-                started_at: row.get(8)?,
-                completed_at: row.get(9)?,
-                created_at: row.get(10)?,
+                Ok(DevelopmentPhase {
+                    id: row.get(0)?,
+                    project_id: row.get(1)?,
+                    phase_name: row.get(2)?,
+                    phase_order: row.get(3)?,
+                    status,
+                    description: row.get(5)?,
+                    completion_criteria,
+                    dependencies,
+                    started_at: row.get(8)?,
+                    completed_at: row.get(9)?,
+                    created_at: row.get(10)?,
+                })
             })
-        }).map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
+            .map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
 
         for phase in phase_rows {
             match phase {
@@ -361,10 +402,10 @@ impl ContextMcpServer {
     /// Validate architecture dependencies for Flutter project
     async fn validate_architecture(&self, project_id: &str) -> Result<Vec<String>, McpError> {
         let mut violations = Vec::new();
-        
+
         // Get all components for the project
         let components = self.list_flutter_components(project_id).await?;
-        
+
         // Check architecture layer violations
         for component in &components {
             match component.architecture_layer {
@@ -385,8 +426,12 @@ impl ContextMcpServer {
                         if dep.contains("presentation/") || dep.contains("data/") {
                             violations.push(format!(
                                 "Architecture violation: {} (domain) imports from {}: {}",
-                                component.component_name, 
-                                if dep.contains("presentation/") { "presentation" } else { "data" },
+                                component.component_name,
+                                if dep.contains("presentation/") {
+                                    "presentation"
+                                } else {
+                                    "data"
+                                },
                                 dep
                             ));
                         }
@@ -395,7 +440,7 @@ impl ContextMcpServer {
                 _ => {} // Data and core layers have fewer restrictions
             }
         }
-        
+
         Ok(violations)
     }
 
@@ -597,7 +642,7 @@ impl ServerHandler for ContextMcpServer {
         _context: rmcp::service::RequestContext<rmcp::service::RoleServer>,
     ) -> Result<ListToolsResult, McpError> {
         tracing::debug!("Received list_tools request");
-        
+
         let tools = vec![
             Tool {
                 name: "query_context".into(),
@@ -776,7 +821,7 @@ impl ServerHandler for ContextMcpServer {
         ];
 
         tracing::debug!("Returning {} tools", tools.len());
-        Ok(ListToolsResult { 
+        Ok(ListToolsResult {
             tools,
             next_cursor: None,
         })
@@ -788,28 +833,39 @@ impl ServerHandler for ContextMcpServer {
         _context: rmcp::service::RequestContext<rmcp::service::RoleServer>,
     ) -> Result<CallToolResult, McpError> {
         tracing::debug!("Received call_tool request for: {}", request.name);
-        
+
         match request.name.as_ref() {
             "query_context" => {
                 tracing::debug!("Processing query_context tool");
                 let args = request.arguments.unwrap_or_default();
-                let project_id = args.get("project_id")
+                let project_id = args
+                    .get("project_id")
                     .and_then(|v| v.as_str())
                     .ok_or_else(|| McpError::invalid_params("project_id is required", None))?;
-                let feature_area = args.get("feature_area")
+                let feature_area = args
+                    .get("feature_area")
                     .and_then(|v| v.as_str())
                     .ok_or_else(|| McpError::invalid_params("feature_area is required", None))?;
-                let task_type = args.get("task_type")
+                let task_type = args
+                    .get("task_type")
                     .and_then(|v| v.as_str())
                     .ok_or_else(|| McpError::invalid_params("task_type is required", None))?;
-                let components = args.get("components")
+                let components = args
+                    .get("components")
                     .and_then(|v| v.as_array())
-                    .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect::<Vec<_>>())
+                    .map(|arr| {
+                        arr.iter()
+                            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                            .collect::<Vec<_>>()
+                    })
                     .unwrap_or_default();
 
-                let result = self.query_context(project_id, feature_area, task_type, &components).await?;
-                let content = serde_json::to_string_pretty(&result)
-                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                let result = self
+                    .query_context(project_id, feature_area, task_type, &components)
+                    .await?;
+                let content = serde_json::to_string_pretty(&result).map_err(|e| {
+                    McpError::internal_error(format!("Serialization error: {}", e), None)
+                })?;
 
                 tracing::debug!("query_context completed successfully");
                 Ok(CallToolResult::success(vec![Content::text(content)]))
@@ -817,8 +873,9 @@ impl ServerHandler for ContextMcpServer {
             "list_projects" => {
                 tracing::debug!("Processing list_projects tool");
                 let projects = self.list_projects().await?;
-                let content = serde_json::to_string_pretty(&projects)
-                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                let content = serde_json::to_string_pretty(&projects).map_err(|e| {
+                    McpError::internal_error(format!("Serialization error: {}", e), None)
+                })?;
 
                 tracing::debug!("list_projects completed successfully");
                 Ok(CallToolResult::success(vec![Content::text(content)]))
@@ -826,15 +883,19 @@ impl ServerHandler for ContextMcpServer {
             "create_project" => {
                 tracing::debug!("Processing create_project tool");
                 let args = request.arguments.unwrap_or_default();
-                let name = args.get("name")
+                let name = args
+                    .get("name")
                     .and_then(|v| v.as_str())
                     .ok_or_else(|| McpError::invalid_params("name is required", None))?;
                 let description = args.get("description").and_then(|v| v.as_str());
                 let repository_url = args.get("repository_url").and_then(|v| v.as_str());
 
-                let project = self.create_project(name, description, repository_url).await?;
-                let content = serde_json::to_string_pretty(&project)
-                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                let project = self
+                    .create_project(name, description, repository_url)
+                    .await?;
+                let content = serde_json::to_string_pretty(&project).map_err(|e| {
+                    McpError::internal_error(format!("Serialization error: {}", e), None)
+                })?;
 
                 tracing::debug!("create_project completed successfully");
                 Ok(CallToolResult::success(vec![Content::text(content)]))
@@ -842,23 +903,38 @@ impl ServerHandler for ContextMcpServer {
             "create_flutter_component" => {
                 tracing::debug!("Processing create_flutter_component tool");
                 let args = request.arguments.unwrap_or_default();
-                let project_id = args.get("project_id")
+                let project_id = args
+                    .get("project_id")
                     .and_then(|v| v.as_str())
                     .ok_or_else(|| McpError::invalid_params("project_id is required", None))?;
-                let component_name = args.get("component_name")
+                let component_name = args
+                    .get("component_name")
                     .and_then(|v| v.as_str())
                     .ok_or_else(|| McpError::invalid_params("component_name is required", None))?;
-                let component_type = args.get("component_type")
+                let component_type = args
+                    .get("component_type")
                     .and_then(|v| v.as_str())
                     .ok_or_else(|| McpError::invalid_params("component_type is required", None))?;
-                let architecture_layer = args.get("architecture_layer")
+                let architecture_layer = args
+                    .get("architecture_layer")
                     .and_then(|v| v.as_str())
-                    .ok_or_else(|| McpError::invalid_params("architecture_layer is required", None))?;
+                    .ok_or_else(|| {
+                        McpError::invalid_params("architecture_layer is required", None)
+                    })?;
                 let file_path = args.get("file_path").and_then(|v| v.as_str());
 
-                let component = self.create_flutter_component(project_id, component_name, component_type, architecture_layer, file_path).await?;
-                let content = serde_json::to_string_pretty(&component)
-                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                let component = self
+                    .create_flutter_component(
+                        project_id,
+                        component_name,
+                        component_type,
+                        architecture_layer,
+                        file_path,
+                    )
+                    .await?;
+                let content = serde_json::to_string_pretty(&component).map_err(|e| {
+                    McpError::internal_error(format!("Serialization error: {}", e), None)
+                })?;
 
                 tracing::debug!("create_flutter_component completed successfully");
                 Ok(CallToolResult::success(vec![Content::text(content)]))
@@ -866,13 +942,15 @@ impl ServerHandler for ContextMcpServer {
             "list_flutter_components" => {
                 tracing::debug!("Processing list_flutter_components tool");
                 let args = request.arguments.unwrap_or_default();
-                let project_id = args.get("project_id")
+                let project_id = args
+                    .get("project_id")
                     .and_then(|v| v.as_str())
                     .ok_or_else(|| McpError::invalid_params("project_id is required", None))?;
 
                 let components = self.list_flutter_components(project_id).await?;
-                let content = serde_json::to_string_pretty(&components)
-                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                let content = serde_json::to_string_pretty(&components).map_err(|e| {
+                    McpError::internal_error(format!("Serialization error: {}", e), None)
+                })?;
 
                 tracing::debug!("list_flutter_components completed successfully");
                 Ok(CallToolResult::success(vec![Content::text(content)]))
@@ -880,20 +958,27 @@ impl ServerHandler for ContextMcpServer {
             "create_development_phase" => {
                 tracing::debug!("Processing create_development_phase tool");
                 let args = request.arguments.unwrap_or_default();
-                let project_id = args.get("project_id")
+                let project_id = args
+                    .get("project_id")
                     .and_then(|v| v.as_str())
                     .ok_or_else(|| McpError::invalid_params("project_id is required", None))?;
-                let phase_name = args.get("phase_name")
+                let phase_name = args
+                    .get("phase_name")
                     .and_then(|v| v.as_str())
                     .ok_or_else(|| McpError::invalid_params("phase_name is required", None))?;
-                let phase_order = args.get("phase_order")
+                let phase_order = args
+                    .get("phase_order")
                     .and_then(|v| v.as_i64())
-                    .ok_or_else(|| McpError::invalid_params("phase_order is required", None))? as i32;
+                    .ok_or_else(|| McpError::invalid_params("phase_order is required", None))?
+                    as i32;
                 let description = args.get("description").and_then(|v| v.as_str());
 
-                let phase = self.create_development_phase(project_id, phase_name, phase_order, description).await?;
-                let content = serde_json::to_string_pretty(&phase)
-                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                let phase = self
+                    .create_development_phase(project_id, phase_name, phase_order, description)
+                    .await?;
+                let content = serde_json::to_string_pretty(&phase).map_err(|e| {
+                    McpError::internal_error(format!("Serialization error: {}", e), None)
+                })?;
 
                 tracing::debug!("create_development_phase completed successfully");
                 Ok(CallToolResult::success(vec![Content::text(content)]))
@@ -901,13 +986,15 @@ impl ServerHandler for ContextMcpServer {
             "list_development_phases" => {
                 tracing::debug!("Processing list_development_phases tool");
                 let args = request.arguments.unwrap_or_default();
-                let project_id = args.get("project_id")
+                let project_id = args
+                    .get("project_id")
                     .and_then(|v| v.as_str())
                     .ok_or_else(|| McpError::invalid_params("project_id is required", None))?;
 
                 let phases = self.list_development_phases(project_id).await?;
-                let content = serde_json::to_string_pretty(&phases)
-                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                let content = serde_json::to_string_pretty(&phases).map_err(|e| {
+                    McpError::internal_error(format!("Serialization error: {}", e), None)
+                })?;
 
                 tracing::debug!("list_development_phases completed successfully");
                 Ok(CallToolResult::success(vec![Content::text(content)]))
@@ -915,23 +1002,26 @@ impl ServerHandler for ContextMcpServer {
             "validate_architecture" => {
                 tracing::debug!("Processing validate_architecture tool");
                 let args = request.arguments.unwrap_or_default();
-                let project_id = args.get("project_id")
+                let project_id = args
+                    .get("project_id")
                     .and_then(|v| v.as_str())
                     .ok_or_else(|| McpError::invalid_params("project_id is required", None))?;
 
                 let violations = self.validate_architecture(project_id).await?;
-                let content = serde_json::to_string_pretty(&violations)
-                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                let content = serde_json::to_string_pretty(&violations).map_err(|e| {
+                    McpError::internal_error(format!("Serialization error: {}", e), None)
+                })?;
 
                 tracing::debug!("validate_architecture completed successfully");
                 Ok(CallToolResult::success(vec![Content::text(content)]))
             }
             "get_server_capabilities" => {
                 tracing::debug!("Processing get_server_capabilities tool");
-                
+
                 let capabilities = self.get_server_capabilities().await?;
-                let content = serde_json::to_string_pretty(&capabilities)
-                    .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
+                let content = serde_json::to_string_pretty(&capabilities).map_err(|e| {
+                    McpError::internal_error(format!("Serialization error: {}", e), None)
+                })?;
 
                 tracing::debug!("get_server_capabilities completed successfully");
                 Ok(CallToolResult::success(vec![Content::text(content)]))

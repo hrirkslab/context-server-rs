@@ -1,6 +1,6 @@
+use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::str::FromStr;
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ArchitectureLayer {
@@ -19,7 +19,7 @@ impl FromStr for ArchitectureLayer {
             "domain" => Ok(ArchitectureLayer::Domain),
             "data" => Ok(ArchitectureLayer::Data),
             "core" => Ok(ArchitectureLayer::Core),
-            _ => Err(format!("Unknown architecture layer: {}", s))
+            _ => Err(format!("Unknown architecture layer: {s}")),
         }
     }
 }
@@ -60,7 +60,7 @@ impl FromStr for ComponentType {
             "utility" => Ok(ComponentType::Utility),
             "controller" => Ok(ComponentType::Controller),
             "view" => Ok(ComponentType::View),
-            _ => Err(format!("Unknown component type: {}", s))
+            _ => Err(format!("Unknown component type: {s}")),
         }
     }
 }
