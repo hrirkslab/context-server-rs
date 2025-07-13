@@ -1,5 +1,5 @@
-use async_trait::async_trait;
 use crate::models::context::Project;
+use async_trait::async_trait;
 use rmcp::model::ErrorData as McpError;
 
 /// Repository interface for Project operations (DIP - Dependency Inversion)

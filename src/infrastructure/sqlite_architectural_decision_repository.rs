@@ -1,9 +1,9 @@
-use std::sync::{Arc, Mutex};
-use async_trait::async_trait;
-use rusqlite::Connection;
 use crate::models::context::ArchitecturalDecision;
 use crate::repositories::ArchitecturalDecisionRepository;
+use async_trait::async_trait;
 use rmcp::model::ErrorData as McpError;
+use rusqlite::Connection;
+use std::sync::{Arc, Mutex};
 
 /// SQLite implementation of ArchitecturalDecisionRepository
 pub struct SqliteArchitecturalDecisionRepository {
@@ -18,9 +18,12 @@ impl SqliteArchitecturalDecisionRepository {
 
 #[async_trait]
 impl ArchitecturalDecisionRepository for SqliteArchitecturalDecisionRepository {
-    async fn create(&self, decision: &ArchitecturalDecision) -> Result<ArchitecturalDecision, McpError> {
+    async fn create(
+        &self,
+        decision: &ArchitecturalDecision,
+    ) -> Result<ArchitecturalDecision, McpError> {
         let db = self.db.lock().unwrap();
-        
+
         db.execute(
             "INSERT INTO architectural_decisions (id, project_id, decision_title, context, decision, consequences, alternatives_considered, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
@@ -39,26 +42,31 @@ impl ArchitecturalDecisionRepository for SqliteArchitecturalDecisionRepository {
         Ok(decision.clone())
     }
 
-    async fn find_by_project_id(&self, project_id: &str) -> Result<Vec<ArchitecturalDecision>, McpError> {
+    async fn find_by_project_id(
+        &self,
+        project_id: &str,
+    ) -> Result<Vec<ArchitecturalDecision>, McpError> {
         let db = self.db.lock().unwrap();
         let mut decisions = Vec::new();
-        
+
         let mut stmt = db.prepare("SELECT id, project_id, decision_title, context, decision, consequences, alternatives_considered, status, created_at FROM architectural_decisions WHERE project_id = ?")
             .map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
-        
-        let decision_rows = stmt.query_map([project_id], |row| {
-            Ok(ArchitecturalDecision {
-                id: row.get(0)?,
-                project_id: row.get(1)?,
-                decision_title: row.get(2)?,
-                context: row.get(3)?,
-                decision: row.get(4)?,
-                consequences: row.get(5)?,
-                alternatives_considered: row.get(6)?,
-                status: row.get(7)?,
-                created_at: row.get(8)?,
+
+        let decision_rows = stmt
+            .query_map([project_id], |row| {
+                Ok(ArchitecturalDecision {
+                    id: row.get(0)?,
+                    project_id: row.get(1)?,
+                    decision_title: row.get(2)?,
+                    context: row.get(3)?,
+                    decision: row.get(4)?,
+                    consequences: row.get(5)?,
+                    alternatives_considered: row.get(6)?,
+                    status: row.get(7)?,
+                    created_at: row.get(8)?,
+                })
             })
-        }).map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
+            .map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
 
         for decision in decision_rows {
             match decision {
@@ -72,34 +80,42 @@ impl ArchitecturalDecisionRepository for SqliteArchitecturalDecisionRepository {
 
     async fn find_by_id(&self, id: &str) -> Result<Option<ArchitecturalDecision>, McpError> {
         let db = self.db.lock().unwrap();
-        
+
         let mut stmt = db.prepare("SELECT id, project_id, decision_title, context, decision, consequences, alternatives_considered, status, created_at FROM architectural_decisions WHERE id = ?")
             .map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
-        
-        let mut decision_iter = stmt.query_map([id], |row| {
-            Ok(ArchitecturalDecision {
-                id: row.get(0)?,
-                project_id: row.get(1)?,
-                decision_title: row.get(2)?,
-                context: row.get(3)?,
-                decision: row.get(4)?,
-                consequences: row.get(5)?,
-                alternatives_considered: row.get(6)?,
-                status: row.get(7)?,
-                created_at: row.get(8)?,
+
+        let mut decision_iter = stmt
+            .query_map([id], |row| {
+                Ok(ArchitecturalDecision {
+                    id: row.get(0)?,
+                    project_id: row.get(1)?,
+                    decision_title: row.get(2)?,
+                    context: row.get(3)?,
+                    decision: row.get(4)?,
+                    consequences: row.get(5)?,
+                    alternatives_considered: row.get(6)?,
+                    status: row.get(7)?,
+                    created_at: row.get(8)?,
+                })
             })
-        }).map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
+            .map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
 
         match decision_iter.next() {
             Some(Ok(decision)) => Ok(Some(decision)),
-            Some(Err(e)) => Err(McpError::internal_error(format!("Database error: {}", e), None)),
+            Some(Err(e)) => Err(McpError::internal_error(
+                format!("Database error: {}", e),
+                None,
+            )),
             None => Ok(None),
         }
     }
 
-    async fn update(&self, decision: &ArchitecturalDecision) -> Result<ArchitecturalDecision, McpError> {
+    async fn update(
+        &self,
+        decision: &ArchitecturalDecision,
+    ) -> Result<ArchitecturalDecision, McpError> {
         let db = self.db.lock().unwrap();
-        
+
         db.execute(
             "UPDATE architectural_decisions SET project_id = ?, decision_title = ?, context = ?, decision = ?, consequences = ?, alternatives_considered = ?, status = ? WHERE id = ?",
             (
@@ -119,8 +135,9 @@ impl ArchitecturalDecisionRepository for SqliteArchitecturalDecisionRepository {
 
     async fn delete(&self, id: &str) -> Result<bool, McpError> {
         let db = self.db.lock().unwrap();
-        
-        let rows_affected = db.execute("DELETE FROM architectural_decisions WHERE id = ?", [id])
+
+        let rows_affected = db
+            .execute("DELETE FROM architectural_decisions WHERE id = ?", [id])
             .map_err(|e| McpError::internal_error(format!("Database error: {}", e), None))?;
 
         Ok(rows_affected > 0)

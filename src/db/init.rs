@@ -3,9 +3,10 @@ use rusqlite::{Connection, Result};
 
 pub fn init_db(db_path: &str) -> Result<Connection> {
     let conn = Connection::open(db_path)?;
-    
+
     // Projects table
-    conn.execute_batch(r#"
+    conn.execute_batch(
+        r#"
         CREATE TABLE IF NOT EXISTS projects (
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
@@ -14,8 +15,9 @@ pub fn init_db(db_path: &str) -> Result<Connection> {
             created_at TEXT DEFAULT (datetime('now')),
             updated_at TEXT DEFAULT (datetime('now'))
         );
-    "#)?;
-    
+    "#,
+    )?;
+
     // Business Rules
     conn.execute_batch(r#"
         CREATE TABLE IF NOT EXISTS business_rules (

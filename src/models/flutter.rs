@@ -214,8 +214,8 @@ pub struct FeatureInfo {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum FeatureStatus {
     Implemented,
-    Framework,    // Database structure exists, tools being added
-    Planned,      // Not yet implemented
+    Framework, // Database structure exists, tools being added
+    Planned,   // Not yet implemented
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
