@@ -110,13 +110,13 @@ impl<R: DevelopmentPhaseRepository> DevelopmentPhaseService for DevelopmentPhase
     async fn complete_phase(&self, id: &str) -> Result<DevelopmentPhase, McpError> {
         // First get the phase from the repository
         let phase_opt = self.repository.find_by_id(id).await?;
-        let mut phase = match phase_opt {
+        let phase = match phase_opt {
             Some(p) => p,
             None => return Err(McpError::invalid_params("Phase not found", None)),
         };
         
         // Create a new development phase with Completed status
-        let mut updated_phase = DevelopmentPhase {
+        let updated_phase = DevelopmentPhase {
             id: phase.id,
             project_id: phase.project_id,
             phase_name: phase.phase_name,
