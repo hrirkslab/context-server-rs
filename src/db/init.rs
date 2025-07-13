@@ -89,7 +89,22 @@ pub fn init_db(db_path: &str) -> Result<Connection> {
             FOREIGN KEY (project_id) REFERENCES projects(id)
         );
         
-        -- Flutter-specific context tables
+        -- Framework-agnostic component tables
+        CREATE TABLE IF NOT EXISTS framework_components (
+            id TEXT PRIMARY KEY,
+            project_id TEXT NOT NULL,
+            component_name TEXT NOT NULL,
+            component_type TEXT NOT NULL, -- 'widget', 'provider', 'service', 'repository', 'model', 'utility'
+            architecture_layer TEXT NOT NULL, -- 'presentation', 'domain', 'data', 'core'
+            file_path TEXT,
+            dependencies TEXT, -- JSON array of dependencies
+            metadata TEXT, -- JSON metadata for framework-specific properties
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (project_id) REFERENCES projects(id)
+        );
+        
+        -- Flutter-specific context tables (legacy)
         CREATE TABLE IF NOT EXISTS flutter_components (
             id TEXT PRIMARY KEY,
             project_id TEXT NOT NULL,
