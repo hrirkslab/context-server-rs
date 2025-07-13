@@ -11,7 +11,7 @@ use crate::infrastructure::{
     SqliteArchitecturalDecisionRepository,
     SqlitePerformanceRequirementRepository,
     SqliteFrameworkRepository,
-    SqliteComponentRepository,
+    // Note: SqliteComponentRepository removed as it was identical to SqliteFrameworkRepository
 };
 
 // Service layer
@@ -27,8 +27,7 @@ use crate::services::{
     context_crud_service::{ContextCrudService, ContextCrudServiceImpl},
     FrameworkService,
     framework_service::FrameworkServiceImpl,
-    ComponentService,
-    component_service::ComponentServiceImpl,
+    // Note: ComponentService removed as it was identical to FrameworkService
 };
 
 /// Application container holding all dependencies
@@ -41,7 +40,7 @@ pub struct AppContainer {
     pub architecture_validation_service: Box<dyn ArchitectureValidationService>,
     pub context_crud_service: Box<dyn ContextCrudService>,
     pub framework_service: Box<dyn FrameworkService>,
-    pub component_service: Box<dyn ComponentService>,
+    // Note: component_service removed as it was identical to framework_service
 }
 
 impl AppContainer {
@@ -85,9 +84,7 @@ impl AppContainer {
         let framework_repository = SqliteFrameworkRepository::new(db.clone());
         let framework_service = Box::new(FrameworkServiceImpl::new(framework_repository));
 
-        // Create component service
-        let component_repository = SqliteComponentRepository::new(db.clone());
-        let component_service = Box::new(ComponentServiceImpl::new(component_repository));
+        // Note: component_service removed as it was identical to framework_service
 
         Ok(AppContainer {
             project_service,
@@ -96,7 +93,7 @@ impl AppContainer {
             architecture_validation_service,
             context_crud_service,
             framework_service,
-            component_service,
+            // Note: component_service removed
         })
     }
 }

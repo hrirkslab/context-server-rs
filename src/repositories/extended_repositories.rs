@@ -1,19 +1,8 @@
 use async_trait::async_trait;
-use crate::models::flutter::{PrivacyRule, PrivacyViolation, ArchitectureLayerConfig, ModelContext, CodeTemplate};
+use crate::models::flutter::{PrivacyViolation, ArchitectureLayerConfig, ModelContext};
 use rmcp::model::ErrorData as McpError;
 
-#[async_trait]
-pub trait PrivacyRuleRepository: Send + Sync {
-    async fn create(&self, privacy_rule: &PrivacyRule) -> Result<PrivacyRule, McpError>;
-    async fn get_by_id(&self, id: &str) -> Result<Option<PrivacyRule>, McpError>;
-    async fn update(&self, privacy_rule: &PrivacyRule) -> Result<PrivacyRule, McpError>;
-    async fn delete(&self, id: &str) -> Result<bool, McpError>;
-    async fn list_by_project(&self, project_id: &str) -> Result<Vec<PrivacyRule>, McpError>;
-    async fn list_by_rule_type(&self, project_id: &str, rule_type: &str) -> Result<Vec<PrivacyRule>, McpError>;
-    async fn bulk_create(&self, privacy_rules: &[PrivacyRule]) -> Result<Vec<PrivacyRule>, McpError>;
-    async fn bulk_update(&self, privacy_rules: &[PrivacyRule]) -> Result<Vec<PrivacyRule>, McpError>;
-    async fn bulk_delete(&self, ids: &[String]) -> Result<usize, McpError>;
-}
+// Privacy rule repository removed - not currently implemented or used
 
 #[async_trait]
 #[allow(dead_code)]
@@ -59,16 +48,5 @@ pub trait ModelContextRepository: Send + Sync {
     async fn bulk_delete(&self, ids: &[String]) -> Result<usize, McpError>;
 }
 
-#[async_trait]
-pub trait CodeTemplateRepository: Send + Sync {
-    async fn create(&self, template: &CodeTemplate) -> Result<CodeTemplate, McpError>;
-    async fn get_by_id(&self, id: &str) -> Result<Option<CodeTemplate>, McpError>;
-    async fn update(&self, template: &CodeTemplate) -> Result<CodeTemplate, McpError>;
-    async fn delete(&self, id: &str) -> Result<bool, McpError>;
-    async fn list_by_project(&self, project_id: &str) -> Result<Vec<CodeTemplate>, McpError>;
-    async fn list_by_template_type(&self, project_id: &str, template_type: &str) -> Result<Vec<CodeTemplate>, McpError>;
-    async fn get_by_name(&self, project_id: &str, template_name: &str) -> Result<Option<CodeTemplate>, McpError>;
-    async fn bulk_create(&self, templates: &[CodeTemplate]) -> Result<Vec<CodeTemplate>, McpError>;
-    async fn bulk_update(&self, templates: &[CodeTemplate]) -> Result<Vec<CodeTemplate>, McpError>;
-    async fn bulk_delete(&self, ids: &[String]) -> Result<usize, McpError>;
-}
+// Code template repository removed - not currently implemented or used
+// This was Flutter-specific functionality that's not needed for the framework-agnostic server

@@ -10,7 +10,7 @@ pub mod project_convention_repository;
 pub mod feature_context_repository;
 pub mod extended_repositories;
 pub mod framework_repository;
-pub mod component_repository;
+// Note: component_repository was removed as it was identical to framework_repository
 
 // Re-export repository traits
 pub use project_repository::ProjectRepository;
@@ -23,4 +23,3 @@ pub use project_convention_repository::ProjectConventionRepository;
 pub use feature_context_repository::FeatureContextRepository;
 // pub use extended_repositories::{}; // Uncomment when needed
 pub use framework_repository::FrameworkRepository;
-pub use component_repository::ComponentRepository;

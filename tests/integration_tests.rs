@@ -72,8 +72,8 @@ async fn test_framework_component_operations() {
         .await
         .unwrap();
     
-    // Test component creation
-    let component = container.component_service
+    // Test component creation using framework_service (was component_service)
+    let component = container.framework_service
         .create_component(
             &project.id,
             "TestWidget",
@@ -89,16 +89,16 @@ async fn test_framework_component_operations() {
     assert_eq!(component.component_name, "TestWidget");
     assert_eq!(component.architecture_layer, "presentation");
     
-    // Test component retrieval
-    let retrieved = container.component_service
+    // Test component retrieval using framework_service (was component_service)
+    let retrieved = container.framework_service
         .get_component(&component.id)
         .await;
     
     assert!(retrieved.is_ok(), "Component retrieval should succeed");
     assert!(retrieved.unwrap().is_some(), "Component should exist");
     
-    // Test listing components by project
-    let components = container.component_service
+    // Test listing components by project using framework_service (was component_service)
+    let components = container.framework_service
         .list_components(&project.id)
         .await;
     
