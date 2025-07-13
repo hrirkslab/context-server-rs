@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 use async_trait::async_trait;
 use rusqlite::Connection;
-use crate::models::flutter::{DevelopmentPhase, PhaseStatus};
+use crate::models::development::{DevelopmentPhase, PhaseStatus};
 use crate::repositories::DevelopmentPhaseRepository;
 use rmcp::model::ErrorData as McpError;
 

@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use crate::models::flutter::{DevelopmentPhase, PhaseStatus};
+use crate::models::development::{DevelopmentPhase, PhaseStatus};
 use crate::repositories::DevelopmentPhaseRepository;
 use rmcp::model::ErrorData as McpError;
 use uuid::Uuid;
@@ -81,22 +81,56 @@ impl<R: DevelopmentPhaseRepository> DevelopmentPhaseService for DevelopmentPhase
     }
 
     async fn start_phase(&self, id: &str) -> Result<DevelopmentPhase, McpError> {
-        let mut phase = self.repository.find_by_id(id).await?
-            .ok_or_else(|| McpError::invalid_params("Phase not found", None))?;
+        // First get the phase from the repository
+        let phase_opt = self.repository.find_by_id(id).await?;
+        let mut phase = match phase_opt {
+            Some(p) => p,
+            None => return Err(McpError::invalid_params("Phase not found", None)),
+        };
         
-        phase.status = PhaseStatus::InProgress;
-        phase.started_at = Some(chrono::Utc::now().to_rfc3339());
+        // Create a new development phase with InProgress status
+        let mut updated_phase = DevelopmentPhase {
+            id: phase.id,
+            project_id: phase.project_id,
+            phase_name: phase.phase_name,
+            phase_order: phase.phase_order,
+            status: PhaseStatus::InProgress,
+            description: phase.description,
+            completion_criteria: phase.completion_criteria,
+            dependencies: phase.dependencies,
+            started_at: Some(chrono::Utc::now().to_rfc3339()),
+            completed_at: phase.completed_at,
+            created_at: phase.created_at,
+        };
         
-        self.repository.update(&phase).await
+        // Update the phase in the repository
+        self.repository.update(&updated_phase).await
     }
 
     async fn complete_phase(&self, id: &str) -> Result<DevelopmentPhase, McpError> {
-        let mut phase = self.repository.find_by_id(id).await?
-            .ok_or_else(|| McpError::invalid_params("Phase not found", None))?;
+        // First get the phase from the repository
+        let phase_opt = self.repository.find_by_id(id).await?;
+        let mut phase = match phase_opt {
+            Some(p) => p,
+            None => return Err(McpError::invalid_params("Phase not found", None)),
+        };
         
-        phase.status = PhaseStatus::Completed;
-        phase.completed_at = Some(chrono::Utc::now().to_rfc3339());
+        // Create a new development phase with Completed status
+        let mut updated_phase = DevelopmentPhase {
+            id: phase.id,
+            project_id: phase.project_id,
+            phase_name: phase.phase_name,
+            phase_order: phase.phase_order,
+            status: PhaseStatus::Completed,
+            description: phase.description,
+            completion_criteria: phase.completion_criteria,
+            dependencies: phase.dependencies,
+            started_at: phase.started_at,
+            completed_at: Some(chrono::Utc::now().to_rfc3339()),
+            created_at: phase.created_at,
+        };
         
-        self.repository.update(&phase).await
+        // Update the phase in the repository
+        self.repository.update(&updated_phase).await
     }
 }
