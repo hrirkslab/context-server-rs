@@ -58,7 +58,10 @@ async fn main() -> Result<()> {
     tracing::info!("Using config directory: {}", config_dir.display());
     
     // Initialize SQLite database
-    match init_db(db_path.to_str().unwrap()) {
+    let db_path_str = db_path.to_str()
+        .ok_or_else(|| anyhow::anyhow!("Invalid database path"))?;
+    
+    match init_db(db_path_str) {
         Ok(_) => tracing::info!("Database initialized at {}", db_path.display()),
         Err(e) => {
             tracing::error!("Failed to initialize DB: {}", e);
@@ -67,7 +70,10 @@ async fn main() -> Result<()> {
     }
 
     // Create and start the enhanced MCP server
-    let service = EnhancedContextMcpServer::new(db_path.to_str().unwrap())?
+    let db_path_str = db_path.to_str()
+        .ok_or_else(|| anyhow::anyhow!("Invalid database path"))?;
+    
+    let service = EnhancedContextMcpServer::new(db_path_str)?
         .serve(stdio())
         .await
         .inspect_err(|e| {
