@@ -300,7 +300,7 @@ impl ServerHandler for EnhancedContextMcpServer {
             "list_projects" => {
                 let projects = self.container.project_service.list_projects().await?;
                 let content = serde_json::to_string_pretty(&projects).map_err(|e| {
-                    McpError::internal_error(format!("Serialization error: {}", e), None)
+                    McpError::internal_error(format!("Serialization error: {e}"), None)
                 })?;
                 Ok(CallToolResult::success(vec![Content::text(content)]))
             }
@@ -342,7 +342,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                     .query_context(project_id, feature_area, task_type, &components)
                     .await?;
                 let content = serde_json::to_string_pretty(&result).map_err(|e| {
-                    McpError::internal_error(format!("Serialization error: {}", e), None)
+                    McpError::internal_error(format!("Serialization error: {e}"), None)
                 })?;
                 Ok(CallToolResult::success(vec![Content::text(content)]))
             }
@@ -363,7 +363,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                     .validate_architecture(project_id)
                     .await?;
                 let content = serde_json::to_string_pretty(&violations).map_err(|e| {
-                    McpError::internal_error(format!("Serialization error: {}", e), None)
+                    McpError::internal_error(format!("Serialization error: {e}"), None)
                 })?;
                 Ok(CallToolResult::success(vec![Content::text(content)]))
             }
@@ -452,7 +452,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                 };
 
                 let content = serde_json::to_string_pretty(&capabilities).map_err(|e| {
-                    McpError::internal_error(format!("Serialization error: {}", e), None)
+                    McpError::internal_error(format!("Serialization error: {e}"), None)
                 })?;
                 Ok(CallToolResult::success(vec![Content::text(content)]))
             }
@@ -535,7 +535,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                 }
 
                 let content = serde_json::to_string_pretty(&components).map_err(|e| {
-                    McpError::internal_error(format!("Serialization error: {}", e), None)
+                    McpError::internal_error(format!("Serialization error: {e}"), None)
                 })?;
                 Ok(CallToolResult::success(vec![Content::text(content)]))
             }
@@ -559,7 +559,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                     "note": "Cache clearing implementation can be customized based on your needs"
                 });
                 let content = serde_json::to_string_pretty(&result).map_err(|e| {
-                    McpError::internal_error(format!("Serialization error: {}", e), None)
+                    McpError::internal_error(format!("Serialization error: {e}"), None)
                 })?;
                 Ok(CallToolResult::success(vec![Content::text(content)]))
             }
@@ -633,11 +633,11 @@ impl ServerHandler for EnhancedContextMcpServer {
                     _ => return Err(McpError::invalid_params("Invalid entity_type", None)),
                 }
                 .map_err(|e| {
-                    McpError::internal_error(format!("Serialization error: {}", e), None)
+                    McpError::internal_error(format!("Serialization error: {e}"), None)
                 })?;
 
                 let content = serde_json::to_string_pretty(&result).map_err(|e| {
-                    McpError::internal_error(format!("Serialization error: {}", e), None)
+                    McpError::internal_error(format!("Serialization error: {e}"), None)
                 })?;
                 Ok(CallToolResult::success(vec![Content::text(content)]))
             }
@@ -939,7 +939,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                     // Add more entity types as needed
                     _ => {
                         return Err(McpError::invalid_params(
-                            format!("Unsupported entity type: {}", entity_type),
+                            format!("Unsupported entity type: {entity_type}"),
                             None,
                         ))
                     }
@@ -1089,7 +1089,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                             self.container.framework_service.get_component(id).await?;
                         if component_opt.is_none() {
                             return Err(McpError::invalid_params(
-                                format!("Component with id {} not found", id),
+                                    format!("Component with id {id} not found"),
                                 None,
                             ));
                         }
@@ -1100,7 +1100,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                                 Some(c) => c,
                                 None => {
                                     return Err(McpError::invalid_params(
-                                        format!("Component with id {} not found", id),
+                                        format!("Component with id {id} not found"),
                                         None,
                                     ))
                                 }
