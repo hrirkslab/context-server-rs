@@ -363,7 +363,7 @@ impl ServerHandler for ContextMcpServer {
                     .ok_or_else(|| McpError::invalid_params("architecture_layer is required", None))?;
                 let file_path = args.get("file_path").and_then(|v| v.as_str());
 
-                let component = self.container.flutter_service.create_component(project_id, component_name, component_type, architecture_layer, file_path).await?;
+                let component = self.container.framework_service.create_component(project_id, component_name, component_type, architecture_layer, file_path, None).await?;
                 let content = serde_json::to_string_pretty(&component)
                     .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
 
@@ -377,7 +377,7 @@ impl ServerHandler for ContextMcpServer {
                     .and_then(|v| v.as_str())
                     .ok_or_else(|| McpError::invalid_params("project_id is required", None))?;
 
-                let components = self.container.flutter_service.list_components(project_id).await?;
+                let components = self.container.framework_service.list_components(project_id).await?;
                 let content = serde_json::to_string_pretty(&components)
                     .map_err(|e| McpError::internal_error(format!("Serialization error: {}", e), None))?;
 
