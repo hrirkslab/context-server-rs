@@ -1,7 +1,9 @@
 use async_trait::async_trait;
+use crate::models::architecture::ArchitectureLayer;
 use crate::models::framework::FrameworkComponent;
 use crate::services::FrameworkService;
 use rmcp::model::ErrorData as McpError;
+use std::str::FromStr;
 
 /// Service for validating architecture rules following Single Responsibility Principle
 #[async_trait]
