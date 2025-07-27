@@ -1,5 +1,6 @@
 // Service layer modules following SOLID principles
 
+pub mod advanced_query_service;
 pub mod architecture_validation_service;
 pub mod context_crud_service;
 pub mod context_intelligence_service;
@@ -16,6 +17,10 @@ pub mod hybrid_search_service;
 pub mod search_index_manager;
 pub mod vector_embedding_integration;
 #[cfg(test)]
+pub mod advanced_query_service_test;
+#[cfg(test)]
+pub mod advanced_query_service_simple_test;
+#[cfg(test)]
 pub mod semantic_search_integration_test;
 #[cfg(test)]
 pub mod search_index_manager_test;
@@ -23,6 +28,8 @@ pub mod search_index_manager_test;
 // Note: flutter_service and flutter_advanced_crud_service modules don't exist yet
 
 // Re-export service traits
+// Temporarily commented out to debug compilation issues
+// pub use advanced_query_service::AdvancedQueryConfig;
 pub use architecture_validation_service::ArchitectureValidationService;
 pub use context_intelligence_service::{ContextIntelligenceService, DefaultContextIntelligenceService};
 pub use context_quality_service::{ContextQualityService, DefaultContextQualityService};
