@@ -175,6 +175,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "dirs",
+ "regex",
  "rmcp",
  "rusqlite",
  "serde",

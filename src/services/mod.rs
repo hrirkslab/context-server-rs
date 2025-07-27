@@ -2,7 +2,10 @@
 
 pub mod architecture_validation_service;
 pub mod context_crud_service;
+pub mod context_intelligence_service;
+pub mod context_quality_service;
 pub mod context_query_service;
+pub mod context_relationship_engine;
 pub mod development_phase_service;
 pub mod extended_context_crud_service;
 pub mod framework_service;
@@ -12,7 +15,10 @@ pub mod project_service;
 
 // Re-export service traits
 pub use architecture_validation_service::ArchitectureValidationService;
+pub use context_intelligence_service::{ContextIntelligenceService, DefaultContextIntelligenceService};
+pub use context_quality_service::{ContextQualityService, DefaultContextQualityService};
 pub use context_query_service::ContextQueryService;
+pub use context_relationship_engine::{ContextRelationshipEngine, DefaultContextRelationshipEngine};
 pub use development_phase_service::DevelopmentPhaseService;
 pub use framework_service::FrameworkService;
 pub use project_service::ProjectService;
