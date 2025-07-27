@@ -12,7 +12,10 @@ pub mod extended_context_crud_service;
 pub mod framework_service;
 pub mod project_service;
 pub mod semantic_search_service;
+pub mod hybrid_search_service;
 pub mod vector_embedding_integration;
+#[cfg(test)]
+pub mod semantic_search_integration_test;
 // Note: component_service removed as it was identical to framework_service
 // Note: flutter_service and flutter_advanced_crud_service modules don't exist yet
 
@@ -27,6 +30,7 @@ pub use embedding_service::{EmbeddingService, EmbeddingServiceFactory};
 pub use framework_service::FrameworkService;
 pub use project_service::ProjectService;
 pub use semantic_search_service::SemanticSearchService;
+pub use hybrid_search_service::{HybridSearchService, HybridSearchServiceImpl};
 // Note: ComponentService removed as it was identical to FrameworkService
 // The following services are currently commented out because their corresponding endpoints
 // have not yet been implemented. These services will be re-enabled once the necessary
