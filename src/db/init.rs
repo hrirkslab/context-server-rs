@@ -199,6 +199,33 @@ pub fn init_db(db_path: &str) -> Result<Connection> {
             created_at TEXT DEFAULT (datetime('now')),
             FOREIGN KEY (project_id) REFERENCES projects(id)
         );
+        
+        -- Vector embeddings table for semantic search
+        CREATE TABLE IF NOT EXISTS context_embeddings (
+            id TEXT PRIMARY KEY,
+            context_id TEXT NOT NULL,
+            project_id TEXT,
+            embedding_vector TEXT NOT NULL, -- JSON array of floats
+            embedding_model TEXT NOT NULL,
+            embedding_version TEXT NOT NULL,
+            content_hash TEXT NOT NULL,
+            content_type TEXT,
+            content_length INTEGER,
+            tokenization_method TEXT,
+            preprocessing_steps TEXT, -- JSON array
+            quality_score REAL,
+            custom_metadata TEXT, -- JSON object
+            created_at TEXT NOT NULL,
+            updated_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (project_id) REFERENCES projects(id),
+            UNIQUE(context_id, embedding_model, embedding_version)
+        );
+        
+        CREATE INDEX IF NOT EXISTS idx_embeddings_context_id ON context_embeddings(context_id);
+        CREATE INDEX IF NOT EXISTS idx_embeddings_project_id ON context_embeddings(project_id);
+        CREATE INDEX IF NOT EXISTS idx_embeddings_model ON context_embeddings(embedding_model);
+        CREATE INDEX IF NOT EXISTS idx_embeddings_content_hash ON context_embeddings(content_hash);
+        CREATE INDEX IF NOT EXISTS idx_embeddings_created_at ON context_embeddings(created_at);
     "#)?;
     Ok(conn)
 }

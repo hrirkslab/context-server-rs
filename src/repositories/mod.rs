@@ -3,6 +3,7 @@
 pub mod architectural_decision_repository;
 pub mod business_rule_repository;
 pub mod development_phase_repository;
+pub mod embedding_repository;
 pub mod extended_repositories;
 pub mod feature_context_repository;
 pub mod framework_repository;
@@ -16,6 +17,7 @@ pub mod security_policy_repository;
 pub use architectural_decision_repository::ArchitecturalDecisionRepository;
 pub use business_rule_repository::BusinessRuleRepository;
 pub use development_phase_repository::DevelopmentPhaseRepository;
+pub use embedding_repository::EmbeddingRepository;
 pub use feature_context_repository::FeatureContextRepository;
 pub use performance_requirement_repository::PerformanceRequirementRepository;
 pub use project_convention_repository::ProjectConventionRepository;
