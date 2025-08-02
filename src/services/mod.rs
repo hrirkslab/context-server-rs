@@ -22,6 +22,8 @@ pub mod websocket_types;
 pub mod change_broadcaster;
 pub mod change_detection_service;
 pub mod sync_engine;
+pub mod conflict_resolution_engine;
+pub mod conflict_resolution_ui;
 // #[cfg(test)]
 // pub mod advanced_query_service_test;
 #[cfg(test)]
@@ -36,6 +38,8 @@ pub mod websocket_manager_test;
 pub mod change_broadcaster_test;
 #[cfg(test)]
 pub mod change_broadcasting_integration_test;
+#[cfg(test)]
+pub mod conflict_resolution_integration_test;
 // Note: component_service removed as it was identical to framework_service
 // Note: flutter_service and flutter_advanced_crud_service modules don't exist yet
 
@@ -60,6 +64,8 @@ pub use websocket_types::*;
 pub use change_broadcaster::{ChangeBroadcaster, ChangeEvent, BroadcastMetrics, QueuedChange};
 pub use change_detection_service::{ChangeDetectionService, ChangeEmitter};
 pub use sync_engine::{SyncEngine, SyncStream, SyncConflict, Resolution};
+pub use conflict_resolution_engine::{ConflictResolutionEngine, ConflictInfo, ConflictType, ManualResolutionRequest, ConflictResolutionResult};
+pub use conflict_resolution_ui::{ConflictResolutionUI, ConflictResolutionSession, StartResolutionRequest, StartResolutionResponse, UpdateUIStateRequest, UpdateUIStateResponse};
 // Note: ComponentService removed as it was identical to FrameworkService
 // The following services are currently commented out because their corresponding endpoints
 // have not yet been implemented. These services will be re-enabled once the necessary

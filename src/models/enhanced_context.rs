@@ -65,6 +65,32 @@ impl EnhancedContextItem {
     }
 }
 
+impl Default for EnhancedContextItem {
+    fn default() -> Self {
+        let now = Utc::now();
+        Self {
+            id: Uuid::new_v4().to_string(),
+            project_id: "default".to_string(),
+            content: ContextContent {
+                content_type: ContextType::Custom("default".to_string()),
+                title: "Default".to_string(),
+                description: "Default context item".to_string(),
+                data: serde_json::Value::Null,
+                source_file: None,
+                source_line: None,
+            },
+            metadata: ContextMetadata::default(),
+            relationships: Vec::new(),
+            quality_score: 0.0,
+            usage_stats: UsageStatistics::default(),
+            semantic_tags: Vec::new(),
+            created_at: now,
+            updated_at: now,
+            version: 1,
+        }
+    }
+}
+
 /// Content of a context item with type information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ContextContent {

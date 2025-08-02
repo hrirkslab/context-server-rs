@@ -2,9 +2,11 @@ use crate::services::change_broadcaster::ChangeBroadcaster;
 use crate::services::change_detection_service::ChangeDetectionService;
 use crate::services::websocket_manager::WebSocketManager;
 use crate::services::websocket_types::*;
+use crate::services::conflict_resolution_engine::{ConflictResolutionEngine, ConflictInfo, ConflictResolutionResult, ManualResolutionRequest};
+use crate::models::enhanced_context::EnhancedContextItem;
 use anyhow::Result;
 use std::sync::Arc;
-use tokio::sync::broadcast;
+use tokio::sync::{broadcast, Mutex};
 use tracing::{info, warn};
 
 /// Main synchronization engine that orchestrates real-time updates
@@ -13,6 +15,7 @@ pub struct SyncEngine {
     change_broadcaster: Arc<ChangeBroadcaster>,
     websocket_manager: Arc<WebSocketManager>,
     change_detector: Arc<ChangeDetectionService>,
+    conflict_resolver: Arc<Mutex<ConflictResolutionEngine>>,
 }
 
 impl SyncEngine {
@@ -21,11 +24,13 @@ impl SyncEngine {
         let change_broadcaster = Arc::new(ChangeBroadcaster::new());
         let websocket_manager = Arc::new(WebSocketManager::new());
         let change_detector = Arc::new(ChangeDetectionService::new(change_broadcaster.clone()));
+        let conflict_resolver = Arc::new(Mutex::new(ConflictResolutionEngine::new()));
 
         Self {
             change_broadcaster,
             websocket_manager,
             change_detector,
+            conflict_resolver,
         }
     }
 
@@ -68,11 +73,77 @@ impl SyncEngine {
         Ok(())
     }
 
-    /// Handle conflict resolution (placeholder for task 3.3)
-    pub async fn handle_conflict(&self, _conflict: SyncConflict) -> Result<Resolution> {
-        // This will be implemented in task 3.3
-        warn!("Conflict resolution not yet implemented - using last-writer-wins");
-        Ok(Resolution::LastWriterWins)
+    /// Detect and handle conflicts for incoming changes
+    pub async fn detect_and_handle_conflict(
+        &self,
+        incoming_change: &ContextChange,
+        existing_entity: Option<&EnhancedContextItem>,
+        recent_changes: &[ContextChange],
+    ) -> Result<Option<ConflictInfo>> {
+        let mut conflict_resolver = self.conflict_resolver.lock().await;
+        conflict_resolver.detect_conflict(incoming_change, existing_entity, recent_changes).await
+    }
+
+    /// Resolve a conflict using the specified strategy
+    pub async fn resolve_conflict(
+        &self,
+        conflict_id: &str,
+        strategy: ConflictStrategy,
+        resolver: Option<String>,
+    ) -> Result<ConflictResolutionResult> {
+        let mut conflict_resolver = self.conflict_resolver.lock().await;
+        conflict_resolver.resolve_conflict(conflict_id, strategy, resolver).await
+    }
+
+    /// Resolve a conflict manually with provided resolution data
+    pub async fn resolve_conflict_manually(
+        &self,
+        request: ManualResolutionRequest,
+    ) -> Result<ConflictResolutionResult> {
+        let mut conflict_resolver = self.conflict_resolver.lock().await;
+        conflict_resolver.resolve_conflict_manually(request).await
+    }
+
+    /// Get information about an active conflict
+    pub async fn get_conflict_info(&self, conflict_id: &str) -> Option<ConflictInfo> {
+        let conflict_resolver = self.conflict_resolver.lock().await;
+        conflict_resolver.get_conflict_info(conflict_id).cloned()
+    }
+
+    /// Get all active conflicts for a project
+    pub async fn get_active_conflicts(&self, project_id: &str) -> Vec<ConflictInfo> {
+        let conflict_resolver = self.conflict_resolver.lock().await;
+        conflict_resolver.get_active_conflicts(project_id).into_iter().cloned().collect()
+    }
+
+    /// Get all resolved conflicts for a project
+    pub async fn get_resolved_conflicts(&self, project_id: &str) -> Vec<ConflictInfo> {
+        let conflict_resolver = self.conflict_resolver.lock().await;
+        conflict_resolver.get_resolved_conflicts(project_id).into_iter().cloned().collect()
+    }
+
+    /// Handle conflict resolution (legacy method for backward compatibility)
+    pub async fn handle_conflict(&self, conflict: SyncConflict) -> Result<Resolution> {
+        warn!("Using legacy handle_conflict method - consider using the new conflict resolution methods");
+        
+        // Convert SyncConflict to the new format and use default strategy
+        if let Some(first_change) = conflict.conflicting_changes.first() {
+            let conflict_info = self.detect_and_handle_conflict(first_change, None, &conflict.conflicting_changes).await?;
+            
+            if let Some(info) = conflict_info {
+                let result = self.resolve_conflict(&info.conflict_id, ConflictStrategy::LastWriterWins, None).await?;
+                match result.strategy_used {
+                    ConflictStrategy::LastWriterWins => Ok(Resolution::LastWriterWins),
+                    ConflictStrategy::AutoMerge => Ok(Resolution::AutoMerge),
+                    ConflictStrategy::ManualResolution => Ok(Resolution::ManualResolution),
+                    ConflictStrategy::Reject => Ok(Resolution::Reject),
+                }
+            } else {
+                Ok(Resolution::LastWriterWins)
+            }
+        } else {
+            Ok(Resolution::LastWriterWins)
+        }
     }
 
     /// Get sync status for a project

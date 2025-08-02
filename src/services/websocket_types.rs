@@ -127,7 +127,7 @@ pub struct ConflictResolution {
 }
 
 /// Strategies for resolving conflicts
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ConflictStrategy {
     LastWriterWins,
     ManualResolution,
