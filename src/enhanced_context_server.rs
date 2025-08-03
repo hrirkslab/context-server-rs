@@ -282,6 +282,64 @@ impl ServerHandler for EnhancedContextMcpServer {
                 }).as_object().unwrap().clone()),
                 annotations: None,
             },
+
+            // Analytics MCP Tools
+            Tool {
+                name: "get_usage_analytics".into(),
+                description: Some("Retrieve usage statistics for entities or global analytics".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "scope": {"type": "string", "enum": ["global", "entity"], "description": "Scope of analytics to retrieve"},
+                        "entity_type": {"type": "string", "description": "Entity type (required for entity scope)"},
+                        "entity_id": {"type": "string", "description": "Entity ID (required for entity scope)"}
+                    },
+                    "required": ["scope"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "get_context_insights".into(),
+                description: Some("Get project-level analytics and insights".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "project_id": {"type": "string", "description": "The ID of the project to analyze"}
+                    },
+                    "required": ["project_id"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "generate_quality_report".into(),
+                description: Some("Generate a context health assessment and quality report".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "start_date": {"type": "string", "format": "date-time", "description": "Start date for the report (ISO 8601 format)"},
+                        "end_date": {"type": "string", "format": "date-time", "description": "End date for the report (ISO 8601 format)"},
+                        "project_id": {"type": "string", "description": "Optional project ID to filter the report"}
+                    },
+                    "required": ["start_date", "end_date"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "export_analytics_data".into(),
+                description: Some("Export analytics data for data portability and external analysis".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "format": {"type": "string", "enum": ["json", "csv"], "description": "Export format", "default": "json"},
+                        "start_date": {"type": "string", "format": "date-time", "description": "Start date for export (ISO 8601 format)"},
+                        "end_date": {"type": "string", "format": "date-time", "description": "End date for export (ISO 8601 format)"},
+                        "project_id": {"type": "string", "description": "Optional project ID to filter the export"},
+                        "event_types": {"type": "array", "items": {"type": "string"}, "description": "Optional array of event types to include"}
+                    },
+                    "required": ["start_date", "end_date"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
         ];
 
         Ok(ListToolsResult {
@@ -845,6 +903,290 @@ impl ServerHandler for EnhancedContextMcpServer {
                 })?;
                 Ok(CallToolResult::success(vec![Content::text(content)]))
             }
+
+            // Analytics MCP Tools
+            "get_usage_analytics" => {
+                let start_time = Instant::now();
+                let args = request.arguments.unwrap_or_default();
+                let scope = args.get("scope").and_then(|v| v.as_str()).ok_or_else(|| {
+                    McpError::invalid_params("Missing required parameter: scope", None)
+                })?;
+
+                let analytics_result = match scope {
+                    "global" => {
+                        self.container.analytics_service.get_global_statistics().await
+                    }
+                    "entity" => {
+                        let entity_type = args.get("entity_type").and_then(|v| v.as_str()).ok_or_else(|| {
+                            McpError::invalid_params("Missing required parameter: entity_type for entity scope", None)
+                        })?;
+                        let entity_id = args.get("entity_id").and_then(|v| v.as_str()).ok_or_else(|| {
+                            McpError::invalid_params("Missing required parameter: entity_id for entity scope", None)
+                        })?;
+                        
+                        match self.container.analytics_service.get_entity_usage(entity_type, entity_id).await {
+                            Ok(usage_stats) => Ok(serde_json::to_value(usage_stats).unwrap_or_default().as_object().unwrap().clone().into_iter().collect()),
+                            Err(e) => Err(e),
+                        }
+                    }
+                    _ => return Err(McpError::invalid_params("Invalid scope. Must be 'global' or 'entity'", None)),
+                };
+
+                let duration_ms = start_time.elapsed().as_millis() as u64;
+
+                match analytics_result {
+                    Ok(result) => {
+                        // Track successful analytics query
+                        let analytics_event = AnalyticsHelper::create_analytics_event(
+                            "get_usage_analytics".to_string(),
+                            Some(scope.to_string()),
+                            Some(duration_ms),
+                            true,
+                            None,
+                        );
+                        
+                        if let Err(e) = self.container.analytics_service.track_event(analytics_event).await {
+                            tracing::warn!("Failed to track analytics event: {}", e);
+                        }
+
+                        let content = serde_json::to_string_pretty(&result).map_err(|e| {
+                            McpError::internal_error(format!("Serialization error: {e}"), None)
+                        })?;
+                        Ok(CallToolResult::success(vec![Content::text(content)]))
+                    }
+                    Err(e) => {
+                        // Track failed analytics query
+                        let analytics_event = AnalyticsHelper::create_analytics_event(
+                            "get_usage_analytics".to_string(),
+                            Some(scope.to_string()),
+                            Some(duration_ms),
+                            false,
+                            Some(e.to_string()),
+                        );
+                        
+                        if let Err(analytics_err) = self.container.analytics_service.track_event(analytics_event).await {
+                            tracing::warn!("Failed to track analytics event: {}", analytics_err);
+                        }
+
+                        Err(McpError::internal_error(format!("Analytics query failed: {e}"), None))
+                    }
+                }
+            }
+
+            "get_context_insights" => {
+                let start_time = Instant::now();
+                let args = request.arguments.unwrap_or_default();
+                let project_id = args.get("project_id").and_then(|v| v.as_str()).ok_or_else(|| {
+                    McpError::invalid_params("Missing required parameter: project_id", None)
+                })?;
+
+                let insights_result = self.container.analytics_service.get_project_insights(project_id).await;
+                let duration_ms = start_time.elapsed().as_millis() as u64;
+
+                match insights_result {
+                    Ok(insights) => {
+                        // Track successful insights query
+                        let analytics_event = AnalyticsHelper::create_analytics_event(
+                            "get_context_insights".to_string(),
+                            Some(project_id.to_string()),
+                            Some(duration_ms),
+                            true,
+                            None,
+                        );
+                        
+                        if let Err(e) = self.container.analytics_service.track_event(analytics_event).await {
+                            tracing::warn!("Failed to track analytics event: {}", e);
+                        }
+
+                        let content = serde_json::to_string_pretty(&insights).map_err(|e| {
+                            McpError::internal_error(format!("Serialization error: {e}"), None)
+                        })?;
+                        Ok(CallToolResult::success(vec![Content::text(content)]))
+                    }
+                    Err(e) => {
+                        // Track failed insights query
+                        let analytics_event = AnalyticsHelper::create_analytics_event(
+                            "get_context_insights".to_string(),
+                            Some(project_id.to_string()),
+                            Some(duration_ms),
+                            false,
+                            Some(e.to_string()),
+                        );
+                        
+                        if let Err(analytics_err) = self.container.analytics_service.track_event(analytics_event).await {
+                            tracing::warn!("Failed to track analytics event: {}", analytics_err);
+                        }
+
+                        Err(McpError::internal_error(format!("Context insights query failed: {e}"), None))
+                    }
+                }
+            }
+
+            "generate_quality_report" => {
+                let start_time = Instant::now();
+                let args = request.arguments.unwrap_or_default();
+                let start_date_str = args.get("start_date").and_then(|v| v.as_str()).ok_or_else(|| {
+                    McpError::invalid_params("Missing required parameter: start_date", None)
+                })?;
+                let end_date_str = args.get("end_date").and_then(|v| v.as_str()).ok_or_else(|| {
+                    McpError::invalid_params("Missing required parameter: end_date", None)
+                })?;
+
+                // Parse dates
+                let start_date = chrono::DateTime::parse_from_rfc3339(start_date_str)
+                    .map_err(|_| McpError::invalid_params("Invalid start_date format. Use ISO 8601 format", None))?
+                    .with_timezone(&chrono::Utc);
+                let end_date = chrono::DateTime::parse_from_rfc3339(end_date_str)
+                    .map_err(|_| McpError::invalid_params("Invalid end_date format. Use ISO 8601 format", None))?
+                    .with_timezone(&chrono::Utc);
+
+                let project_id = args.get("project_id").and_then(|v| v.as_str());
+
+                let report_result = self.container.analytics_service.generate_usage_report(start_date, end_date).await;
+                let duration_ms = start_time.elapsed().as_millis() as u64;
+
+                match report_result {
+                    Ok(mut report) => {
+                        // Add quality assessment to the report
+                        if let Some(pid) = project_id {
+                            if let Ok(insights) = self.container.analytics_service.get_project_insights(pid).await {
+                                if let Some(report_obj) = report.as_object_mut() {
+                                    report_obj.insert("quality_assessment".to_string(), serde_json::json!({
+                                        "context_health_score": insights.context_health_score,
+                                        "recommendations": insights.recommendations,
+                                        "most_active_entity_types": insights.most_active_entity_types
+                                    }));
+                                }
+                            }
+                        }
+
+                        // Track successful report generation
+                        let analytics_event = AnalyticsHelper::create_analytics_event(
+                            "generate_quality_report".to_string(),
+                            project_id.map(|s| s.to_string()),
+                            Some(duration_ms),
+                            true,
+                            None,
+                        );
+                        
+                        if let Err(e) = self.container.analytics_service.track_event(analytics_event).await {
+                            tracing::warn!("Failed to track analytics event: {}", e);
+                        }
+
+                        let content = serde_json::to_string_pretty(&report).map_err(|e| {
+                            McpError::internal_error(format!("Serialization error: {e}"), None)
+                        })?;
+                        Ok(CallToolResult::success(vec![Content::text(content)]))
+                    }
+                    Err(e) => {
+                        // Track failed report generation
+                        let analytics_event = AnalyticsHelper::create_analytics_event(
+                            "generate_quality_report".to_string(),
+                            project_id.map(|s| s.to_string()),
+                            Some(duration_ms),
+                            false,
+                            Some(e.to_string()),
+                        );
+                        
+                        if let Err(analytics_err) = self.container.analytics_service.track_event(analytics_event).await {
+                            tracing::warn!("Failed to track analytics event: {}", analytics_err);
+                        }
+
+                        Err(McpError::internal_error(format!("Quality report generation failed: {e}"), None))
+                    }
+                }
+            }
+
+            "export_analytics_data" => {
+                let start_time = Instant::now();
+                let args = request.arguments.unwrap_or_default();
+                let format = args.get("format").and_then(|v| v.as_str()).unwrap_or("json");
+                let start_date_str = args.get("start_date").and_then(|v| v.as_str()).ok_or_else(|| {
+                    McpError::invalid_params("Missing required parameter: start_date", None)
+                })?;
+                let end_date_str = args.get("end_date").and_then(|v| v.as_str()).ok_or_else(|| {
+                    McpError::invalid_params("Missing required parameter: end_date", None)
+                })?;
+
+                // Parse dates
+                let start_date = chrono::DateTime::parse_from_rfc3339(start_date_str)
+                    .map_err(|_| McpError::invalid_params("Invalid start_date format. Use ISO 8601 format", None))?
+                    .with_timezone(&chrono::Utc);
+                let end_date = chrono::DateTime::parse_from_rfc3339(end_date_str)
+                    .map_err(|_| McpError::invalid_params("Invalid end_date format. Use ISO 8601 format", None))?
+                    .with_timezone(&chrono::Utc);
+
+                let project_id = args.get("project_id").and_then(|v| v.as_str());
+                let event_types: Vec<String> = args.get("event_types")
+                    .and_then(|v| v.as_array())
+                    .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect())
+                    .unwrap_or_default();
+
+                let export_result = self.container.analytics_service.generate_usage_report(start_date, end_date).await;
+                let duration_ms = start_time.elapsed().as_millis() as u64;
+
+                match export_result {
+                    Ok(mut export_data) => {
+                        // Add export metadata
+                        if let Some(export_obj) = export_data.as_object_mut() {
+                            export_obj.insert("export_metadata".to_string(), serde_json::json!({
+                                "format": format,
+                                "exported_at": chrono::Utc::now().to_rfc3339(),
+                                "project_filter": project_id,
+                                "event_type_filter": if event_types.is_empty() { None } else { Some(event_types) },
+                                "total_records": export_obj.get("summary").and_then(|s| s.get("total_events")).unwrap_or(&serde_json::Value::Number(0.into()))
+                            }));
+                        }
+
+                        // For CSV format, we would need to implement CSV conversion
+                        // For now, we'll return JSON with a note about CSV format
+                        let final_content = if format == "csv" {
+                            serde_json::json!({
+                                "note": "CSV export format requested but not yet implemented. Returning JSON format.",
+                                "format": "json",
+                                "data": export_data
+                            })
+                        } else {
+                            export_data
+                        };
+
+                        // Track successful export
+                        let analytics_event = AnalyticsHelper::create_analytics_event(
+                            "export_analytics_data".to_string(),
+                            project_id.map(|s| s.to_string()),
+                            Some(duration_ms),
+                            true,
+                            None,
+                        );
+                        
+                        if let Err(e) = self.container.analytics_service.track_event(analytics_event).await {
+                            tracing::warn!("Failed to track analytics event: {}", e);
+                        }
+
+                        let content = serde_json::to_string_pretty(&final_content).map_err(|e| {
+                            McpError::internal_error(format!("Serialization error: {e}"), None)
+                        })?;
+                        Ok(CallToolResult::success(vec![Content::text(content)]))
+                    }
+                    Err(e) => {
+                        // Track failed export
+                        let analytics_event = AnalyticsHelper::create_analytics_event(
+                            "export_analytics_data".to_string(),
+                            project_id.map(|s| s.to_string()),
+                            Some(duration_ms),
+                            false,
+                            Some(e.to_string()),
+                        );
+                        
+                        if let Err(analytics_err) = self.container.analytics_service.track_event(analytics_event).await {
+                            tracing::warn!("Failed to track analytics event: {}", analytics_err);
+                        }
+
+                        Err(McpError::internal_error(format!("Analytics data export failed: {e}"), None))
+                    }
+                }
+            }
+
             // Universal CRUD Operations
             // First universal handler for create_entity
             "create_entity" => {

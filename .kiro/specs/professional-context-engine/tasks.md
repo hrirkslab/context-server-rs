@@ -122,21 +122,28 @@
   - Create analytics repository for storing usage data and metrics
   - _Requirements: 4.1, 4.2_
 
-- [ ] 4.2 Add Analytics MCP Tools
+- [x] 4.2 Add Analytics MCP Tools
+
+
+
+
+
+
+
   - Implement get_usage_analytics MCP tool for retrieving usage statistics
   - Add get_context_insights MCP tool for project-level analytics
   - Create generate_quality_report MCP tool for context health assessment
   - Build export_analytics_data MCP tool for data portability
   - _Requirements: 4.2, 4.4_
 
-- [ ] 4.3 Implement Context Effectiveness Tracking
+- [x] 4.3 Implement Context Effectiveness Tracking
   - Add success rate tracking to context query operations
   - Implement context recommendation effectiveness measurement
   - Create feedback loop for improving context suggestions
   - Build automated quality scoring based on usage patterns
   - _Requirements: 1.2, 4.3_
 
-- [ ] 4.4 Create Analytics Dashboard Data Services
+- [x] 4.4 Create Analytics Dashboard Data Services
   - Implement real-time analytics data aggregation
   - Add trend analysis for context usage and quality over time
   - Create predictive analytics for context gaps and improvements
@@ -157,9 +164,9 @@
   - _Requirements: 11.1, 11.2, 11.3_
 
 - [ ] 5.2 Build Specification Import System
-  - Implement automatic detection and parsing of Kiro spec files
-  - Add specification validation and error reporting
-  - Create incremental updates when specifications change
+  - Implement automatic detection and parsing of Kiro spec files (.kiro/specs directory structure)
+  - Add specification validation and error reporting for requirements.md, design.md, tasks.md
+  - Create incremental updates when specifications change using file system monitoring
   - Build specification versioning and change tracking
   - _Requirements: 11.1, 11.6_
 
@@ -326,8 +333,8 @@
   - Wire up all services through the enhanced context server
   - _Requirements: All requirements integrated through enhanced API_
 
-- [ ] 10.1 Integrate Intelligence Services with MCP Tools
-  - Wire ContextIntelligenceService into the container and MCP server
+- [ ] 10.1 Integrate Intelligence Services with Container and MCP Tools
+  - Wire ContextIntelligenceService, SemanticSearchService, and other intelligence services into the container
   - Add semantic search capabilities to existing query_context tool
   - Integrate relationship analysis into context retrieval operations
   - Update MCP tool responses to include intelligence insights

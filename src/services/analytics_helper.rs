@@ -207,4 +207,34 @@ impl AnalyticsHelper {
             error_message,
         }
     }
+
+    /// Create a general analytics event for analytics operations
+    pub fn create_analytics_event(
+        operation: String,
+        context: Option<String>,
+        duration_ms: Option<u64>,
+        success: bool,
+        error_message: Option<String>,
+    ) -> AnalyticsEvent {
+        let mut metadata = HashMap::new();
+        metadata.insert("analytics_operation".to_string(), serde_json::Value::String(operation.clone()));
+        
+        if let Some(ctx) = context {
+            metadata.insert("context".to_string(), serde_json::Value::String(ctx));
+        }
+
+        AnalyticsEvent {
+            id: Uuid::new_v4().to_string(),
+            event_type: AnalyticsEventType::ContextQuery, // Using ContextQuery as the closest match
+            project_id: None,
+            entity_type: Some("analytics_operation".to_string()),
+            entity_id: Some(operation),
+            user_agent: None,
+            metadata,
+            timestamp: Utc::now(),
+            duration_ms,
+            success,
+            error_message,
+        }
+    }
 }
