@@ -340,6 +340,79 @@ impl ServerHandler for EnhancedContextMcpServer {
                 }).as_object().unwrap().clone()),
                 annotations: None,
             },
+
+            // Specification Import and Management Tools
+            Tool {
+                name: "scan_specifications".into(),
+                description: Some("Scan and import all Kiro specifications from .kiro/specs directory".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "base_path": {"type": "string", "description": "Base path to scan for specifications (defaults to .kiro/specs)", "default": ".kiro/specs"}
+                    }
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "import_specification".into(),
+                description: Some("Import a single specification file".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "file_path": {"type": "string", "description": "Path to the specification file to import"}
+                    },
+                    "required": ["file_path"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "validate_specification".into(),
+                description: Some("Validate a specification file and return validation issues".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "file_path": {"type": "string", "description": "Path to the specification file to validate"}
+                    },
+                    "required": ["file_path"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "start_spec_monitoring".into(),
+                description: Some("Start monitoring .kiro/specs directory for changes".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "base_path": {"type": "string", "description": "Base path to monitor (defaults to .kiro/specs)", "default": ".kiro/specs"}
+                    }
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "get_specification_versions".into(),
+                description: Some("Get all versions of a specification".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "spec_id": {"type": "string", "description": "ID of the specification"}
+                    },
+                    "required": ["spec_id"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "compare_specification_versions".into(),
+                description: Some("Compare two versions of a specification".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "version1_id": {"type": "string", "description": "ID of the first version"},
+                        "version2_id": {"type": "string", "description": "ID of the second version"}
+                    },
+                    "required": ["version1_id", "version2_id"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
         ];
 
         Ok(ListToolsResult {
@@ -2102,6 +2175,143 @@ impl ServerHandler for EnhancedContextMcpServer {
 
             // Project Management
             // Removed duplicate manage_project handler
+
+            // Specification Import and Management Tools
+            "scan_specifications" => {
+                let args = request.arguments.unwrap_or_default();
+                let base_path = args
+                    .get("base_path")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or(".kiro/specs");
+
+                let path = std::path::Path::new(base_path);
+                match self.container.specification_import_service.scan_and_import_specifications(path).await {
+                    Ok(specs) => {
+                        let content = serde_json::to_string_pretty(&specs).map_err(|e| {
+                            McpError::internal_error(format!("Serialization error: {e}"), None)
+                        })?;
+                        Ok(CallToolResult::success(vec![Content::text(content)]))
+                    }
+                    Err(e) => Err(McpError::internal_error(format!("Failed to scan specifications: {e}"), None)),
+                }
+            }
+
+            "import_specification" => {
+                let args = request.arguments.unwrap_or_default();
+                let file_path = args
+                    .get("file_path")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        McpError::invalid_params("Missing required parameter: file_path", None)
+                    })?;
+
+                let path = std::path::Path::new(file_path);
+                match self.container.specification_import_service.import_specification_file(path).await {
+                    Ok(spec) => {
+                        let content = serde_json::to_string_pretty(&spec).map_err(|e| {
+                            McpError::internal_error(format!("Serialization error: {e}"), None)
+                        })?;
+                        Ok(CallToolResult::success(vec![Content::text(content)]))
+                    }
+                    Err(e) => Err(McpError::internal_error(format!("Failed to import specification: {e}"), None)),
+                }
+            }
+
+            "validate_specification" => {
+                let args = request.arguments.unwrap_or_default();
+                let file_path = args
+                    .get("file_path")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        McpError::invalid_params("Missing required parameter: file_path", None)
+                    })?;
+
+                let path = std::path::Path::new(file_path);
+                match self.container.specification_import_service.validate_specification_file(path).await {
+                    Ok(issues) => {
+                        let result = serde_json::json!({
+                            "file_path": file_path,
+                            "validation_issues": issues,
+                            "is_valid": issues.is_empty()
+                        });
+                        let content = serde_json::to_string_pretty(&result).map_err(|e| {
+                            McpError::internal_error(format!("Serialization error: {e}"), None)
+                        })?;
+                        Ok(CallToolResult::success(vec![Content::text(content)]))
+                    }
+                    Err(e) => Err(McpError::internal_error(format!("Failed to validate specification: {e}"), None)),
+                }
+            }
+
+            "start_spec_monitoring" => {
+                let args = request.arguments.unwrap_or_default();
+                let base_path = args
+                    .get("base_path")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or(".kiro/specs");
+
+                let path = std::path::Path::new(base_path);
+                match self.container.specification_import_service.start_file_monitoring(path).await {
+                    Ok(()) => {
+                        let result = serde_json::json!({
+                            "status": "success",
+                            "message": format!("Started monitoring {}", base_path),
+                            "monitoring_path": base_path
+                        });
+                        let content = serde_json::to_string_pretty(&result).map_err(|e| {
+                            McpError::internal_error(format!("Serialization error: {e}"), None)
+                        })?;
+                        Ok(CallToolResult::success(vec![Content::text(content)]))
+                    }
+                    Err(e) => Err(McpError::internal_error(format!("Failed to start monitoring: {e}"), None)),
+                }
+            }
+
+            "get_specification_versions" => {
+                let args = request.arguments.unwrap_or_default();
+                let spec_id = args
+                    .get("spec_id")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        McpError::invalid_params("Missing required parameter: spec_id", None)
+                    })?;
+
+                match self.container.specification_versioning_service.get_versions(spec_id).await {
+                    Ok(versions) => {
+                        let content = serde_json::to_string_pretty(&versions).map_err(|e| {
+                            McpError::internal_error(format!("Serialization error: {e}"), None)
+                        })?;
+                        Ok(CallToolResult::success(vec![Content::text(content)]))
+                    }
+                    Err(e) => Err(McpError::internal_error(format!("Failed to get specification versions: {e}"), None)),
+                }
+            }
+
+            "compare_specification_versions" => {
+                let args = request.arguments.unwrap_or_default();
+                let version1_id = args
+                    .get("version1_id")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        McpError::invalid_params("Missing required parameter: version1_id", None)
+                    })?;
+                let version2_id = args
+                    .get("version2_id")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        McpError::invalid_params("Missing required parameter: version2_id", None)
+                    })?;
+
+                match self.container.specification_versioning_service.compare_versions(version1_id, version2_id).await {
+                    Ok(comparison) => {
+                        let content = serde_json::to_string_pretty(&comparison).map_err(|e| {
+                            McpError::internal_error(format!("Serialization error: {e}"), None)
+                        })?;
+                        Ok(CallToolResult::success(vec![Content::text(content)]))
+                    }
+                    Err(e) => Err(McpError::internal_error(format!("Failed to compare specification versions: {e}"), None)),
+                }
+            }
 
             // Fallback for undefined tools
             _ => Err(McpError::method_not_found::<CallToolRequestMethod>()),

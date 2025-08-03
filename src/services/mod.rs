@@ -19,6 +19,8 @@ pub mod hybrid_search_service;
 pub mod search_index_manager;
 pub mod specification_parser;
 pub mod specification_service;
+pub mod specification_import_service;
+pub mod specification_versioning_service;
 pub mod vector_embedding_integration;
 pub mod websocket_manager;
 pub mod websocket_server;
@@ -46,6 +48,8 @@ pub mod change_broadcasting_integration_test;
 pub mod analytics_integration_test;
 #[cfg(test)]
 pub mod conflict_resolution_integration_test;
+#[cfg(test)]
+pub mod specification_import_integration_test;
 // Note: component_service removed as it was identical to framework_service
 // Note: flutter_service and flutter_advanced_crud_service modules don't exist yet
 
@@ -67,6 +71,8 @@ pub use semantic_search_service::SemanticSearchService;
 pub use hybrid_search_service::{HybridSearchService, HybridSearchServiceImpl};
 pub use search_index_manager::{SearchIndexManager, SearchIndexManagerImpl, IndexManagerConfig};
 pub use specification_parser::SpecificationParser;
+pub use specification_import_service::{SpecificationImportService, DefaultSpecificationImportService, SpecificationChange, ChangeType};
+pub use specification_versioning_service::{SpecificationVersioningService, SqliteSpecificationVersioningService, SpecificationVersion, VersionChangeType, VersionComparison, VersionDifference, DifferenceType};
 pub use specification_service::{SpecificationService, DefaultSpecificationService};
 pub use websocket_manager::WebSocketManager;
 pub use websocket_server::{WebSocketServer, WebSocketService, WebSocketConfig};

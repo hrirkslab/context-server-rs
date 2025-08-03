@@ -13,6 +13,7 @@ use crate::infrastructure::{
     // Note: SqliteComponentRepository removed as it was identical to SqliteFrameworkRepository
     SqlitePerformanceRequirementRepository,
     SqliteProjectRepository,
+    SqliteSpecificationRepository,
 };
 
 // Service layer
@@ -30,6 +31,12 @@ use crate::services::{
     DevelopmentPhaseService,
     FrameworkService,
     ProjectService,
+    DefaultSpecificationService,
+    SpecificationService,
+    DefaultSpecificationImportService,
+    SpecificationImportService,
+    SqliteSpecificationVersioningService,
+    SpecificationVersioningService,
 };
 
 /// Application container holding all dependencies
@@ -43,6 +50,9 @@ pub struct AppContainer {
     pub context_crud_service: Box<dyn ContextCrudService>,
     pub framework_service: Box<dyn FrameworkService>,
     pub analytics_service: Box<dyn AnalyticsService>,
+    pub specification_service: Arc<dyn SpecificationService>,
+    pub specification_import_service: Arc<dyn SpecificationImportService>,
+    pub specification_versioning_service: Arc<dyn SpecificationVersioningService>,
     // Note: component_service removed as it was identical to framework_service
 }
 
@@ -100,6 +110,20 @@ impl AppContainer {
         analytics_repository.init_tables()?;
         let analytics_service = Box::new(DefaultAnalyticsService::new(Box::new(analytics_repository)));
 
+        // Create specification services
+        let specification_repository = Arc::new(SqliteSpecificationRepository::new(db.clone()));
+        specification_repository.initialize_tables()?;
+        
+        let specification_service = Arc::new(DefaultSpecificationService::new(specification_repository.clone()));
+        
+        let specification_import_service = Arc::new(DefaultSpecificationImportService::new(
+            specification_service.clone(),
+            specification_repository.clone(),
+        ));
+        
+        let specification_versioning_service = Arc::new(SqliteSpecificationVersioningService::new(db.clone()));
+        specification_versioning_service.initialize_tables()?;
+
         // Note: component_service removed as it was identical to framework_service
 
         Ok(AppContainer {
@@ -110,6 +134,9 @@ impl AppContainer {
             context_crud_service,
             framework_service,
             analytics_service,
+            specification_service,
+            specification_import_service,
+            specification_versioning_service,
             // Note: component_service removed
         })
     }
