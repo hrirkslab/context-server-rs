@@ -226,6 +226,26 @@ pub fn init_db(db_path: &str) -> Result<Connection> {
         CREATE INDEX IF NOT EXISTS idx_embeddings_model ON context_embeddings(embedding_model);
         CREATE INDEX IF NOT EXISTS idx_embeddings_content_hash ON context_embeddings(content_hash);
         CREATE INDEX IF NOT EXISTS idx_embeddings_created_at ON context_embeddings(created_at);
+        
+        -- Analytics events table for usage tracking
+        CREATE TABLE IF NOT EXISTS analytics_events (
+            id TEXT PRIMARY KEY,
+            event_type TEXT NOT NULL,
+            project_id TEXT,
+            entity_type TEXT,
+            entity_id TEXT,
+            user_agent TEXT,
+            metadata TEXT,
+            timestamp TEXT NOT NULL,
+            duration_ms INTEGER,
+            success BOOLEAN NOT NULL,
+            error_message TEXT
+        );
+
+        -- Create indexes for better query performance
+        CREATE INDEX IF NOT EXISTS idx_analytics_events_project_id ON analytics_events(project_id);
+        CREATE INDEX IF NOT EXISTS idx_analytics_events_entity ON analytics_events(entity_type, entity_id);
+        CREATE INDEX IF NOT EXISTS idx_analytics_events_timestamp ON analytics_events(timestamp);
     "#)?;
     Ok(conn)
 }

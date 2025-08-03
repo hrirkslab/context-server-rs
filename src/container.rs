@@ -5,6 +5,7 @@ use std::sync::{Arc, Mutex};
 
 // Infrastructure layer
 use crate::infrastructure::{
+    SqliteAnalyticsRepository,
     SqliteArchitecturalDecisionRepository,
     SqliteBusinessRuleRepository,
     SqliteDevelopmentPhaseRepository,
@@ -16,6 +17,7 @@ use crate::infrastructure::{
 
 // Service layer
 use crate::services::{
+    analytics_service::{AnalyticsService, DefaultAnalyticsService},
     architecture_validation_service::ArchitectureValidationServiceImpl,
     context_crud_service::{ContextCrudService, ContextCrudServiceImpl},
     context_query_service::ContextQueryServiceImpl,
@@ -40,6 +42,7 @@ pub struct AppContainer {
     pub architecture_validation_service: Box<dyn ArchitectureValidationService>,
     pub context_crud_service: Box<dyn ContextCrudService>,
     pub framework_service: Box<dyn FrameworkService>,
+    pub analytics_service: Box<dyn AnalyticsService>,
     // Note: component_service removed as it was identical to framework_service
 }
 
@@ -91,6 +94,12 @@ impl AppContainer {
         let framework_repository = SqliteFrameworkRepository::new(db.clone());
         let framework_service = Box::new(FrameworkServiceImpl::new(framework_repository));
 
+        // Create analytics service
+        let analytics_repository = SqliteAnalyticsRepository::new(db.clone());
+        // Initialize analytics tables
+        analytics_repository.init_tables()?;
+        let analytics_service = Box::new(DefaultAnalyticsService::new(Box::new(analytics_repository)));
+
         // Note: component_service removed as it was identical to framework_service
 
         Ok(AppContainer {
@@ -100,6 +109,7 @@ impl AppContainer {
             architecture_validation_service,
             context_crud_service,
             framework_service,
+            analytics_service,
             // Note: component_service removed
         })
     }

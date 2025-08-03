@@ -1,6 +1,8 @@
 // Service layer modules following SOLID principles
 
 pub mod advanced_query_service;
+pub mod analytics_helper;
+pub mod analytics_service;
 pub mod architecture_validation_service;
 pub mod context_crud_service;
 pub mod context_intelligence_service;
@@ -39,6 +41,8 @@ pub mod change_broadcaster_test;
 #[cfg(test)]
 pub mod change_broadcasting_integration_test;
 #[cfg(test)]
+pub mod analytics_integration_test;
+#[cfg(test)]
 pub mod conflict_resolution_integration_test;
 // Note: component_service removed as it was identical to framework_service
 // Note: flutter_service and flutter_advanced_crud_service modules don't exist yet
@@ -46,6 +50,8 @@ pub mod conflict_resolution_integration_test;
 // Re-export service traits
 // Temporarily commented out to debug compilation issues
 // pub use advanced_query_service::AdvancedQueryConfig;
+pub use analytics_helper::AnalyticsHelper;
+pub use analytics_service::{AnalyticsService, DefaultAnalyticsService, AnalyticsEvent, AnalyticsEventType, UsageStatistics, ProjectInsights};
 pub use architecture_validation_service::ArchitectureValidationService;
 pub use context_intelligence_service::{ContextIntelligenceService, DefaultContextIntelligenceService};
 pub use context_quality_service::{ContextQualityService, DefaultContextQualityService};

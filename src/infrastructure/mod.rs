@@ -1,5 +1,6 @@
 // Infrastructure layer - SQLite implementations of repositories
 
+pub mod sqlite_analytics_repository;
 pub mod sqlite_architectural_decision_repository;
 pub mod sqlite_business_rule_repository;
 pub mod sqlite_development_phase_repository;
@@ -12,6 +13,7 @@ pub mod sqlite_project_repository;
 // pub mod sqlite_extended_repositories;
 
 // Re-export implementations
+pub use sqlite_analytics_repository::SqliteAnalyticsRepository;
 pub use sqlite_architectural_decision_repository::SqliteArchitecturalDecisionRepository;
 pub use sqlite_business_rule_repository::SqliteBusinessRuleRepository;
 pub use sqlite_development_phase_repository::SqliteDevelopmentPhaseRepository;

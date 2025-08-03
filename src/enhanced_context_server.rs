@@ -3,9 +3,11 @@ use crate::models::framework::{
     FeatureInfo, FeatureStatus, ServerCapabilitiesInfo, ServerMetadata, TableInfo, ToolInfo,
     UsageExample,
 };
+use crate::services::AnalyticsHelper;
 use anyhow::Result;
 use rmcp::{handler::server::ServerHandler, model::ErrorData as McpError, model::*};
 use std::sync::Arc;
+use std::time::Instant;
 
 /// Enhanced MCP Context Server with SOLID principles and comprehensive CRUD operations
 #[derive(Clone)]
@@ -307,6 +309,7 @@ impl ServerHandler for EnhancedContextMcpServer {
 
             // Context Query
             "query_context" => {
+                let start_time = Instant::now();
                 let args = request.arguments.unwrap_or_default();
                 let project_id =
                     args.get("project_id")
@@ -336,19 +339,60 @@ impl ServerHandler for EnhancedContextMcpServer {
                     })
                     .unwrap_or_default();
 
-                let result = self
+                let query_result = self
                     .container
                     .context_query_service
                     .query_context(project_id, feature_area, task_type, &components)
-                    .await?;
-                let content = serde_json::to_string_pretty(&result).map_err(|e| {
-                    McpError::internal_error(format!("Serialization error: {e}"), None)
-                })?;
-                Ok(CallToolResult::success(vec![Content::text(content)]))
+                    .await;
+
+                let duration_ms = start_time.elapsed().as_millis() as u64;
+                
+                match query_result {
+                    Ok(result) => {
+                        // Track successful query
+                        let analytics_event = AnalyticsHelper::create_context_query_event(
+                            Some(project_id.to_string()),
+                            Some(feature_area.to_string()),
+                            Some(task_type.to_string()),
+                            Some(components),
+                            Some(duration_ms),
+                            true,
+                            None,
+                        );
+                        
+                        if let Err(e) = self.container.analytics_service.track_event(analytics_event).await {
+                            tracing::warn!("Failed to track analytics event: {}", e);
+                        }
+
+                        let content = serde_json::to_string_pretty(&result).map_err(|e| {
+                            McpError::internal_error(format!("Serialization error: {e}"), None)
+                        })?;
+                        Ok(CallToolResult::success(vec![Content::text(content)]))
+                    }
+                    Err(e) => {
+                        // Track failed query
+                        let analytics_event = AnalyticsHelper::create_context_query_event(
+                            Some(project_id.to_string()),
+                            Some(feature_area.to_string()),
+                            Some(task_type.to_string()),
+                            Some(components),
+                            Some(duration_ms),
+                            false,
+                            Some(e.to_string()),
+                        );
+                        
+                        if let Err(analytics_err) = self.container.analytics_service.track_event(analytics_event).await {
+                            tracing::warn!("Failed to track analytics event: {}", analytics_err);
+                        }
+
+                        Err(McpError::internal_error(format!("Query failed: {e}"), None))
+                    }
+                }
             }
 
             // Architecture validation
             "validate_architecture" => {
+                let start_time = Instant::now();
                 let args = request.arguments.unwrap_or_default();
                 let project_id =
                     args.get("project_id")
@@ -357,15 +401,51 @@ impl ServerHandler for EnhancedContextMcpServer {
                             McpError::invalid_params("Missing required parameter: project_id", None)
                         })?;
 
-                let violations = self
+                let validation_result = self
                     .container
                     .architecture_validation_service
                     .validate_architecture(project_id)
-                    .await?;
-                let content = serde_json::to_string_pretty(&violations).map_err(|e| {
-                    McpError::internal_error(format!("Serialization error: {e}"), None)
-                })?;
-                Ok(CallToolResult::success(vec![Content::text(content)]))
+                    .await;
+
+                let duration_ms = start_time.elapsed().as_millis() as u64;
+
+                match validation_result {
+                    Ok(violations) => {
+                        // Track successful validation
+                        let analytics_event = AnalyticsHelper::create_architecture_validation_event(
+                            project_id.to_string(),
+                            violations.len(),
+                            Some(duration_ms),
+                            true,
+                            None,
+                        );
+                        
+                        if let Err(e) = self.container.analytics_service.track_event(analytics_event).await {
+                            tracing::warn!("Failed to track analytics event: {}", e);
+                        }
+
+                        let content = serde_json::to_string_pretty(&violations).map_err(|e| {
+                            McpError::internal_error(format!("Serialization error: {e}"), None)
+                        })?;
+                        Ok(CallToolResult::success(vec![Content::text(content)]))
+                    }
+                    Err(e) => {
+                        // Track failed validation
+                        let analytics_event = AnalyticsHelper::create_architecture_validation_event(
+                            project_id.to_string(),
+                            0,
+                            Some(duration_ms),
+                            false,
+                            Some(e.to_string()),
+                        );
+                        
+                        if let Err(analytics_err) = self.container.analytics_service.track_event(analytics_event).await {
+                            tracing::warn!("Failed to track analytics event: {}", analytics_err);
+                        }
+
+                        Err(McpError::internal_error(format!("Validation failed: {e}"), None))
+                    }
+                }
             }
 
             // Server capabilities
@@ -471,6 +551,7 @@ impl ServerHandler for EnhancedContextMcpServer {
 
             // Bulk Operations
             "bulk_create_components" => {
+                let start_time = Instant::now();
                 let args = request.arguments.unwrap_or_default();
                 let project_id =
                     args.get("project_id")
@@ -532,6 +613,23 @@ impl ServerHandler for EnhancedContextMcpServer {
                         )
                         .await?;
                     components.push(component);
+                }
+
+                let duration_ms = start_time.elapsed().as_millis() as u64;
+                
+                // Track successful bulk operation
+                let analytics_event = AnalyticsHelper::create_bulk_operation_event(
+                    Some(project_id.to_string()),
+                    "framework_component".to_string(),
+                    "bulk_create".to_string(),
+                    components.len(),
+                    Some(duration_ms),
+                    true,
+                    None,
+                );
+                
+                if let Err(e) = self.container.analytics_service.track_event(analytics_event).await {
+                    tracing::warn!("Failed to track analytics event: {}", e);
                 }
 
                 let content = serde_json::to_string_pretty(&components).map_err(|e| {
@@ -750,6 +848,7 @@ impl ServerHandler for EnhancedContextMcpServer {
             // Universal CRUD Operations
             // First universal handler for create_entity
             "create_entity" => {
+                let start_time = Instant::now();
                 let args = request.arguments.unwrap_or_default();
                 let entity_type = args
                     .get("entity_type")
@@ -950,6 +1049,30 @@ impl ServerHandler for EnhancedContextMcpServer {
                         ))
                     }
                 };
+
+                let duration_ms = start_time.elapsed().as_millis() as u64;
+                
+                // Extract project_id and entity_id from result for analytics
+                let project_id = data.get("project_id").and_then(|v| v.as_str()).map(|s| s.to_string());
+                let entity_id = if let Ok(obj) = result.as_object().ok_or("Invalid result") {
+                    obj.get("id").and_then(|v| v.as_str()).map(|s| s.to_string())
+                } else {
+                    None
+                };
+
+                // Track successful creation
+                let analytics_event = AnalyticsHelper::create_entity_create_event(
+                    project_id,
+                    entity_type.to_string(),
+                    entity_id.unwrap_or_else(|| "unknown".to_string()),
+                    Some(duration_ms),
+                    true,
+                    None,
+                );
+                
+                if let Err(e) = self.container.analytics_service.track_event(analytics_event).await {
+                    tracing::warn!("Failed to track analytics event: {}", e);
+                }
 
                 let content = serde_json::to_string_pretty(&result).map_err(|e| {
                     McpError::internal_error(format!("Serialization error: {}", e), None)
