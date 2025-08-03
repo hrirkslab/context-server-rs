@@ -7,3 +7,4 @@ pub mod embedding;
 pub mod enhanced_context;
 pub mod flutter;
 pub mod framework;
+pub mod specification;
