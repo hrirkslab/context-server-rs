@@ -22,6 +22,7 @@ pub mod specification_service;
 pub mod specification_import_service;
 pub mod specification_versioning_service;
 pub mod specification_context_linking_service;
+pub mod specification_analytics_service;
 pub mod vector_embedding_integration;
 pub mod websocket_manager;
 pub mod websocket_server;
@@ -76,6 +77,7 @@ pub use specification_import_service::{SpecificationImportService, DefaultSpecif
 pub use specification_versioning_service::{SpecificationVersioningService, SqliteSpecificationVersioningService, SpecificationVersion, VersionChangeType, VersionComparison, VersionDifference, DifferenceType};
 pub use specification_service::{SpecificationService, DefaultSpecificationService};
 pub use specification_context_linking_service::{SpecificationContextLinkingService, DefaultSpecificationContextLinkingService};
+pub use specification_analytics_service::{SpecificationAnalyticsService, DefaultSpecificationAnalyticsService};
 pub use websocket_manager::WebSocketManager;
 pub use websocket_server::{WebSocketServer, WebSocketService, WebSocketConfig};
 pub use websocket_types::*;

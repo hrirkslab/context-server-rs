@@ -27,6 +27,7 @@ use crate::services::{
     framework_service::FrameworkServiceImpl,
     // Note: ComponentService removed as it was identical to FrameworkService
     project_service::ProjectServiceImpl,
+    specification_analytics_service::{SpecificationAnalyticsService, DefaultSpecificationAnalyticsService},
     ArchitectureValidationService,
     ContextQueryService,
     DevelopmentPhaseService,
@@ -57,6 +58,7 @@ pub struct AppContainer {
     pub specification_import_service: Arc<dyn SpecificationImportService>,
     pub specification_versioning_service: Arc<dyn SpecificationVersioningService>,
     pub specification_context_linking_service: Arc<dyn SpecificationContextLinkingService>,
+    pub specification_analytics_service: Arc<dyn SpecificationAnalyticsService>,
     // Note: component_service removed as it was identical to framework_service
 }
 
@@ -142,6 +144,12 @@ impl AppContainer {
             )),
         ));
 
+        // Create specification analytics service
+        let specification_analytics_service = Arc::new(DefaultSpecificationAnalyticsService::new(
+            specification_repository.clone(),
+            Arc::new(DefaultAnalyticsService::new(Box::new(SqliteAnalyticsRepository::new(db.clone())))),
+        ));
+
         // Note: component_service removed as it was identical to framework_service
 
         Ok(AppContainer {
@@ -156,6 +164,7 @@ impl AppContainer {
             specification_import_service,
             specification_versioning_service,
             specification_context_linking_service,
+            specification_analytics_service,
             // Note: component_service removed
         })
     }

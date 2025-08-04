@@ -1,3 +1,4 @@
+pub mod api;
 pub mod container;
 pub mod db;
 pub mod enhanced_context_server;

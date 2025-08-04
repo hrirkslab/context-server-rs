@@ -1,3 +1,4 @@
+use crate::api::SpecificationAnalyticsTools;
 use crate::container::AppContainer;
 use crate::models::framework::{
     FeatureInfo, FeatureStatus, ServerCapabilitiesInfo, ServerMetadata, TableInfo, ToolInfo,
@@ -410,6 +411,69 @@ impl ServerHandler for EnhancedContextMcpServer {
                         "version2_id": {"type": "string", "description": "ID of the second version"}
                     },
                     "required": ["version1_id", "version2_id"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
+
+            // Specification Analytics Tools
+            Tool {
+                name: "track_requirements_progress".into(),
+                description: Some("Track progress for all requirements in a project, including completion percentages, linked tasks, and acceptance criteria status".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "project_id": {"type": "string", "description": "The ID of the project to track requirements progress for"}
+                    },
+                    "required": ["project_id"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "track_tasks_progress".into(),
+                description: Some("Track progress for all tasks in a project, including status, completion percentage, time tracking, and dependencies".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "project_id": {"type": "string", "description": "The ID of the project to track tasks progress for"}
+                    },
+                    "required": ["project_id"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "analyze_specification_completeness".into(),
+                description: Some("Analyze completeness of specifications in a project, including content quality, missing sections, and recommendations".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "project_id": {"type": "string", "description": "The ID of the project to analyze specification completeness for"}
+                    },
+                    "required": ["project_id"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "calculate_development_velocity".into(),
+                description: Some("Calculate development velocity metrics based on task and requirement completion over a specified time period".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "project_id": {"type": "string", "description": "The ID of the project to calculate velocity for"},
+                        "days": {"type": "integer", "description": "Number of days to look back for velocity calculation", "default": 30, "minimum": 1, "maximum": 365}
+                    },
+                    "required": ["project_id"]
+                }).as_object().unwrap().clone()),
+                annotations: None,
+            },
+            Tool {
+                name: "generate_specification_health_report".into(),
+                description: Some("Generate a comprehensive health report for all specifications in a project, including progress, completeness, velocity, and recommendations".into()),
+                input_schema: Arc::new(serde_json::json!({
+                    "type": "object",
+                    "properties": {
+                        "project_id": {"type": "string", "description": "The ID of the project to generate health report for"}
+                    },
+                    "required": ["project_id"]
                 }).as_object().unwrap().clone()),
                 annotations: None,
             },
@@ -2311,6 +2375,14 @@ impl ServerHandler for EnhancedContextMcpServer {
                     }
                     Err(e) => Err(McpError::internal_error(format!("Failed to compare specification versions: {e}"), None)),
                 }
+            }
+
+            // Specification Analytics Tools
+            "track_requirements_progress" | "track_tasks_progress" | "analyze_specification_completeness" | 
+            "calculate_development_velocity" | "generate_specification_health_report" => {
+                let analytics_tools = SpecificationAnalyticsTools::new(self.container.specification_analytics_service.clone());
+                let arguments = request.arguments.unwrap_or_default();
+                analytics_tools.handle_tool_call(&request.name, serde_json::Value::Object(arguments)).await
             }
 
             // Fallback for undefined tools
