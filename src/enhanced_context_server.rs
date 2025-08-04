@@ -650,79 +650,419 @@ impl ServerHandler for EnhancedContextMcpServer {
                         name: "Enhanced Context Server".to_string(),
                         version: "0.2.0".to_string(),
                         description:
-                            "SOLID-compliant context server with comprehensive CRUD operations"
+                            "Professional Context Engine with AI-powered intelligence, semantic search, real-time sync, and comprehensive project specification management"
                                 .to_string(),
                         config_directory: "~/.context-server".to_string(),
                     },
                     features: vec![
                         FeatureInfo {
                             name: "Enhanced CRUD Operations".to_string(),
-                            description: "Full CRUD for all entities with bulk operations"
+                            description: "Full CRUD for all entities with bulk operations and universal entity handlers"
                                 .to_string(),
                             status: FeatureStatus::Implemented,
                             tools: vec![
-                                "create_*".to_string(),
-                                "update_*".to_string(),
-                                "delete_*".to_string(),
+                                "create_entity".to_string(),
+                                "update_entity".to_string(),
+                                "delete_entity".to_string(),
+                                "get_entity".to_string(),
+                                "list_entities".to_string(),
                                 "bulk_*".to_string(),
                             ],
                         },
                         FeatureInfo {
                             name: "SOLID Architecture".to_string(),
-                            description: "Service/Repository pattern with dependency injection"
+                            description: "Service/Repository pattern with dependency injection and clean architecture"
                                 .to_string(),
                             status: FeatureStatus::Implemented,
                             tools: vec!["All operations".to_string()],
+                        },
+                        FeatureInfo {
+                            name: "Project Specification Management".to_string(),
+                            description: "Complete Kiro specification integration with automatic parsing, versioning, and context linking"
+                                .to_string(),
+                            status: FeatureStatus::Implemented,
+                            tools: vec![
+                                "scan_specifications".to_string(),
+                                "import_specification".to_string(),
+                                "validate_specification".to_string(),
+                                "get_specification_versions".to_string(),
+                                "compare_specification_versions".to_string(),
+                                "start_spec_monitoring".to_string(),
+                            ],
+                        },
+                        FeatureInfo {
+                            name: "Specification Analytics & Intelligence".to_string(),
+                            description: "Advanced analytics for requirements, tasks, development velocity, and project health"
+                                .to_string(),
+                            status: FeatureStatus::Implemented,
+                            tools: vec![
+                                "track_requirements_progress".to_string(),
+                                "track_tasks_progress".to_string(),
+                                "analyze_specification_completeness".to_string(),
+                                "calculate_development_velocity".to_string(),
+                                "generate_specification_health_report".to_string(),
+                            ],
+                        },
+                        FeatureInfo {
+                            name: "Context Intelligence & Quality".to_string(),
+                            description: "AI-powered context relationship detection, quality scoring, and intelligent suggestions"
+                                .to_string(),
+                            status: FeatureStatus::Implemented,
+                            tools: vec![
+                                "query_context".to_string(),
+                                "validate_architecture".to_string(),
+                                "get_context_insights".to_string(),
+                                "generate_quality_report".to_string(),
+                            ],
+                        },
+                        FeatureInfo {
+                            name: "Usage Analytics & Insights".to_string(),
+                            description: "Comprehensive usage tracking, analytics, and data export capabilities"
+                                .to_string(),
+                            status: FeatureStatus::Implemented,
+                            tools: vec![
+                                "get_usage_analytics".to_string(),
+                                "get_context_insights".to_string(),
+                                "generate_quality_report".to_string(),
+                                "export_analytics_data".to_string(),
+                            ],
+                        },
+                        FeatureInfo {
+                            name: "Cache Management".to_string(),
+                            description: "Intelligent caching system with project-level and global cache management"
+                                .to_string(),
+                            status: FeatureStatus::Implemented,
+                            tools: vec![
+                                "cache_management".to_string(),
+                            ],
                         },
                     ],
                     database_tables: vec![
                         TableInfo {
                             name: "projects".to_string(),
-                            description: "Main project information".to_string(),
-                            primary_fields: vec!["id".to_string(), "name".to_string()],
-                            example_use: "Organizing code contexts by project".to_string(),
+                            description: "Main project information and metadata".to_string(),
+                            primary_fields: vec!["id".to_string(), "name".to_string(), "description".to_string()],
+                            example_use: "Organizing code contexts by project with comprehensive metadata".to_string(),
                         },
                         TableInfo {
                             name: "business_rules".to_string(),
-                            description: "Domain-specific business logic rules".to_string(),
+                            description: "Domain-specific business logic rules and constraints".to_string(),
                             primary_fields: vec![
                                 "id".to_string(),
                                 "rule_name".to_string(),
                                 "domain_area".to_string(),
+                                "project_id".to_string(),
                             ],
-                            example_use: "Capturing business constraints for AI code generation"
-                                .to_string(),
+                            example_use: "Capturing business constraints for AI code generation and validation".to_string(),
                         },
-                        // Add more table info as needed
+                        TableInfo {
+                            name: "architectural_decisions".to_string(),
+                            description: "Architecture Decision Records (ADRs) and design choices".to_string(),
+                            primary_fields: vec![
+                                "id".to_string(),
+                                "decision_title".to_string(),
+                                "status".to_string(),
+                                "project_id".to_string(),
+                            ],
+                            example_use: "Tracking architectural decisions and their rationale for consistent development".to_string(),
+                        },
+                        TableInfo {
+                            name: "performance_requirements".to_string(),
+                            description: "Performance constraints and non-functional requirements".to_string(),
+                            primary_fields: vec![
+                                "id".to_string(),
+                                "requirement_name".to_string(),
+                                "metric_type".to_string(),
+                                "target_value".to_string(),
+                            ],
+                            example_use: "Defining performance benchmarks and optimization targets".to_string(),
+                        },
+                        TableInfo {
+                            name: "framework_components".to_string(),
+                            description: "Framework-agnostic component definitions and architecture layers".to_string(),
+                            primary_fields: vec![
+                                "id".to_string(),
+                                "component_name".to_string(),
+                                "component_type".to_string(),
+                                "architecture_layer".to_string(),
+                            ],
+                            example_use: "Managing component architecture and clean architecture compliance".to_string(),
+                        },
+                        TableInfo {
+                            name: "specifications".to_string(),
+                            description: "Project specifications, requirements, and tasks from Kiro specs".to_string(),
+                            primary_fields: vec![
+                                "id".to_string(),
+                                "title".to_string(),
+                                "spec_type".to_string(),
+                                "status".to_string(),
+                                "project_id".to_string(),
+                            ],
+                            example_use: "Managing project specifications with automatic parsing and version tracking".to_string(),
+                        },
+                        TableInfo {
+                            name: "specification_versions".to_string(),
+                            description: "Version history and change tracking for specifications".to_string(),
+                            primary_fields: vec![
+                                "id".to_string(),
+                                "spec_id".to_string(),
+                                "version_number".to_string(),
+                                "created_at".to_string(),
+                            ],
+                            example_use: "Tracking specification changes and enabling version comparison".to_string(),
+                        },
+                        TableInfo {
+                            name: "enhanced_context".to_string(),
+                            description: "Enhanced context items with relationships and quality metrics".to_string(),
+                            primary_fields: vec![
+                                "id".to_string(),
+                                "context_type".to_string(),
+                                "quality_score".to_string(),
+                                "relationship_count".to_string(),
+                            ],
+                            example_use: "Storing intelligent context with AI-powered relationship detection".to_string(),
+                        },
+                        TableInfo {
+                            name: "analytics_events".to_string(),
+                            description: "Usage analytics and event tracking for insights".to_string(),
+                            primary_fields: vec![
+                                "id".to_string(),
+                                "event_type".to_string(),
+                                "entity_type".to_string(),
+                                "timestamp".to_string(),
+                            ],
+                            example_use: "Tracking usage patterns and generating analytics insights".to_string(),
+                        },
                     ],
                     mcp_tools: vec![
+                        // Core Context Operations
                         ToolInfo {
-                            name: "create_business_rule".to_string(),
-                            description: "Create a new business rule".to_string(),
-                            category: "CRUD".to_string(),
+                            name: "query_context".to_string(),
+                            description: "Query project context with AI-powered intelligence".to_string(),
+                            category: "Core".to_string(),
                             required_params: vec![
                                 "project_id".to_string(),
-                                "rule_name".to_string(),
+                                "feature_area".to_string(),
+                                "task_type".to_string(),
+                                "components".to_string(),
                             ],
-                            example_use: "Define validation rules for user input".to_string(),
+                            example_use: "Get curated context for implementing authentication features".to_string(),
                         },
-                        // Add more tool info as needed
+                        // Universal CRUD Operations
+                        ToolInfo {
+                            name: "create_entity".to_string(),
+                            description: "Create any entity type with universal handler".to_string(),
+                            category: "CRUD".to_string(),
+                            required_params: vec![
+                                "entity_type".to_string(),
+                                "data".to_string(),
+                            ],
+                            example_use: "Create business rules, architectural decisions, or any other entity".to_string(),
+                        },
+                        ToolInfo {
+                            name: "get_entity".to_string(),
+                            description: "Retrieve any entity by ID and type".to_string(),
+                            category: "CRUD".to_string(),
+                            required_params: vec![
+                                "entity_type".to_string(),
+                                "id".to_string(),
+                            ],
+                            example_use: "Get specific business rule or architectural decision".to_string(),
+                        },
+                        ToolInfo {
+                            name: "list_entities".to_string(),
+                            description: "List entities by type with optional filtering".to_string(),
+                            category: "CRUD".to_string(),
+                            required_params: vec![
+                                "entity_type".to_string(),
+                            ],
+                            example_use: "List all business rules for a project".to_string(),
+                        },
+                        // Specification Management
+                        ToolInfo {
+                            name: "scan_specifications".to_string(),
+                            description: "Automatically scan and import Kiro specifications".to_string(),
+                            category: "Specifications".to_string(),
+                            required_params: vec![],
+                            example_use: "Import all specifications from .kiro/specs directory".to_string(),
+                        },
+                        ToolInfo {
+                            name: "import_specification".to_string(),
+                            description: "Import a single specification file with parsing".to_string(),
+                            category: "Specifications".to_string(),
+                            required_params: vec![
+                                "file_path".to_string(),
+                            ],
+                            example_use: "Import specific requirements.md or tasks.md file".to_string(),
+                        },
+                        ToolInfo {
+                            name: "validate_specification".to_string(),
+                            description: "Validate specification format and content".to_string(),
+                            category: "Specifications".to_string(),
+                            required_params: vec![
+                                "file_path".to_string(),
+                            ],
+                            example_use: "Check specification file for format issues and completeness".to_string(),
+                        },
+                        // Specification Analytics
+                        ToolInfo {
+                            name: "track_requirements_progress".to_string(),
+                            description: "Track progress for all requirements in a project".to_string(),
+                            category: "Analytics".to_string(),
+                            required_params: vec![
+                                "project_id".to_string(),
+                            ],
+                            example_use: "Monitor requirement completion rates and acceptance criteria status".to_string(),
+                        },
+                        ToolInfo {
+                            name: "track_tasks_progress".to_string(),
+                            description: "Track progress for all tasks with dependencies and time tracking".to_string(),
+                            category: "Analytics".to_string(),
+                            required_params: vec![
+                                "project_id".to_string(),
+                            ],
+                            example_use: "Monitor task completion, blockers, and development velocity".to_string(),
+                        },
+                        ToolInfo {
+                            name: "generate_specification_health_report".to_string(),
+                            description: "Generate comprehensive health report for project specifications".to_string(),
+                            category: "Analytics".to_string(),
+                            required_params: vec![
+                                "project_id".to_string(),
+                            ],
+                            example_use: "Get executive summary of project health, velocity, and recommendations".to_string(),
+                        },
+                        ToolInfo {
+                            name: "calculate_development_velocity".to_string(),
+                            description: "Calculate development velocity metrics and trends".to_string(),
+                            category: "Analytics".to_string(),
+                            required_params: vec![
+                                "project_id".to_string(),
+                            ],
+                            example_use: "Measure team productivity and identify bottlenecks".to_string(),
+                        },
+                        // Usage Analytics
+                        ToolInfo {
+                            name: "get_usage_analytics".to_string(),
+                            description: "Retrieve usage statistics and patterns".to_string(),
+                            category: "Analytics".to_string(),
+                            required_params: vec![
+                                "scope".to_string(),
+                            ],
+                            example_use: "Get global or entity-specific usage analytics".to_string(),
+                        },
+                        ToolInfo {
+                            name: "export_analytics_data".to_string(),
+                            description: "Export analytics data for external analysis".to_string(),
+                            category: "Analytics".to_string(),
+                            required_params: vec![
+                                "start_date".to_string(),
+                                "end_date".to_string(),
+                            ],
+                            example_use: "Export usage data in JSON or CSV format for reporting".to_string(),
+                        },
+                        // Architecture & Quality
+                        ToolInfo {
+                            name: "validate_architecture".to_string(),
+                            description: "Validate Clean Architecture rules and detect violations".to_string(),
+                            category: "Quality".to_string(),
+                            required_params: vec![
+                                "project_id".to_string(),
+                            ],
+                            example_use: "Check for architecture layer violations and dependency issues".to_string(),
+                        },
+                        ToolInfo {
+                            name: "generate_quality_report".to_string(),
+                            description: "Generate context health assessment and quality report".to_string(),
+                            category: "Quality".to_string(),
+                            required_params: vec![
+                                "start_date".to_string(),
+                                "end_date".to_string(),
+                            ],
+                            example_use: "Assess context quality and get improvement recommendations".to_string(),
+                        },
+                        // Bulk Operations
+                        ToolInfo {
+                            name: "bulk_operations".to_string(),
+                            description: "Perform bulk operations on multiple entities".to_string(),
+                            category: "Bulk".to_string(),
+                            required_params: vec![
+                                "operation".to_string(),
+                                "entity_type".to_string(),
+                                "data".to_string(),
+                            ],
+                            example_use: "Create, update, or delete multiple entities in one operation".to_string(),
+                        },
+                        // Server Management
+                        ToolInfo {
+                            name: "get_server_capabilities".to_string(),
+                            description: "Get comprehensive server information and capabilities".to_string(),
+                            category: "Core".to_string(),
+                            required_params: vec![],
+                            example_use: "Discover available features, tools, and database schema".to_string(),
+                        },
+                        ToolInfo {
+                            name: "cache_management".to_string(),
+                            description: "Manage cache and temporary data".to_string(),
+                            category: "Management".to_string(),
+                            required_params: vec![
+                                "action".to_string(),
+                            ],
+                            example_use: "Clear project cache or global cache for performance optimization".to_string(),
+                        },
                     ],
-                    usage_examples: vec![UsageExample {
-                        scenario: "Setting up a new project".to_string(),
-                        steps: vec![
-                            "1. create_project with project details".to_string(),
-                            "2. create_development_phase for each milestone".to_string(),
-                            "3. bulk_create_components for initial architecture".to_string(),
-                            "4. Define business_rules for domain logic".to_string(),
-                        ],
-                    }],
+                    usage_examples: vec![
+                        UsageExample {
+                            scenario: "Setting up a new project with specifications".to_string(),
+                            steps: vec![
+                                "1. create_entity with entity_type='project' and project details".to_string(),
+                                "2. scan_specifications to import all Kiro specs from .kiro/specs".to_string(),
+                                "3. bulk_create_components for initial architecture setup".to_string(),
+                                "4. create_entity with entity_type='business_rule' for domain logic".to_string(),
+                                "5. query_context to get AI-curated context for development tasks".to_string(),
+                            ],
+                        },
+                        UsageExample {
+                            scenario: "Monitoring project health and progress".to_string(),
+                            steps: vec![
+                                "1. track_requirements_progress to see requirement completion status".to_string(),
+                                "2. track_tasks_progress to monitor task completion and blockers".to_string(),
+                                "3. calculate_development_velocity to measure team productivity".to_string(),
+                                "4. generate_specification_health_report for executive summary".to_string(),
+                                "5. export_analytics_data for external reporting and analysis".to_string(),
+                            ],
+                        },
+                        UsageExample {
+                            scenario: "AI-powered development assistance".to_string(),
+                            steps: vec![
+                                "1. query_context with feature_area, task_type, and components".to_string(),
+                                "2. validate_architecture to check for Clean Architecture compliance".to_string(),
+                                "3. get_context_insights for project-level analytics and patterns".to_string(),
+                                "4. generate_quality_report to assess context health and get recommendations".to_string(),
+                            ],
+                        },
+                        UsageExample {
+                            scenario: "Specification management workflow".to_string(),
+                            steps: vec![
+                                "1. import_specification to add new spec files".to_string(),
+                                "2. validate_specification to check format and completeness".to_string(),
+                                "3. get_specification_versions to see version history".to_string(),
+                                "4. compare_specification_versions to see changes between versions".to_string(),
+                                "5. start_spec_monitoring for automatic updates on file changes".to_string(),
+                            ],
+                        },
+                    ],
                     recommended_workflow: vec![
-                        "Start with create_project".to_string(),
-                        "Define development phases".to_string(),
-                        "Set up framework components structure".to_string(),
-                        "Add business rules and constraints".to_string(),
-                        "Use query_context for AI assistance".to_string(),
+                        "1. Project Setup: Use create_entity to create your project".to_string(),
+                        "2. Specification Import: Run scan_specifications to import all Kiro specs".to_string(),
+                        "3. Architecture Setup: Use bulk_create_components for initial component structure".to_string(),
+                        "4. Context Definition: Add business_rules, architectural_decisions, and performance_requirements".to_string(),
+                        "5. Development: Use query_context for AI-powered development assistance".to_string(),
+                        "6. Monitoring: Track progress with track_requirements_progress and track_tasks_progress".to_string(),
+                        "7. Quality Assurance: Run validate_architecture and generate_quality_report regularly".to_string(),
+                        "8. Analytics: Use generate_specification_health_report for project insights".to_string(),
+                        "9. Optimization: Use get_usage_analytics to understand usage patterns".to_string(),
+                        "10. Maintenance: Use cache_management to optimize performance as needed".to_string(),
                     ],
                 };
 
