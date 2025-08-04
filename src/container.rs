@@ -9,6 +9,7 @@ use crate::infrastructure::{
     SqliteArchitecturalDecisionRepository,
     SqliteBusinessRuleRepository,
     SqliteDevelopmentPhaseRepository,
+    SqliteEnhancedContextRepository,
     SqliteFrameworkRepository,
     // Note: SqliteComponentRepository removed as it was identical to SqliteFrameworkRepository
     SqlitePerformanceRequirementRepository,
@@ -37,6 +38,8 @@ use crate::services::{
     SpecificationImportService,
     SqliteSpecificationVersioningService,
     SpecificationVersioningService,
+    DefaultSpecificationContextLinkingService,
+    SpecificationContextLinkingService,
 };
 
 /// Application container holding all dependencies
@@ -53,6 +56,7 @@ pub struct AppContainer {
     pub specification_service: Arc<dyn SpecificationService>,
     pub specification_import_service: Arc<dyn SpecificationImportService>,
     pub specification_versioning_service: Arc<dyn SpecificationVersioningService>,
+    pub specification_context_linking_service: Arc<dyn SpecificationContextLinkingService>,
     // Note: component_service removed as it was identical to framework_service
 }
 
@@ -124,6 +128,20 @@ impl AppContainer {
         let specification_versioning_service = Arc::new(SqliteSpecificationVersioningService::new(db.clone()));
         specification_versioning_service.initialize_tables()?;
 
+        // Create enhanced context repository and service
+        let enhanced_context_repository = Arc::new(SqliteEnhancedContextRepository::new(db.clone()));
+        enhanced_context_repository.initialize_tables()?;
+        
+        let specification_context_linking_service = Arc::new(DefaultSpecificationContextLinkingService::new(
+            specification_repository.clone(),
+            enhanced_context_repository,
+            Arc::new(ContextQueryServiceImpl::new(
+                SqliteBusinessRuleRepository::new(db.clone()),
+                SqliteArchitecturalDecisionRepository::new(db.clone()),
+                SqlitePerformanceRequirementRepository::new(db.clone()),
+            )),
+        ));
+
         // Note: component_service removed as it was identical to framework_service
 
         Ok(AppContainer {
@@ -137,6 +155,7 @@ impl AppContainer {
             specification_service,
             specification_import_service,
             specification_versioning_service,
+            specification_context_linking_service,
             // Note: component_service removed
         })
     }
