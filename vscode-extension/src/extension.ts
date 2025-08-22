@@ -265,7 +265,7 @@ async function handleSuggestionAction(suggestion: any) {
     });
 
     if (selectedAction) {
-        await executeSuggestionAction(selectedAction.action, suggestion);
+        await executeSuggestionAction((selectedAction as any).action, suggestion);
     }
 }
 

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import axios, { AxiosInstance } from 'axios';
-import * as WebSocket from 'ws';
+import WebSocket from 'ws';
 import { ConfigurationManager } from './configurationManager';
 
 export interface ContextSuggestion {
@@ -96,7 +96,7 @@ export class ContextEngineClient {
             try {
                 this.websocket = new WebSocket(wsUrl);
 
-                this.websocket.on('open', () => {
+                this.websocket!.on('open', () => {
                     console.log('[ContextEngine] WebSocket connection established');
                     this.reconnectAttempts = 0;
                     
@@ -111,7 +111,7 @@ export class ContextEngineClient {
                     resolve();
                 });
 
-                this.websocket.on('message', (data: WebSocket.Data) => {
+                this.websocket!.on('message', (data: WebSocket.Data) => {
                     try {
                         const message = JSON.parse(data.toString());
                         this.handleWebSocketMessage(message);
@@ -120,7 +120,7 @@ export class ContextEngineClient {
                     }
                 });
 
-                this.websocket.on('close', (code: number, reason: string) => {
+                this.websocket!.on('close', (code: number, reason: string) => {
                     console.log(`[ContextEngine] WebSocket connection closed: ${code} ${reason}`);
                     this.websocket = null;
                     
@@ -137,7 +137,7 @@ export class ContextEngineClient {
                     }
                 });
 
-                this.websocket.on('error', (error: Error) => {
+                this.websocket!.on('error', (error: Error) => {
                     console.error('[ContextEngine] WebSocket error:', error);
                     reject(error);
                 });

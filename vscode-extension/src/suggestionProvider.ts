@@ -176,7 +176,7 @@ export class SuggestionProvider implements vscode.HoverProvider, vscode.CodeActi
             this.getCodeActionKind(action.action_type)
         );
         
-        codeAction.detail = action.description;
+        (codeAction as any).detail = action.description;
         
         // Set the command to execute
         codeAction.command = {

@@ -4,21 +4,43 @@
   "description": "VS Code extension for intelligent context management and AI-powered development assistance",
   "version": "1.0.0",
   "publisher": "context-engine",
+  "author": {
+    "name": "Context Engine Team"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/context-engine/professional-context-engine",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/context-engine/professional-context-engine.git"
+  },
+  "bugs": {
+    "url": "https://github.com/context-engine/professional-context-engine/issues"
+  },
   "engines": {
     "vscode": "^1.74.0"
   },
   "categories": [
     "Other",
     "Machine Learning",
-    "Snippets"
+    "Snippets",
+    "Linters"
   ],
   "keywords": [
     "context",
     "ai",
     "development",
     "assistance",
-    "intelligent"
+    "intelligent",
+    "code-analysis",
+    "suggestions",
+    "productivity",
+    "collaboration",
+    "documentation"
   ],
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
   "activationEvents": [
     "onStartupFinished"
   ],
@@ -134,7 +156,15 @@
         },
         "contextEngine.supportedLanguages": {
           "type": "array",
-          "default": ["rust", "typescript", "javascript", "python", "java", "cpp", "csharp"],
+          "default": [
+            "rust",
+            "typescript",
+            "javascript",
+            "python",
+            "java",
+            "cpp",
+            "csharp"
+          ],
           "description": "List of supported programming languages"
         },
         "contextEngine.analysisRules": {
@@ -240,24 +270,30 @@
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
     "package": "vsce package",
-    "publish": "vsce publish"
+    "publish": "vsce publish",
+    "build:production": "node scripts/build-production.js",
+    "clean": "rimraf out *.vsix",
+    "install:local": "code --install-extension $(ls *.vsix | head -1)",
+    "uninstall:local": "code --uninstall-extension context-engine.professional-context-engine"
   },
   "devDependencies": {
-    "@types/vscode": "^1.74.0",
-    "@types/node": "16.x",
-    "@types/mocha": "^10.0.1",
     "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "16.x",
+    "@types/vscode": "^1.74.0",
+    "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/parser": "^5.45.0",
     "@vscode/test-electron": "^2.2.0",
+    "@vscode/vsce": "^2.15.0",
     "eslint": "^8.28.0",
     "glob": "^8.0.3",
     "mocha": "^10.1.0",
-    "typescript": "^4.9.4",
-    "@vscode/vsce": "^2.15.0"
+    "rimraf": "^3.0.2",
+    "typescript": "^4.9.4"
   },
   "dependencies": {
-    "ws": "^8.14.2",
-    "axios": "^1.6.0"
+    "axios": "^1.6.0",
+    "ws": "^8.14.2"
   }
 }

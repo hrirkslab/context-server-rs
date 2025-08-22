@@ -6,7 +6,7 @@ export class CommandManager {
     constructor(
         private contextClient: ContextEngineClient,
         private configManager: ConfigurationManager
-    ) {}
+    ) { }
 
     registerCommands(context: vscode.ExtensionContext): void {
         // Register all commands
@@ -33,7 +33,7 @@ export class CommandManager {
     private async executeSuggestionAction(params: any): Promise<void> {
         try {
             const { suggestionId, actionType, suggestion, action } = params;
-            
+
             switch (actionType) {
                 case 'CreateContext':
                     await this.handleCreateContextAction(suggestion, action);
@@ -505,7 +505,7 @@ export class CommandManager {
             try {
                 const content = await vscode.workspace.fs.readFile(uri[0]);
                 const configData = JSON.parse(content.toString());
-                
+
                 await this.configManager.importConfiguration(configData);
                 vscode.window.showInformationMessage('Configuration imported successfully');
             } catch (error) {
@@ -517,7 +517,7 @@ export class CommandManager {
     private async showContextHealth(): Promise<void> {
         try {
             const health = await this.contextClient.getContextHealth();
-            
+
             const panel = vscode.window.createWebviewPanel(
                 'contextHealth',
                 'Context Health Report',
@@ -537,7 +537,7 @@ export class CommandManager {
     private async showProjectInsights(): Promise<void> {
         try {
             const insights = await this.contextClient.getProjectInsights();
-            
+
             const panel = vscode.window.createWebviewPanel(
                 'projectInsights',
                 'Project Insights',
@@ -564,7 +564,7 @@ export class CommandManager {
 
         try {
             const results = await this.contextClient.queryContext(query);
-            
+
             if (results.length === 0) {
                 vscode.window.showInformationMessage('No context found for your query');
                 return;
@@ -589,7 +589,7 @@ export class CommandManager {
     private async toggleRealTimeSuggestions(): Promise<void> {
         const current = this.configManager.isRealTimeSuggestionsEnabled();
         await this.configManager.updateRealTimeSuggestions(!current);
-        
+
         const status = !current ? 'enabled' : 'disabled';
         vscode.window.showInformationMessage(`Real-time suggestions ${status}`);
     }
@@ -597,7 +597,7 @@ export class CommandManager {
     private async toggleAutoAnalyze(): Promise<void> {
         const current = this.configManager.isAutoAnalyzeOnSaveEnabled();
         await this.configManager.updateAutoAnalyzeOnSave(!current);
-        
+
         const status = !current ? 'enabled' : 'disabled';
         vscode.window.showInformationMessage(`Auto-analyze on save ${status}`);
     }
@@ -665,9 +665,9 @@ export class CommandManager {
                     ${Object.keys(suggestion.metadata).length > 0 ? `
                         <h2>Additional Information</h2>
                         <div class="metadata">
-                            ${Object.entries(suggestion.metadata).map(([key, value]) => 
-                                `<strong>${key}:</strong> ${value}<br>`
-                            ).join('')}
+                            ${Object.entries(suggestion.metadata).map(([key, value]) =>
+            `<strong>${key}:</strong> ${value}<br>`
+        ).join('')}
                         </div>
                     ` : ''}
                 </div>
@@ -734,9 +734,9 @@ export class CommandManager {
                     ${Object.keys(suggestion.metadata).length > 0 ? `
                         <h2>Metadata</h2>
                         <div class="metadata">
-                            ${Object.entries(suggestion.metadata).map(([key, value]) => 
-                                `<strong>${key}:</strong> ${JSON.stringify(value)}<br>`
-                            ).join('')}
+                            ${Object.entries(suggestion.metadata).map(([key, value]) =>
+            `<strong>${key}:</strong> ${JSON.stringify(value)}<br>`
+        ).join('')}
                         </div>
                     ` : ''}
                 </div>
@@ -917,14 +917,14 @@ export class CommandManager {
                 
                 <div class="insight-section">
                     <h2>Most Used Context Types</h2>
-                    ${insights.popular_context_types ? 
-                        insights.popular_context_types.map((type: any) => `
+                    ${insights.popular_context_types ?
+                insights.popular_context_types.map((type: any) => `
                             <div class="metric">
                                 <strong>${type.name}:</strong> ${type.count} uses
                             </div>
-                        `).join('') : 
-                        '<p>No usage data available</p>'
-                    }
+                        `).join('') :
+                '<p>No usage data available</p>'
+            }
                 </div>
                 
                 <div class="insight-section">
