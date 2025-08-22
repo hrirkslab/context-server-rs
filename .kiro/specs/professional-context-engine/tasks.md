@@ -207,10 +207,7 @@
   - Build specification health reports and recommendations
   - _Requirements: 11.5_
 
-- [-] 6. Plugin Architecture and Extensibility
-
-
-
+- [x] 6. Plugin Architecture and Extensibility
   - Create plugin system framework
   - Implement built-in plugins for common integrations
   - Add plugin marketplace infrastructure
@@ -275,25 +272,17 @@
   - Create configuration panel for plugin settings and analysis rules
   - _Requirements: 8.1, 8.4_
 
-- [ ] 6.7 Implement IntelliJ IDEA Plugin
-  - Create IntelliJ IDEA plugin for IDE integration
-  - Add support for multiple JetBrains IDEs (WebStorm, PyCharm, etc.)
-  - Implement context suggestion display in IntelliJ UI components
-  - Build project-specific configuration and rule management
-  - _Requirements: 8.1, 8.4_
-
-- [ ] 6.8 Build Universal IDE Integration API
-  - Create standardized HTTP/WebSocket API for IDE communication
-  - Implement Language Server Protocol (LSP) integration
-  - Add support for Vim/Neovim, Emacs, and other editors
-  - Build IDE-agnostic configuration and deployment system
-  - _Requirements: 8.1, 8.4_
-
-- [ ] 6.9 Enhance IDE Integration with Advanced Features
-  - Add real-time collaboration features for team context sharing
-  - Implement context-aware code completion and suggestions
-  - Create debugging integration with context-enhanced error messages
-  - Build performance monitoring and analytics for IDE usage
+- [ ] 6.7 Create Professional-Grade VS Code Extension
+  - Add dedicated activity bar panel for context engine with comprehensive project overview
+  - Implement real-time WebSocket communication with context server for live updates
+  - Create context-aware code completion and intelligent suggestions with hover previews
+  - Add context health dashboard showing project insights, quality metrics, and recommendations
+  - Build interactive context tree view with filtering, search, and relationship visualization
+  - Implement debugging integration with context-enhanced error messages and stack traces
+  - Add performance monitoring and analytics dashboard for IDE usage patterns
+  - Create context creation wizard with templates and smart categorization
+  - Build team collaboration features with shared context and real-time sync indicators
+  - Add marketplace-ready packaging with professional icons, screenshots, and documentation
   - _Requirements: 8.1, 8.4, 3.1, 4.1_
 
 - [ ] 7. Advanced Code Analysis Integration
@@ -501,70 +490,85 @@
   - Add embedding-based similarity search to existing query operations
   - _Requirements: 5.1, 5.3_
 
-- [ ] 13. IDE Integration Production Deployment
-  - Deploy IDE integration plugins to official marketplaces
-  - Create user onboarding and documentation
-  - Build plugin distribution and update systems
+- [ ] 12.5 Fix Container Service Integration
+  - Wire specification_service, specification_context_linking_service, and plugin_service into MCP tools
+  - Remove dead code warnings by integrating unused services
+  - Add proper error handling for service initialization failures
+  - Create service health checks and monitoring
+  - _Requirements: 7.1, 11.1, 11.2_
+
+- [ ] 13. VS Code Extension Production Deployment
+  - Deploy professional VS Code extension to Visual Studio Marketplace
+  - Create comprehensive user onboarding and documentation
+  - Build extension distribution and update systems
   - _Requirements: 8.1, 8.4_
 
-- [ ] 13.1 Prepare IDE Extensions for Marketplace
-  - Package VS Code extension for Visual Studio Marketplace
-  - Prepare IntelliJ plugin for JetBrains Plugin Repository
-  - Create extension metadata, descriptions, and screenshots
-  - Build automated testing and validation for extension releases
+- [ ] 13.1 Prepare VS Code Extension for Marketplace
+  - Create professional extension metadata, descriptions, and high-quality screenshots
+  - Build comprehensive README with feature showcase and installation guide
+  - Add extension demo videos and interactive tutorials
+  - Implement automated testing and validation for extension releases
+  - Create professional branding with consistent icons and visual design
   - _Requirements: 8.1, 8.4_
 
 - [ ] 13.2 Create User Onboarding Experience
-  - Build setup wizard for first-time users
-  - Create interactive tutorials for IDE integration features
-  - Add contextual help and documentation within IDEs
-  - Implement usage analytics and feedback collection
+  - Build interactive setup wizard for first-time users with server connection setup
+  - Create guided tutorials for key features (context creation, search, analytics)
+  - Add contextual help and tooltips throughout the extension UI
+  - Implement usage analytics and feedback collection with privacy controls
+  - Build welcome screen with quick start actions and feature highlights
   - _Requirements: 8.1, 8.4, 4.1_
 
-- [ ] 13.3 Build Plugin Update and Distribution System
-  - Implement automatic plugin updates and version management
+- [ ] 13.3 Build Extension Update and Distribution System
+  - Implement automatic extension updates with changelog notifications
   - Create rollback mechanisms for problematic updates
-  - Add telemetry and crash reporting for plugin stability
+  - Add telemetry and crash reporting for extension stability
   - Build A/B testing framework for feature rollouts
+  - Create extension health monitoring and performance metrics
   - _Requirements: 8.1, 8.4, 4.1_
 
 - [ ] 13.4 Implement Enterprise Features
   - Add team-wide configuration and policy management
-  - Create centralized plugin deployment for organizations
+  - Create centralized extension deployment for organizations
   - Implement SSO and enterprise authentication integration
   - Build compliance and audit logging for enterprise users
+  - Add workspace-level settings and team collaboration features
   - _Requirements: 8.1, 8.4, 9.1, 9.4_
 
-- [ ] 14. Advanced IDE Integration Features
+- [ ] 14. Advanced VS Code Extension Features
   - Implement AI-powered code suggestions based on context
   - Add collaborative editing with shared context
   - Create advanced debugging and profiling integration
   - _Requirements: 8.1, 8.4, 3.1_
 
-- [ ] 14.1 Build AI-Powered Code Assistance
-  - Integrate with AI models for context-aware code generation
-  - Implement intelligent refactoring suggestions based on context
-  - Add code review automation with context validation
-  - Create predictive coding features using project context
+- [ ] 14.1 Build AI-Powered Code Assistance in VS Code
+  - Integrate with AI models for context-aware code generation within VS Code
+  - Implement intelligent refactoring suggestions based on context with quick fixes
+  - Add code review automation with context validation in VS Code review flow
+  - Create predictive coding features using project context with IntelliSense integration
+  - Build context-aware snippet generation and code templates
   - _Requirements: 8.1, 8.4, 1.1, 1.2_
 
-- [ ] 14.2 Implement Collaborative Development Features
-  - Add real-time context sharing between team members
-  - Create collaborative code review with shared context insights
-  - Implement team knowledge base integration
+- [ ] 14.2 Implement Collaborative Development Features in VS Code
+  - Add real-time context sharing between team members with Live Share integration
+  - Create collaborative code review with shared context insights in VS Code
+  - Implement team knowledge base integration with searchable context panel
   - Build pair programming support with context synchronization
+  - Add team activity feed showing context changes and updates
   - _Requirements: 8.1, 8.4, 3.1, 3.2, 9.1_
 
-- [ ] 14.3 Create Advanced Debugging Integration
-  - Add context-enhanced error messages and stack traces
+- [ ] 14.3 Create Advanced Debugging Integration in VS Code
+  - Add context-enhanced error messages and stack traces in debug console
   - Implement debugging session recording with context correlation
   - Create performance profiling with context-aware bottleneck detection
   - Build automated bug report generation with relevant context
+  - Add context-aware breakpoint suggestions based on project patterns
   - _Requirements: 8.1, 8.4, 4.1_
 
-- [ ] 14.4 Build Development Workflow Automation
-  - Create automated testing based on context changes
-  - Implement CI/CD integration with context validation
+- [ ] 14.4 Build Development Workflow Automation in VS Code
+  - Create automated testing based on context changes with task integration
+  - Implement CI/CD integration with context validation in VS Code terminal
   - Add deployment automation with context-aware rollback decisions
-  - Build development metrics and productivity analytics
+  - Build development metrics and productivity analytics dashboard
+  - Create context-driven task management with VS Code tasks integration
   - _Requirements: 8.1, 8.4, 4.1, 4.2_
