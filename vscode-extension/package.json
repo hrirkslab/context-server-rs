@@ -1,0 +1,263 @@
+{
+  "name": "professional-context-engine",
+  "displayName": "Professional Context Engine",
+  "description": "VS Code extension for intelligent context management and AI-powered development assistance",
+  "version": "1.0.0",
+  "publisher": "context-engine",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other",
+    "Machine Learning",
+    "Snippets"
+  ],
+  "keywords": [
+    "context",
+    "ai",
+    "development",
+    "assistance",
+    "intelligent"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "contextEngine.showSuggestions",
+        "title": "Show Context Suggestions",
+        "category": "Context Engine",
+        "icon": "$(lightbulb)"
+      },
+      {
+        "command": "contextEngine.refreshContext",
+        "title": "Refresh Context Analysis",
+        "category": "Context Engine",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "contextEngine.openSettings",
+        "title": "Open Context Engine Settings",
+        "category": "Context Engine",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "contextEngine.createContext",
+        "title": "Create Context Entry",
+        "category": "Context Engine",
+        "icon": "$(add)"
+      },
+      {
+        "command": "contextEngine.analyzeFile",
+        "title": "Analyze Current File",
+        "category": "Context Engine",
+        "icon": "$(search)"
+      },
+      {
+        "command": "contextEngine.configureAnalysisRules",
+        "title": "Configure Analysis Rules",
+        "category": "Context Engine",
+        "icon": "$(law)"
+      },
+      {
+        "command": "contextEngine.configureSuggestionTriggers",
+        "title": "Configure Suggestion Triggers",
+        "category": "Context Engine",
+        "icon": "$(trigger-auto)"
+      },
+      {
+        "command": "contextEngine.showContextHealth",
+        "title": "Show Context Health",
+        "category": "Context Engine",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "contextEngine.showProjectInsights",
+        "title": "Show Project Insights",
+        "category": "Context Engine",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "contextEngine.queryContext",
+        "title": "Query Context",
+        "category": "Context Engine",
+        "icon": "$(search)"
+      },
+      {
+        "command": "contextEngine.testConnection",
+        "title": "Test Connection",
+        "category": "Context Engine",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "contextEngine.exportConfiguration",
+        "title": "Export Configuration",
+        "category": "Context Engine",
+        "icon": "$(export)"
+      },
+      {
+        "command": "contextEngine.importConfiguration",
+        "title": "Import Configuration",
+        "category": "Context Engine",
+        "icon": "$(import)"
+      }
+    ],
+    "configuration": {
+      "title": "Professional Context Engine",
+      "properties": {
+        "contextEngine.serverUrl": {
+          "type": "string",
+          "default": "http://localhost:3000",
+          "description": "URL of the Context Engine server"
+        },
+        "contextEngine.autoAnalyzeOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically analyze files when saved"
+        },
+        "contextEngine.realTimeSuggestions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show real-time context suggestions"
+        },
+        "contextEngine.enableHoverSuggestions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show context suggestions on hover"
+        },
+        "contextEngine.enableCodeActions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable context-aware code actions"
+        },
+        "contextEngine.supportedLanguages": {
+          "type": "array",
+          "default": ["rust", "typescript", "javascript", "python", "java", "cpp", "csharp"],
+          "description": "List of supported programming languages"
+        },
+        "contextEngine.analysisRules": {
+          "type": "array",
+          "default": [],
+          "description": "Custom analysis rules for context extraction"
+        },
+        "contextEngine.suggestionTriggers": {
+          "type": "array",
+          "default": [],
+          "description": "Custom triggers for context suggestions"
+        },
+        "contextEngine.debugMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug logging"
+        },
+        "contextEngine.connectionTimeout": {
+          "type": "number",
+          "default": 10000,
+          "description": "Connection timeout in milliseconds"
+        },
+        "contextEngine.maxSuggestions": {
+          "type": "number",
+          "default": 10,
+          "description": "Maximum number of suggestions to display"
+        },
+        "contextEngine.cacheTimeout": {
+          "type": "number",
+          "default": 30000,
+          "description": "Cache timeout in milliseconds"
+        }
+      }
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "contextEngine.createContext",
+          "group": "context@1",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "contextEngine.analyzeFile",
+          "group": "context@2"
+        },
+        {
+          "command": "contextEngine.showSuggestions",
+          "group": "context@3"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "contextEngine.refreshContext",
+          "group": "context@1"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "contextEngine.refreshContext",
+          "when": "view == contextSuggestions",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "contextEngine.showSuggestions",
+          "when": "editorIsOpen"
+        },
+        {
+          "command": "contextEngine.createContext",
+          "when": "editorIsOpen"
+        },
+        {
+          "command": "contextEngine.analyzeFile",
+          "when": "editorIsOpen"
+        }
+      ]
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "contextSuggestions",
+          "name": "Context Suggestions",
+          "when": "contextEngine.enabled"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "contextEngine",
+          "title": "Context Engine",
+          "icon": "$(lightbulb)"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.74.0",
+    "@types/node": "16.x",
+    "@types/mocha": "^10.0.1",
+    "@types/glob": "^8.1.0",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "@vscode/test-electron": "^2.2.0",
+    "eslint": "^8.28.0",
+    "glob": "^8.0.3",
+    "mocha": "^10.1.0",
+    "typescript": "^4.9.4",
+    "@vscode/vsce": "^2.15.0"
+  },
+  "dependencies": {
+    "ws": "^8.14.2",
+    "axios": "^1.6.0"
+  }
+}
