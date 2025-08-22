@@ -92,7 +92,7 @@ pub use plugin_event_system::{PluginEventSystem, DefaultPluginEventSystem, Event
 pub use plugin_api::{PluginApi, DefaultPluginApi, PluginApiClient, LogLevel};
 pub use plugin_error_handler::{PluginErrorHandler, DefaultPluginErrorHandler, PluginError, RecoveryStrategy, ErrorRecoveryCoordinator};
 pub use plugin_testing::{PluginTestFramework, DefaultPluginTestFramework, PluginTestCase, TestResult, TestSuiteResult, MockPluginBehavior};
-pub use plugins::{GitIntegrationPlugin, KiroIntegrationPlugin};
+pub use plugins::{GitIntegrationPlugin, KiroIntegrationPlugin, IdeIntegrationPlugin};
 pub use specification_import_service::{SpecificationImportService, DefaultSpecificationImportService, SpecificationChange, ChangeType};
 pub use specification_versioning_service::{SpecificationVersioningService, SqliteSpecificationVersioningService, SpecificationVersion, VersionChangeType, VersionComparison, VersionDifference, DifferenceType};
 pub use specification_service::{SpecificationService, DefaultSpecificationService};
