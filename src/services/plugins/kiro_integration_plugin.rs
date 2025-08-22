@@ -98,8 +98,9 @@ pub enum TaskStatus {
     NotStarted,
     InProgress,
     Completed,
-}i
-mpl Default for KiroPluginConfig {
+}
+
+impl Default for KiroPluginConfig {
     fn default() -> Self {
         Self {
             spec_directory: ".kiro/specs".to_string(),
@@ -200,8 +201,8 @@ impl KiroIntegrationPlugin {
         }
         Ok(())
     }
-}    //
-/ Discover and parse Kiro specs in the directory
+
+    /// Discover and parse Kiro specs in the directory
     async fn discover_specs(&self) -> Result<Vec<KiroSpec>> {
         let spec_dir = self.spec_directory.as_ref()
             .ok_or_else(|| anyhow!("Spec directory not set"))?;
@@ -565,6 +566,7 @@ impl KiroIntegrationPlugin {
         
         Ok(())
     }
+}
 
 #[async_trait]
 impl ContextPlugin for KiroIntegrationPlugin {
