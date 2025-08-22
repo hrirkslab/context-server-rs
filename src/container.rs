@@ -41,6 +41,8 @@ use crate::services::{
     SpecificationVersioningService,
     DefaultSpecificationContextLinkingService,
     SpecificationContextLinkingService,
+    PluginService,
+    DefaultPluginService,
 };
 
 /// Application container holding all dependencies
@@ -59,6 +61,7 @@ pub struct AppContainer {
     pub specification_versioning_service: Arc<dyn SpecificationVersioningService>,
     pub specification_context_linking_service: Arc<dyn SpecificationContextLinkingService>,
     pub specification_analytics_service: Arc<dyn SpecificationAnalyticsService>,
+    pub plugin_service: Arc<dyn PluginService>,
     // Note: component_service removed as it was identical to framework_service
 }
 
@@ -150,6 +153,19 @@ impl AppContainer {
             Arc::new(DefaultAnalyticsService::new(Box::new(SqliteAnalyticsRepository::new(db.clone())))),
         ));
 
+        // Create plugin service
+        let plugin_install_dir = std::env::current_dir()?.join("plugins");
+        let plugin_data_dir = std::env::current_dir()?.join("plugin_data");
+        let temp_dir = std::env::temp_dir().join("context_server_plugins");
+        let marketplace_url = std::env::var("PLUGIN_MARKETPLACE_URL").ok();
+        
+        let plugin_service = Arc::new(DefaultPluginService::new(
+            plugin_install_dir,
+            plugin_data_dir,
+            temp_dir,
+            marketplace_url,
+        ));
+
         // Note: component_service removed as it was identical to framework_service
 
         Ok(AppContainer {
@@ -165,6 +181,7 @@ impl AppContainer {
             specification_versioning_service,
             specification_context_linking_service,
             specification_analytics_service,
+            plugin_service,
             // Note: component_service removed
         })
     }

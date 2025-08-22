@@ -150,7 +150,10 @@
   - Build automated alerts for context quality issues
   - _Requirements: 4.2, 4.4_
 
-- [-] 5. Project Specification Integration
+- [x] 5. Project Specification Integration
+
+
+
 
 
 
@@ -204,27 +207,36 @@
   - Build specification health reports and recommendations
   - _Requirements: 11.5_
 
-- [ ] 6. Plugin Architecture and Extensibility
+- [-] 6. Plugin Architecture and Extensibility
+
+
+
   - Create plugin system framework
   - Implement built-in plugins for common integrations
   - Add plugin marketplace infrastructure
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-- [ ] 6.1 Build Plugin System Framework
+- [x] 6.1 Build Plugin System Framework
+
+
   - Create plugin trait definitions and lifecycle management
   - Implement plugin discovery, loading, and initialization
   - Add plugin sandboxing and resource management
   - Create plugin configuration and dependency management
   - _Requirements: 7.1, 7.2, 7.4_
 
-- [ ] 6.2 Implement Core Plugin Infrastructure
+- [x] 6.2 Implement Core Plugin Infrastructure
+
+
   - Create plugin event system for context changes and queries
   - Add plugin API for context contribution and modification
   - Implement plugin error handling and recovery mechanisms
   - Build plugin testing framework and utilities
   - _Requirements: 7.2, 7.4, 7.5_
 
-- [ ] 6.3 Create Built-in Git Integration Plugin
+- [x] 6.3 Create Built-in Git Integration Plugin
+
+
   - Implement Git repository monitoring for code changes
   - Add automatic context updates based on commit messages and code changes
   - Create branch and merge tracking with context synchronization
@@ -232,6 +244,8 @@
   - _Requirements: 8.1, 8.2, 8.3_
 
 - [ ] 6.4 Build Kiro Integration Plugin
+
+
   - Create seamless integration with Kiro spec system
   - Implement automatic spec file monitoring and parsing
   - Add task status synchronization between Kiro and context server
@@ -374,7 +388,8 @@
   - Create MCP tools for managing real-time synchronization
   - _Requirements: 3.1, 3.2, 3.3, 3.4_
 
-- [ ] 10.4 Create Specification Management MCP Tools
+- [x] 10.4 Create Specification Management MCP Tools
+
   - Implement import_specification tool for automatic spec parsing and integration
   - Add sync_specifications tool for bidirectional spec-context synchronization
   - Create track_progress tool for requirement and task progress monitoring
@@ -414,3 +429,37 @@
   - Create access control and authentication systems
   - Build security monitoring and incident response
   - _Requirements: All requirements with security implications_
+
+- [ ] 12. Integration and Wiring Tasks
+  - Wire up implemented services into the container and MCP server
+  - Complete missing integrations between components
+  - Add remaining MCP tools for intelligence features
+  - _Requirements: Integration of all implemented features_
+
+- [ ] 12.1 Wire Intelligence Services into Container
+  - Add ContextIntelligenceService to the dependency injection container
+  - Wire SemanticSearchService with embedding services and repositories
+  - Integrate SyncEngine with WebSocket services in the container
+  - Connect all intelligence services to existing MCP tools
+  - _Requirements: 1.1, 1.2, 2.1, 3.1_
+
+- [ ] 12.2 Complete MCP Tool Integration
+  - Add suggest_context MCP tool using ContextIntelligenceService
+  - Implement analyze_relationships MCP tool for relationship analysis
+  - Create validate_context MCP tool for quality assessment
+  - Build search_context MCP tool with semantic search capabilities
+  - _Requirements: 1.2, 2.1, 5.1, 6.1_
+
+- [ ] 12.3 Integrate Real-time Synchronization
+  - Wire SyncEngine into the MCP server for real-time updates
+  - Add WebSocket endpoint to the enhanced context server
+  - Implement change broadcasting in all context modification operations
+  - Create MCP tools for sync status and conflict management
+  - _Requirements: 3.1, 3.2, 3.3, 3.4_
+
+- [ ] 12.4 Complete Vector Embedding Integration
+  - Wire EmbeddingService into the container with proper configuration
+  - Initialize vector database/storage for semantic search
+  - Integrate embedding generation with context indexing
+  - Add embedding-based similarity search to existing query operations
+  - _Requirements: 5.1, 5.3_

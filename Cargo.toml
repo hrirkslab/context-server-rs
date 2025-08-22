@@ -35,6 +35,10 @@ futures-util = "0.3"
 dashmap = "5.5"
 # File system monitoring
 notify = "6.0"
+# Plugin system dependencies
+toml = "0.8"
+reqwest = { version = "0.11", features = ["json"] }
+rand = "0.8"
 
 [dev-dependencies]
 tokio-test = "0.4"
