@@ -38,7 +38,7 @@ fn get_config_dir() -> Result<PathBuf> {
 /// This server provides curated project context that AI agents cannot automatically discover.
 /// It stores business rules, architectural decisions, conventions, security policies, and other
 /// high-value context to help AI agents generate better production-quality code.
-///
+/// 
 /// Features comprehensive CRUD operations for all entities, bulk operations, and follows
 /// SOLID principles with dependency injection and service/repository patterns.
 #[tokio::main]
