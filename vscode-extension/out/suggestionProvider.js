@@ -223,6 +223,87 @@ class SuggestionProvider {
     clearCache() {
         this.suggestionCache.clear();
     }
+    // Completion provider implementation for intelligent suggestions
+    async provideCompletionItems(document, position, token, context) {
+        if (!this.configManager.isRealTimeSuggestionsEnabled()) {
+            return [];
+        }
+        try {
+            // Get context around the cursor
+            const line = document.lineAt(position);
+            const textBeforeCursor = line.text.substring(0, position.character);
+            const textAfterCursor = line.text.substring(position.character);
+            // Get intelligent suggestions from context engine
+            const suggestions = await this.getIntelligentSuggestions(document.uri.fsPath, position.line, position.character, textBeforeCursor, textAfterCursor);
+            return suggestions.map(suggestion => this.createCompletionItem(suggestion));
+        }
+        catch (error) {
+            console.error('[SuggestionProvider] Failed to provide completions:', error);
+            return [];
+        }
+    }
+    async getIntelligentSuggestions(filePath, line, character, textBefore, textAfter) {
+        try {
+            const response = await this.contextClient.queryContext(JSON.stringify({
+                type: 'completion',
+                filePath,
+                line,
+                character,
+                textBefore,
+                textAfter,
+                language: this.getLanguageFromPath(filePath)
+            }));
+            return response.filter(item => item.type === 'completion_suggestion');
+        }
+        catch (error) {
+            console.error('[SuggestionProvider] Failed to get intelligent suggestions:', error);
+            return [];
+        }
+    }
+    createCompletionItem(suggestion) {
+        const item = new vscode.CompletionItem(suggestion.label || suggestion.title, this.getCompletionKind(suggestion.suggestionType));
+        item.detail = suggestion.detail || suggestion.description;
+        item.documentation = new vscode.MarkdownString(suggestion.documentation || suggestion.description);
+        item.insertText = suggestion.insertText || suggestion.label;
+        item.sortText = suggestion.priority === 'High' ? '0' : suggestion.priority === 'Medium' ? '1' : '2';
+        if (suggestion.snippet) {
+            item.insertText = new vscode.SnippetString(suggestion.snippet);
+        }
+        if (suggestion.additionalTextEdits) {
+            item.additionalTextEdits = suggestion.additionalTextEdits.map((edit) => new vscode.TextEdit(new vscode.Range(edit.range.start.line, edit.range.start.character, edit.range.end.line, edit.range.end.character), edit.newText));
+        }
+        return item;
+    }
+    getCompletionKind(suggestionType) {
+        switch (suggestionType) {
+            case 'function': return vscode.CompletionItemKind.Function;
+            case 'method': return vscode.CompletionItemKind.Method;
+            case 'variable': return vscode.CompletionItemKind.Variable;
+            case 'class': return vscode.CompletionItemKind.Class;
+            case 'interface': return vscode.CompletionItemKind.Interface;
+            case 'module': return vscode.CompletionItemKind.Module;
+            case 'property': return vscode.CompletionItemKind.Property;
+            case 'keyword': return vscode.CompletionItemKind.Keyword;
+            case 'snippet': return vscode.CompletionItemKind.Snippet;
+            case 'text': return vscode.CompletionItemKind.Text;
+            default: return vscode.CompletionItemKind.Text;
+        }
+    }
+    getLanguageFromPath(filePath) {
+        const extension = filePath.split('.').pop()?.toLowerCase();
+        switch (extension) {
+            case 'rs': return 'rust';
+            case 'ts': return 'typescript';
+            case 'js': return 'javascript';
+            case 'py': return 'python';
+            case 'java': return 'java';
+            case 'cpp':
+            case 'cc':
+            case 'cxx': return 'cpp';
+            case 'cs': return 'csharp';
+            default: return 'text';
+        }
+    }
 }
 exports.SuggestionProvider = SuggestionProvider;
 //# sourceMappingURL=suggestionProvider.js.map

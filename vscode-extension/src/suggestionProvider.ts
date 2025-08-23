@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { ContextEngineClient, ContextSuggestion } from './contextEngineClient';
 import { ConfigurationManager } from './configurationManager';
 
-export class SuggestionProvider implements vscode.HoverProvider, vscode.CodeActionProvider {
+export class SuggestionProvider implements vscode.HoverProvider, vscode.CodeActionProvider, vscode.CompletionItemProvider {
     private suggestionCache: Map<string, ContextSuggestion[]> = new Map();
     private cacheTimeout = 30000; // 30 seconds cache timeout
 
@@ -266,5 +266,122 @@ export class SuggestionProvider implements vscode.HoverProvider, vscode.CodeActi
     // Public method to clear all cached suggestions
     public clearCache(): void {
         this.suggestionCache.clear();
+    }
+
+    // Completion provider implementation for intelligent suggestions
+    async provideCompletionItems(
+        document: vscode.TextDocument,
+        position: vscode.Position,
+        token: vscode.CancellationToken,
+        context: vscode.CompletionContext
+    ): Promise<vscode.CompletionItem[]> {
+        if (!this.configManager.isRealTimeSuggestionsEnabled()) {
+            return [];
+        }
+
+        try {
+            // Get context around the cursor
+            const line = document.lineAt(position);
+            const textBeforeCursor = line.text.substring(0, position.character);
+            const textAfterCursor = line.text.substring(position.character);
+
+            // Get intelligent suggestions from context engine
+            const suggestions = await this.getIntelligentSuggestions(
+                document.uri.fsPath,
+                position.line,
+                position.character,
+                textBeforeCursor,
+                textAfterCursor
+            );
+
+            return suggestions.map(suggestion => this.createCompletionItem(suggestion));
+        } catch (error) {
+            console.error('[SuggestionProvider] Failed to provide completions:', error);
+            return [];
+        }
+    }
+
+    private async getIntelligentSuggestions(
+        filePath: string,
+        line: number,
+        character: number,
+        textBefore: string,
+        textAfter: string
+    ): Promise<any[]> {
+        try {
+            const response = await this.contextClient.queryContext(JSON.stringify({
+                type: 'completion',
+                filePath,
+                line,
+                character,
+                textBefore,
+                textAfter,
+                language: this.getLanguageFromPath(filePath)
+            }));
+
+            return response.filter(item => item.type === 'completion_suggestion');
+        } catch (error) {
+            console.error('[SuggestionProvider] Failed to get intelligent suggestions:', error);
+            return [];
+        }
+    }
+
+    private createCompletionItem(suggestion: any): vscode.CompletionItem {
+        const item = new vscode.CompletionItem(
+            suggestion.label || suggestion.title,
+            this.getCompletionKind(suggestion.suggestionType)
+        );
+
+        item.detail = suggestion.detail || suggestion.description;
+        item.documentation = new vscode.MarkdownString(suggestion.documentation || suggestion.description);
+        item.insertText = suggestion.insertText || suggestion.label;
+        item.sortText = suggestion.priority === 'High' ? '0' : suggestion.priority === 'Medium' ? '1' : '2';
+        
+        if (suggestion.snippet) {
+            item.insertText = new vscode.SnippetString(suggestion.snippet);
+        }
+
+        if (suggestion.additionalTextEdits) {
+            item.additionalTextEdits = suggestion.additionalTextEdits.map((edit: any) => 
+                new vscode.TextEdit(
+                    new vscode.Range(edit.range.start.line, edit.range.start.character, edit.range.end.line, edit.range.end.character),
+                    edit.newText
+                )
+            );
+        }
+
+        return item;
+    }
+
+    private getCompletionKind(suggestionType: string): vscode.CompletionItemKind {
+        switch (suggestionType) {
+            case 'function': return vscode.CompletionItemKind.Function;
+            case 'method': return vscode.CompletionItemKind.Method;
+            case 'variable': return vscode.CompletionItemKind.Variable;
+            case 'class': return vscode.CompletionItemKind.Class;
+            case 'interface': return vscode.CompletionItemKind.Interface;
+            case 'module': return vscode.CompletionItemKind.Module;
+            case 'property': return vscode.CompletionItemKind.Property;
+            case 'keyword': return vscode.CompletionItemKind.Keyword;
+            case 'snippet': return vscode.CompletionItemKind.Snippet;
+            case 'text': return vscode.CompletionItemKind.Text;
+            default: return vscode.CompletionItemKind.Text;
+        }
+    }
+
+    private getLanguageFromPath(filePath: string): string {
+        const extension = filePath.split('.').pop()?.toLowerCase();
+        switch (extension) {
+            case 'rs': return 'rust';
+            case 'ts': return 'typescript';
+            case 'js': return 'javascript';
+            case 'py': return 'python';
+            case 'java': return 'java';
+            case 'cpp':
+            case 'cc':
+            case 'cxx': return 'cpp';
+            case 'cs': return 'csharp';
+            default: return 'text';
+        }
     }
 }

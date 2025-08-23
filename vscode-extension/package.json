@@ -37,6 +37,7 @@
     "collaboration",
     "documentation"
   ],
+
   "galleryBanner": {
     "color": "#1e1e1e",
     "theme": "dark"
@@ -124,6 +125,48 @@
         "title": "Import Configuration",
         "category": "Context Engine",
         "icon": "$(import)"
+      },
+      {
+        "command": "contextEngine.openContextWizard",
+        "title": "Open Context Creation Wizard",
+        "category": "Context Engine",
+        "icon": "$(wand)"
+      },
+      {
+        "command": "contextEngine.showTeamActivity",
+        "title": "Show Team Activity",
+        "category": "Context Engine",
+        "icon": "$(organization)"
+      },
+      {
+        "command": "contextEngine.showPerformanceMetrics",
+        "title": "Show Performance Metrics",
+        "category": "Context Engine",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "contextEngine.toggleSyncIndicator",
+        "title": "Toggle Sync Indicator",
+        "category": "Context Engine",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "contextEngine.showRelationshipGraph",
+        "title": "Show Context Relationships",
+        "category": "Context Engine",
+        "icon": "$(graph-scatter)"
+      },
+      {
+        "command": "contextEngine.filterContextTree",
+        "title": "Filter Context Tree",
+        "category": "Context Engine",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "contextEngine.searchContextTree",
+        "title": "Search Context Tree",
+        "category": "Context Engine",
+        "icon": "$(search)"
       }
     ],
     "configuration": {
@@ -196,6 +239,41 @@
           "type": "number",
           "default": 30000,
           "description": "Cache timeout in milliseconds"
+        },
+        "contextEngine.enableWebSocketSync": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time WebSocket synchronization"
+        },
+        "contextEngine.teamMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable team collaboration features"
+        },
+        "contextEngine.showSyncIndicators": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show real-time sync status indicators"
+        },
+        "contextEngine.enablePerformanceMonitoring": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable performance monitoring and analytics"
+        },
+        "contextEngine.contextTreeDepth": {
+          "type": "number",
+          "default": 3,
+          "description": "Maximum depth for context tree visualization"
+        },
+        "contextEngine.enableIntelligentSuggestions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable AI-powered intelligent code suggestions"
+        },
+        "contextEngine.debugIntegration": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable context-enhanced debugging features"
         }
       }
     },
@@ -226,6 +304,26 @@
           "command": "contextEngine.refreshContext",
           "when": "view == contextSuggestions",
           "group": "navigation"
+        },
+        {
+          "command": "contextEngine.filterContextTree",
+          "when": "view == contextTree",
+          "group": "navigation@1"
+        },
+        {
+          "command": "contextEngine.searchContextTree",
+          "when": "view == contextTree",
+          "group": "navigation@2"
+        },
+        {
+          "command": "contextEngine.openContextWizard",
+          "when": "view == contextOverview",
+          "group": "navigation"
+        },
+        {
+          "command": "contextEngine.showPerformanceMetrics",
+          "when": "view == performanceMetrics",
+          "group": "navigation"
         }
       ],
       "commandPalette": [
@@ -244,10 +342,35 @@
       ]
     },
     "views": {
-      "explorer": [
+      "contextEngine": [
+        {
+          "id": "contextOverview",
+          "name": "Project Overview",
+          "when": "contextEngine.enabled"
+        },
+        {
+          "id": "contextTree",
+          "name": "Context Tree",
+          "when": "contextEngine.enabled"
+        },
         {
           "id": "contextSuggestions",
-          "name": "Context Suggestions",
+          "name": "Suggestions",
+          "when": "contextEngine.enabled"
+        },
+        {
+          "id": "contextHealth",
+          "name": "Health Dashboard",
+          "when": "contextEngine.enabled"
+        },
+        {
+          "id": "teamActivity",
+          "name": "Team Activity",
+          "when": "contextEngine.enabled && contextEngine.teamMode"
+        },
+        {
+          "id": "performanceMetrics",
+          "name": "Performance",
           "when": "contextEngine.enabled"
         }
       ]
@@ -257,7 +380,7 @@
         {
           "id": "contextEngine",
           "title": "Context Engine",
-          "icon": "$(lightbulb)"
+          "icon": "$(database)"
         }
       ]
     }

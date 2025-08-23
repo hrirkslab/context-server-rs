@@ -304,4 +304,73 @@ export class ContextEngineClient {
     isConnected(): boolean {
         return this.websocket !== null && this.websocket.readyState === WebSocket.OPEN;
     }
+
+    // Additional methods for professional-grade features
+    async getTeamMembers(): Promise<any[]> {
+        try {
+            const response = await this.httpClient.get('/team/members');
+            return response.data.members || [];
+        } catch (error) {
+            console.error('[ContextEngineClient] Failed to get team members:', error);
+            return [];
+        }
+    }
+
+    async getTeamActivity(): Promise<any[]> {
+        try {
+            const response = await this.httpClient.get('/team/activity');
+            return response.data.activities || [];
+        } catch (error) {
+            console.error('[ContextEngineClient] Failed to get team activity:', error);
+            return [];
+        }
+    }
+
+    async getSyncStatus(): Promise<any> {
+        try {
+            const response = await this.httpClient.get('/sync/status');
+            return response.data || {
+                isConnected: this.isConnected(),
+                lastSync: new Date(),
+                pendingChanges: 0,
+                conflictCount: 0
+            };
+        } catch (error) {
+            console.error('[ContextEngineClient] Failed to get sync status:', error);
+            return {
+                isConnected: this.isConnected(),
+                lastSync: new Date(),
+                pendingChanges: 0,
+                conflictCount: 0
+            };
+        }
+    }
+
+    async getPerformanceMetrics(): Promise<any> {
+        try {
+            const response = await this.httpClient.get('/metrics/performance');
+            return response.data || null;
+        } catch (error) {
+            console.error('[ContextEngineClient] Failed to get performance metrics:', error);
+            return null;
+        }
+    }
+
+    async syncPendingChanges(): Promise<void> {
+        try {
+            await this.httpClient.post('/sync/pending');
+        } catch (error) {
+            console.error('[ContextEngineClient] Failed to sync pending changes:', error);
+            throw error;
+        }
+    }
+
+    async resolveConflicts(): Promise<void> {
+        try {
+            await this.httpClient.post('/sync/resolve-conflicts');
+        } catch (error) {
+            console.error('[ContextEngineClient] Failed to resolve conflicts:', error);
+            throw error;
+        }
+    }
 }

@@ -5,6 +5,12 @@ import { SuggestionProvider } from './suggestionProvider';
 import { ConfigurationManager } from './configurationManager';
 import { ContextSuggestionsProvider } from './contextSuggestionsProvider';
 import { CommandManager } from './commands';
+import { ContextOverviewProvider } from './contextOverviewProvider';
+import { ContextTreeProvider } from './contextTreeProvider';
+import { ContextHealthProvider } from './contextHealthProvider';
+import { TeamActivityProvider } from './teamActivityProvider';
+import { PerformanceMetricsProvider } from './performanceMetricsProvider';
+import { ContextWizard } from './contextWizard';
 
 let contextEngineClient: ContextEngineClient;
 let fileWatcher: FileWatcher;
@@ -12,6 +18,12 @@ let suggestionProvider: SuggestionProvider;
 let configurationManager: ConfigurationManager;
 let contextSuggestionsProvider: ContextSuggestionsProvider;
 let commandManager: CommandManager;
+let contextOverviewProvider: ContextOverviewProvider;
+let contextTreeProvider: ContextTreeProvider;
+let contextHealthProvider: ContextHealthProvider;
+let teamActivityProvider: TeamActivityProvider;
+let performanceMetricsProvider: PerformanceMetricsProvider;
+let contextWizard: ContextWizard;
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Professional Context Engine extension is now active!');
@@ -33,6 +45,14 @@ export function activate(context: vscode.ExtensionContext) {
     
     // Initialize command manager
     commandManager = new CommandManager(contextEngineClient, configurationManager);
+
+    // Initialize professional-grade providers
+    contextOverviewProvider = new ContextOverviewProvider(contextEngineClient);
+    contextTreeProvider = new ContextTreeProvider(contextEngineClient);
+    contextHealthProvider = new ContextHealthProvider(contextEngineClient);
+    teamActivityProvider = new TeamActivityProvider(contextEngineClient);
+    performanceMetricsProvider = new PerformanceMetricsProvider(contextEngineClient);
+    contextWizard = new ContextWizard(contextEngineClient);
 
     // Register commands
     registerCommands(context);
@@ -202,13 +222,68 @@ function registerCommands(context: vscode.ExtensionContext) {
         }
     });
 
+    // Context Wizard command
+    const openContextWizardCommand = vscode.commands.registerCommand('contextEngine.openContextWizard', async () => {
+        await contextWizard.showWizard();
+    });
+
+    // Context Tree commands
+    const filterContextTreeCommand = vscode.commands.registerCommand('contextEngine.filterContextTree', async () => {
+        await contextTreeProvider.showFilterDialog();
+    });
+
+    const searchContextTreeCommand = vscode.commands.registerCommand('contextEngine.searchContextTree', async () => {
+        await contextTreeProvider.showSearchDialog();
+    });
+
+    const showRelationshipGraphCommand = vscode.commands.registerCommand('contextEngine.showRelationshipGraph', async () => {
+        await contextTreeProvider.showGroupByDialog();
+    });
+
+    // Team Activity commands
+    const showTeamActivityCommand = vscode.commands.registerCommand('contextEngine.showTeamActivity', async () => {
+        teamActivityProvider.refresh();
+    });
+
+    const toggleSyncIndicatorCommand = vscode.commands.registerCommand('contextEngine.toggleSyncIndicator', async () => {
+        const config = vscode.workspace.getConfiguration('contextEngine');
+        const current = config.get<boolean>('showSyncIndicators', true);
+        await config.update('showSyncIndicators', !current, vscode.ConfigurationTarget.Workspace);
+        vscode.window.showInformationMessage(`Sync indicators ${!current ? 'enabled' : 'disabled'}`);
+    });
+
+    // Performance Metrics commands
+    const showPerformanceMetricsCommand = vscode.commands.registerCommand('contextEngine.showPerformanceMetrics', async () => {
+        performanceMetricsProvider.refresh();
+    });
+
+    // Context details command
+    const showContextDetailsCommand = vscode.commands.registerCommand('contextEngine.showContextDetails', async (contextItem: any) => {
+        const panel = vscode.window.createWebviewPanel(
+            'contextDetails',
+            `Context: ${contextItem.title}`,
+            vscode.ViewColumn.Beside,
+            { enableScripts: true }
+        );
+
+        panel.webview.html = getContextDetailsWebview(contextItem);
+    });
+
     // Register all commands
     context.subscriptions.push(
         showSuggestionsCommand,
         refreshContextCommand,
         openSettingsCommand,
         createContextCommand,
-        analyzeFileCommand
+        analyzeFileCommand,
+        openContextWizardCommand,
+        filterContextTreeCommand,
+        searchContextTreeCommand,
+        showRelationshipGraphCommand,
+        showTeamActivityCommand,
+        toggleSyncIndicatorCommand,
+        showPerformanceMetricsCommand,
+        showContextDetailsCommand
     );
 }
 
@@ -228,16 +303,54 @@ function registerProviders(context: vscode.ExtensionContext) {
         }
     );
 
-    // Register tree data provider for context suggestions
-    const treeDataProvider = vscode.window.createTreeView('contextSuggestions', {
+    // Register completion provider for intelligent suggestions
+    const completionProvider = vscode.languages.registerCompletionItemProvider(
+        { scheme: 'file' },
+        suggestionProvider,
+        '.' // Trigger on dot
+    );
+
+    // Register tree data providers for activity bar views
+    const contextOverviewTree = vscode.window.createTreeView('contextOverview', {
+        treeDataProvider: contextOverviewProvider,
+        showCollapseAll: false
+    });
+
+    const contextTreeView = vscode.window.createTreeView('contextTree', {
+        treeDataProvider: contextTreeProvider,
+        showCollapseAll: true
+    });
+
+    const contextSuggestionsTree = vscode.window.createTreeView('contextSuggestions', {
         treeDataProvider: contextSuggestionsProvider,
+        showCollapseAll: true
+    });
+
+    const contextHealthTree = vscode.window.createTreeView('contextHealth', {
+        treeDataProvider: contextHealthProvider,
+        showCollapseAll: true
+    });
+
+    const teamActivityTree = vscode.window.createTreeView('teamActivity', {
+        treeDataProvider: teamActivityProvider,
+        showCollapseAll: true
+    });
+
+    const performanceMetricsTree = vscode.window.createTreeView('performanceMetrics', {
+        treeDataProvider: performanceMetricsProvider,
         showCollapseAll: true
     });
 
     context.subscriptions.push(
         hoverProvider,
         codeActionProvider,
-        treeDataProvider
+        completionProvider,
+        contextOverviewTree,
+        contextTreeView,
+        contextSuggestionsTree,
+        contextHealthTree,
+        teamActivityTree,
+        performanceMetricsTree
     );
 }
 
@@ -307,11 +420,121 @@ async function executeSuggestionAction(action: any, suggestion: any) {
     }
 }
 
+function getContextDetailsWebview(contextItem: any): string {
+    return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Context Details</title>
+            <style>
+                body {
+                    font-family: var(--vscode-font-family);
+                    padding: 20px;
+                    color: var(--vscode-foreground);
+                    background-color: var(--vscode-editor-background);
+                }
+                .header {
+                    border-bottom: 1px solid var(--vscode-panel-border);
+                    padding-bottom: 15px;
+                    margin-bottom: 20px;
+                }
+                .metadata {
+                    background-color: var(--vscode-editor-inactiveSelectionBackground);
+                    padding: 15px;
+                    border-radius: 4px;
+                    margin: 15px 0;
+                }
+                .quality-score {
+                    display: inline-block;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    font-weight: bold;
+                    color: white;
+                }
+                .quality-high { background-color: #28a745; }
+                .quality-medium { background-color: #ffc107; color: black; }
+                .quality-low { background-color: #dc3545; }
+                .tags {
+                    margin-top: 10px;
+                }
+                .tag {
+                    display: inline-block;
+                    background-color: var(--vscode-button-background);
+                    color: var(--vscode-button-foreground);
+                    padding: 2px 6px;
+                    border-radius: 3px;
+                    font-size: 12px;
+                    margin-right: 5px;
+                }
+                .relationships {
+                    margin-top: 20px;
+                }
+                .relationship {
+                    padding: 8px;
+                    margin: 5px 0;
+                    background-color: var(--vscode-editor-inactiveSelectionBackground);
+                    border-left: 3px solid var(--vscode-textLink-foreground);
+                    border-radius: 0 4px 4px 0;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>${contextItem.title}</h1>
+                <p><strong>Type:</strong> ${contextItem.type}</p>
+                ${contextItem.qualityScore ? `
+                    <span class="quality-score quality-${contextItem.qualityScore > 0.7 ? 'high' : contextItem.qualityScore > 0.4 ? 'medium' : 'low'}">
+                        Quality: ${Math.round(contextItem.qualityScore * 100)}%
+                    </span>
+                ` : ''}
+            </div>
+            
+            <div class="content">
+                <h2>Description</h2>
+                <p>${contextItem.description}</p>
+                
+                <div class="metadata">
+                    ${contextItem.filePath ? `<p><strong>File:</strong> ${contextItem.filePath}</p>` : ''}
+                    ${contextItem.lineNumber ? `<p><strong>Line:</strong> ${contextItem.lineNumber}</p>` : ''}
+                    ${contextItem.lastModified ? `<p><strong>Last Modified:</strong> ${new Date(contextItem.lastModified).toLocaleString()}</p>` : ''}
+                </div>
+                
+                ${contextItem.tags && contextItem.tags.length > 0 ? `
+                    <div class="tags">
+                        <h3>Tags</h3>
+                        ${contextItem.tags.map((tag: string) => `<span class="tag">${tag}</span>`).join('')}
+                    </div>
+                ` : ''}
+                
+                ${contextItem.relationships && contextItem.relationships.length > 0 ? `
+                    <div class="relationships">
+                        <h3>Relationships</h3>
+                        ${contextItem.relationships.map((rel: any) => `
+                            <div class="relationship">
+                                <strong>${rel.type}:</strong> ${rel.targetId} (${Math.round(rel.strength * 100)}% strength)
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+            </div>
+        </body>
+        </html>
+    `;
+}
+
 export function deactivate() {
     if (fileWatcher) {
         fileWatcher.dispose();
     }
     if (contextEngineClient) {
         contextEngineClient.disconnect();
+    }
+    if (contextHealthProvider) {
+        contextHealthProvider.dispose();
+    }
+    if (performanceMetricsProvider) {
+        performanceMetricsProvider.dispose();
     }
 }
