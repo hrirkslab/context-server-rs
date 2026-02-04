@@ -1,9 +1,8 @@
 /// SQLite repository for audit trails
 use crate::models::audit_log::{AuditEventType, AuditTrail};
-use serde_json::json;
 use std::sync::Arc;
 
-pub trait AuditTrailRepository: Send + Sync {
+pub trait AuditTrailRepository: Send {
     fn log_event(&self, audit: &AuditTrail) -> anyhow::Result<()>;
     fn get_audit_trail(&self, id: &str) -> anyhow::Result<Option<AuditTrail>>;
     fn get_entity_history(&self, entity_type: &str, entity_id: &str) -> anyhow::Result<Vec<AuditTrail>>;
@@ -123,7 +122,7 @@ impl AuditTrailRepository for SqliteAuditTrailRepository {
                     .map(|dt| dt.with_timezone(&chrono::Utc))
                     .unwrap_or_else(|_| chrono::Utc::now());
 
-                let mut audit = AuditTrail {
+                let audit = AuditTrail {
                     id,
                     timestamp,
                     event_type,

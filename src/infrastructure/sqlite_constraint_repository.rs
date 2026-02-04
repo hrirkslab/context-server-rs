@@ -2,7 +2,7 @@
 use crate::models::constraint::{ComponentDependency, Constraint, ConstraintType, DependencyType};
 use std::sync::Arc;
 
-pub trait ConstraintRepository: Send + Sync {
+pub trait ConstraintRepository: Send {
     fn create_constraint(&self, constraint: &Constraint) -> anyhow::Result<()>;
     fn get_constraint(&self, id: &str) -> anyhow::Result<Option<Constraint>>;
     fn list_constraints(&self, project_id: &str) -> anyhow::Result<Vec<Constraint>>;
@@ -362,7 +362,7 @@ impl ConstraintRepository for SqliteConstraintRepository {
 }
 
 // Dependency Repository
-pub trait DependencyRepository: Send + Sync {
+pub trait DependencyRepository: Send {
     fn create_dependency(&self, dependency: &ComponentDependency) -> anyhow::Result<()>;
     fn get_dependency(&self, id: &str) -> anyhow::Result<Option<ComponentDependency>>;
     fn list_dependencies(&self, project_id: &str) -> anyhow::Result<Vec<ComponentDependency>>;
