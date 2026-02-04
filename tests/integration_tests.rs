@@ -362,10 +362,6 @@ async fn test_security_policy_crud_operations() {
             &project.id,
             "GDPR Compliance",
             Some("data_storage"),
-            Some("Must encrypt all sensitive data at rest"),
-            Some("AES-256 encryption"),
-            Some("plain text storage"),
-            Some("GDPR compliant"),
         )
         .await;
 
@@ -641,10 +637,6 @@ async fn test_combined_crud_workflow() {
             &project.id,
             "Payment Data Protection",
             Some("data_storage"),
-            Some("PCI DSS compliance required"),
-            Some("AES-256 encryption"),
-            None,
-            Some("PCI DSS Level 1"),
         )
         .await
         .unwrap();

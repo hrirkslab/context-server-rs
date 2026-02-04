@@ -359,7 +359,7 @@ async fn test_entity_type_enum_values() {
                         if let Some(arr) = enum_values.as_array() {
                             let values: Vec<&str> = arr
                                 .iter()
-                                .filter_map(|v| v.as_str())
+                                .filter_map(|v: &serde_json::Value| v.as_str())
                                 .collect();
 
                             // Verify all required entity types are supported
