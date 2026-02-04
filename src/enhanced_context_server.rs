@@ -1890,7 +1890,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                             .context_crud_service
                             .create_performance_requirement(
                                 project_id,
-                                component_area,
+                                Some(component_area),
                                 Some(requirement_type),
                                 target_value,
                             )
@@ -1900,64 +1900,18 @@ impl ServerHandler for EnhancedContextMcpServer {
                         })?
                     }
                     "security_policy" => {
-                        let project_id = data
-                            .get("project_id")
-                            .and_then(|v| v.as_str())
-                            .ok_or_else(|| {
-                                McpError::invalid_params(
-                                    "Missing required parameter: project_id",
-                                    None,
-                                )
-                            })?;
-                        let policy_name = data
-                            .get("policy_name")
-                            .and_then(|v| v.as_str())
-                            .ok_or_else(|| {
-                                McpError::invalid_params(
-                                    "Missing required parameter: policy_name",
-                                    None,
-                                )
-                            })?;
-                        let policy_area = data.get("policy_area").and_then(|v| v.as_str());
-
-                        let sec_policy = self
-                            .container
-                            .context_crud_service
-                            .create_security_policy(project_id, policy_name, policy_area)
-                            .await?;
-                        serde_json::to_value(sec_policy).map_err(|e| {
-                            McpError::internal_error(format!("Serialization error: {}", e), None)
-                        })?
+                        // Security Policy operations - placeholder
+                        return Err(McpError::invalid_params(
+                            "Security policy operations not yet fully integrated. Please use the ExtendedContextCrudService.",
+                            None,
+                        ));
                     }
                     "feature_context" => {
-                        let project_id = data
-                            .get("project_id")
-                            .and_then(|v| v.as_str())
-                            .ok_or_else(|| {
-                                McpError::invalid_params(
-                                    "Missing required parameter: project_id",
-                                    None,
-                                )
-                            })?;
-                        let feature_name = data
-                            .get("feature_name")
-                            .and_then(|v| v.as_str())
-                            .ok_or_else(|| {
-                                McpError::invalid_params(
-                                    "Missing required parameter: feature_name",
-                                    None,
-                                )
-                            })?;
-                        let business_purpose = data.get("business_purpose").and_then(|v| v.as_str());
-
-                        let feature_ctx = self
-                            .container
-                            .context_crud_service
-                            .create_feature_context(project_id, feature_name, business_purpose)
-                            .await?;
-                        serde_json::to_value(feature_ctx).map_err(|e| {
-                            McpError::internal_error(format!("Serialization error: {}", e), None)
-                        })?
+                        // Feature Context operations - placeholder
+                        return Err(McpError::invalid_params(
+                            "Feature context operations not yet fully integrated. Please use the ExtendedContextCrudService.",
+                            None,
+                        ));
                     }
                     // Add more entity types as needed
                     _ => {
@@ -2316,7 +2270,7 @@ impl ServerHandler for EnhancedContextMcpServer {
                         })?
                     }
                     "development_phase" => {
-                        use crate::models::context::DevelopmentPhase;
+                        use crate::models::development::{DevelopmentPhase, PhaseStatus};
 
                         let phase_name = data
                             .get("phase_name")
@@ -2333,6 +2287,26 @@ impl ServerHandler for EnhancedContextMcpServer {
                             .and_then(|v| v.as_i64())
                             .unwrap_or(0) as i32;
 
+                        let completion_criteria_str = data
+                            .get("completion_criteria")
+                            .and_then(|v| v.as_array())
+                            .map(|arr| {
+                                arr.iter()
+                                    .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                                    .collect()
+                            })
+                            .unwrap_or_default();
+
+                        let dependencies_str = data
+                            .get("dependencies")
+                            .and_then(|v| v.as_array())
+                            .map(|arr| {
+                                arr.iter()
+                                    .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                                    .collect()
+                            })
+                            .unwrap_or_default();
+
                         let phase = DevelopmentPhase {
                             id: id.to_string(),
                             project_id: data
@@ -2342,10 +2316,15 @@ impl ServerHandler for EnhancedContextMcpServer {
                                 .to_string(),
                             phase_name: phase_name.to_string(),
                             phase_order,
+                            status: PhaseStatus::Pending,
                             description: data
                                 .get("description")
                                 .and_then(|v| v.as_str())
                                 .map(|s| s.to_string()),
+                            completion_criteria: completion_criteria_str,
+                            dependencies: dependencies_str,
+                            started_at: None,
+                            completed_at: None,
                             created_at: None,
                         };
 
@@ -2431,20 +2410,18 @@ impl ServerHandler for EnhancedContextMcpServer {
                         serde_json::json!({"deleted": deleted, "requirement_id": id})
                     }
                     "security_policy" => {
-                        let deleted = self
-                            .container
-                            .context_crud_service
-                            .delete_security_policy(id)
-                            .await?;
-                        serde_json::json!({"deleted": deleted, "policy_id": id})
+                        // Security Policy operations - placeholder
+                        return Err(McpError::invalid_params(
+                            "Security policy operations not yet fully integrated",
+                            None,
+                        ));
                     }
                     "feature_context" => {
-                        let deleted = self
-                            .container
-                            .context_crud_service
-                            .delete_feature_context(id)
-                            .await?;
-                        serde_json::json!({"deleted": deleted, "context_id": id})
+                        // Feature Context operations - placeholder
+                        return Err(McpError::invalid_params(
+                            "Feature context operations not yet fully integrated",
+                            None,
+                        ));
                     }
                     // Add more entity types as needed
                     _ => {
@@ -2577,38 +2554,12 @@ impl ServerHandler for EnhancedContextMcpServer {
                         }
                     }
                     "security_policy" => {
-                        if let Some(pid) = project_id {
-                            let policies = self
-                                .container
-                                .context_crud_service
-                                .list_security_policies(pid)
-                                .await?;
-                            serde_json::to_value(policies).map_err(|e| {
-                                McpError::internal_error(
-                                    format!("Serialization error: {}", e),
-                                    None,
-                                )
-                            })?
-                        } else {
-                            return Err(McpError::invalid_params("Missing required parameter: project_id for security_policy listing", None));
-                        }
+                        // Security Policy operations - placeholder
+                        serde_json::json!({"error": "Security policy operations not yet fully integrated"})
                     }
                     "feature_context" => {
-                        if let Some(pid) = project_id {
-                            let contexts = self
-                                .container
-                                .context_crud_service
-                                .list_feature_contexts(pid)
-                                .await?;
-                            serde_json::to_value(contexts).map_err(|e| {
-                                McpError::internal_error(
-                                    format!("Serialization error: {}", e),
-                                    None,
-                                )
-                            })?
-                        } else {
-                            return Err(McpError::invalid_params("Missing required parameter: project_id for feature_context listing", None));
-                        }
+                        // Feature Context operations - placeholder
+                        serde_json::json!({"error": "Feature context operations not yet fully integrated"})
                     }
                     // Add more entity types as needed
                     _ => {

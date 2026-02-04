@@ -82,6 +82,42 @@ pub trait ContextCrudService: Send + Sync {
         rules: &[BusinessRule],
     ) -> Result<Vec<BusinessRule>, McpError>;
     async fn bulk_delete_business_rules(&self, ids: &[String]) -> Result<usize, McpError>;
+
+    // Security Policy CRUD (from ExtendedContextCrudService)
+    async fn create_security_policy(
+        &self,
+        project_id: &str,
+        policy_name: &str,
+        policy_area: Option<&str>,
+    ) -> Result<crate::models::context::SecurityPolicy, McpError>;
+    async fn get_security_policy(&self, id: &str) -> Result<Option<crate::models::context::SecurityPolicy>, McpError>;
+    async fn update_security_policy(
+        &self,
+        policy: &crate::models::context::SecurityPolicy,
+    ) -> Result<crate::models::context::SecurityPolicy, McpError>;
+    async fn delete_security_policy(&self, id: &str) -> Result<bool, McpError>;
+    async fn list_security_policies(
+        &self,
+        project_id: &str,
+    ) -> Result<Vec<crate::models::context::SecurityPolicy>, McpError>;
+
+    // Feature Context CRUD (from ExtendedContextCrudService)
+    async fn create_feature_context(
+        &self,
+        project_id: &str,
+        feature_name: &str,
+        business_purpose: Option<&str>,
+    ) -> Result<crate::models::context::FeatureContext, McpError>;
+    async fn get_feature_context(&self, id: &str) -> Result<Option<crate::models::context::FeatureContext>, McpError>;
+    async fn update_feature_context(
+        &self,
+        feature_context: &crate::models::context::FeatureContext,
+    ) -> Result<crate::models::context::FeatureContext, McpError>;
+    async fn delete_feature_context(&self, id: &str) -> Result<bool, McpError>;
+    async fn list_feature_contexts(
+        &self,
+        project_id: &str,
+    ) -> Result<Vec<crate::models::context::FeatureContext>, McpError>;
 }
 
 /// Implementation of ContextCrudService
@@ -323,5 +359,98 @@ where
             }
         }
         Ok(deleted_count)
+    }
+
+    // Extended methods - SecurityPolicy and FeatureContext (stubs for now)
+    async fn create_security_policy(
+        &self,
+        _project_id: &str,
+        _policy_name: &str,
+        _policy_area: Option<&str>,
+    ) -> Result<crate::models::context::SecurityPolicy, McpError> {
+        Err(McpError::internal_error(
+            "SecurityPolicy creation not implemented in ContextCrudServiceImpl".to_string(),
+            None,
+        ))
+    }
+
+    async fn get_security_policy(&self, _id: &str) -> Result<Option<crate::models::context::SecurityPolicy>, McpError> {
+        Err(McpError::internal_error(
+            "SecurityPolicy retrieval not implemented".to_string(),
+            None,
+        ))
+    }
+
+    async fn update_security_policy(
+        &self,
+        _policy: &crate::models::context::SecurityPolicy,
+    ) -> Result<crate::models::context::SecurityPolicy, McpError> {
+        Err(McpError::internal_error(
+            "SecurityPolicy update not implemented".to_string(),
+            None,
+        ))
+    }
+
+    async fn delete_security_policy(&self, _id: &str) -> Result<bool, McpError> {
+        Err(McpError::internal_error(
+            "SecurityPolicy deletion not implemented".to_string(),
+            None,
+        ))
+    }
+
+    async fn list_security_policies(
+        &self,
+        _project_id: &str,
+    ) -> Result<Vec<crate::models::context::SecurityPolicy>, McpError> {
+        Err(McpError::internal_error(
+            "SecurityPolicy listing not implemented".to_string(),
+            None,
+        ))
+    }
+
+    async fn create_feature_context(
+        &self,
+        _project_id: &str,
+        _feature_name: &str,
+        _business_purpose: Option<&str>,
+    ) -> Result<crate::models::context::FeatureContext, McpError> {
+        Err(McpError::internal_error(
+            "FeatureContext creation not implemented".to_string(),
+            None,
+        ))
+    }
+
+    async fn get_feature_context(&self, _id: &str) -> Result<Option<crate::models::context::FeatureContext>, McpError> {
+        Err(McpError::internal_error(
+            "FeatureContext retrieval not implemented".to_string(),
+            None,
+        ))
+    }
+
+    async fn update_feature_context(
+        &self,
+        _feature_context: &crate::models::context::FeatureContext,
+    ) -> Result<crate::models::context::FeatureContext, McpError> {
+        Err(McpError::internal_error(
+            "FeatureContext update not implemented".to_string(),
+            None,
+        ))
+    }
+
+    async fn delete_feature_context(&self, _id: &str) -> Result<bool, McpError> {
+        Err(McpError::internal_error(
+            "FeatureContext deletion not implemented".to_string(),
+            None,
+        ))
+    }
+
+    async fn list_feature_contexts(
+        &self,
+        _project_id: &str,
+    ) -> Result<Vec<crate::models::context::FeatureContext>, McpError> {
+        Err(McpError::internal_error(
+            "FeatureContext listing not implemented".to_string(),
+            None,
+        ))
     }
 }
