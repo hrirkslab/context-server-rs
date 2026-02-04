@@ -2,11 +2,6 @@ use tempfile::tempdir;
 
 use context_server_rs::container::AppContainer;
 use context_server_rs::db::init::init_db;
-use context_server_rs::models::context::{
-    ArchitecturalDecision, BusinessRule, DevelopmentPhase, PerformanceRequirement,
-    SecurityPolicy,
-};
-use uuid::Uuid;
 
 #[tokio::test]
 async fn test_database_initialization() {
@@ -286,8 +281,6 @@ async fn test_performance_requirement_crud_operations() {
             Some("API Response Time"),
             Some("response_time"),
             Some("< 100ms"),
-            Some("Connection pooling, caching"),
-            Some("N1 queries, blocking calls"),
         )
         .await;
 
@@ -436,10 +429,6 @@ async fn test_feature_context_crud_operations() {
             &project.id,
             "User Authentication",
             Some("Allow users to securely login"),
-            Some("Admin, User, Guest"),
-            Some("Login flow, Password reset"),
-            Some("OAuth 2.0, Session management"),
-            Some("Invalid credentials, Account lockout"),
         )
         .await;
 
@@ -624,8 +613,6 @@ async fn test_combined_crud_workflow() {
             Some("Checkout Process"),
             Some("response_time"),
             Some("< 200ms"),
-            None,
-            None,
         )
         .await
         .unwrap();

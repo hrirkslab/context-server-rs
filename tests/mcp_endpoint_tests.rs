@@ -1,6 +1,6 @@
 /// Unit tests for MCP endpoints for enhanced context server
 /// Tests the create_entity, read_entity, update_entity, delete_entity, and list_entities endpoints
-use serde_json::{json, Value};
+use serde_json::json;
 use tempfile::tempdir;
 
 use context_server_rs::enhanced_context_server::EnhancedContextMcpServer;
@@ -15,7 +15,7 @@ async fn test_mcp_create_project_entity_endpoint() {
     let server = EnhancedContextMcpServer::new(db_path_str).expect("Failed to create server");
 
     // Test creating a project via MCP
-    let args = json!({
+    let _args = json!({
         "entity_type": "project",
         "data": {
             "name": "Test Project",
@@ -25,7 +25,7 @@ async fn test_mcp_create_project_entity_endpoint() {
 
     // Verify the endpoint exists in the tools list
     let tools_result = server
-        .list_tools(None, Default::default())
+        .list_tools(None)
         .await
         .expect("Failed to list tools");
 
@@ -49,7 +49,7 @@ async fn test_mcp_list_projects_endpoint() {
 
     // Verify the list_projects endpoint exists
     let tools_result = server
-        .list_tools(None, Default::default())
+        .list_tools(None)
         .await
         .expect("Failed to list tools");
 
@@ -73,7 +73,7 @@ async fn test_mcp_get_entity_endpoint_schema() {
 
     // Verify the get_entity endpoint exists with proper schema
     let tools_result = server
-        .list_tools(None, Default::default())
+        .list_tools(None)
         .await
         .expect("Failed to list tools");
 
@@ -85,11 +85,10 @@ async fn test_mcp_get_entity_endpoint_schema() {
     assert!(get_entity_tool.is_some(), "get_entity tool should exist");
 
     if let Some(tool) = get_entity_tool {
-        let schema = tool.input_schema.as_ref();
-        assert!(schema.is_some(), "get_entity should have input schema");
-
+        let schema = &tool.input_schema;
+        
         // Verify entity_type enum includes all supported types
-        if let Some(props) = schema.and_then(|s| s.get("properties")) {
+        if let Some(props) = schema.get("properties") {
             assert!(
                 props.get("entity_type").is_some(),
                 "entity_type should be in schema"
@@ -109,7 +108,7 @@ async fn test_mcp_create_entity_endpoint_schema() {
 
     // Verify the create_entity endpoint exists with proper schema
     let tools_result = server
-        .list_tools(None, Default::default())
+        .list_tools(None)
         .await
         .expect("Failed to list tools");
 
@@ -124,11 +123,10 @@ async fn test_mcp_create_entity_endpoint_schema() {
     );
 
     if let Some(tool) = create_entity_tool {
-        let schema = tool.input_schema.as_ref();
-        assert!(schema.is_some(), "create_entity should have input schema");
-
+        let schema = &tool.input_schema;
+        
         // Verify schema structure
-        if let Some(props) = schema.and_then(|s| s.get("properties")) {
+        if let Some(props) = schema.get("properties") {
             assert!(
                 props.get("entity_type").is_some(),
                 "entity_type should be in schema"
@@ -148,7 +146,7 @@ async fn test_mcp_update_entity_endpoint_schema() {
 
     // Verify the update_entity endpoint exists
     let tools_result = server
-        .list_tools(None, Default::default())
+        .list_tools(None)
         .await
         .expect("Failed to list tools");
 
@@ -163,11 +161,10 @@ async fn test_mcp_update_entity_endpoint_schema() {
     );
 
     if let Some(tool) = update_entity_tool {
-        let schema = tool.input_schema.as_ref();
-        assert!(schema.is_some(), "update_entity should have input schema");
-
+        let schema = &tool.input_schema;
+        
         // Verify schema structure
-        if let Some(props) = schema.and_then(|s| s.get("properties")) {
+        if let Some(props) = schema.get("properties") {
             assert!(
                 props.get("entity_type").is_some(),
                 "entity_type should be in schema"
@@ -188,7 +185,7 @@ async fn test_mcp_delete_entity_endpoint_schema() {
 
     // Verify the delete_entity endpoint exists
     let tools_result = server
-        .list_tools(None, Default::default())
+        .list_tools(None)
         .await
         .expect("Failed to list tools");
 
@@ -203,11 +200,10 @@ async fn test_mcp_delete_entity_endpoint_schema() {
     );
 
     if let Some(tool) = delete_entity_tool {
-        let schema = tool.input_schema.as_ref();
-        assert!(schema.is_some(), "delete_entity should have input schema");
-
+        let schema = &tool.input_schema;
+        
         // Verify schema structure
-        if let Some(props) = schema.and_then(|s| s.get("properties")) {
+        if let Some(props) = schema.get("properties") {
             assert!(
                 props.get("entity_type").is_some(),
                 "entity_type should be in schema"
@@ -227,7 +223,7 @@ async fn test_mcp_list_entities_endpoint_schema() {
 
     // Verify the list_entities endpoint exists
     let tools_result = server
-        .list_tools(None, Default::default())
+        .list_tools(None)
         .await
         .expect("Failed to list tools");
 
@@ -242,11 +238,10 @@ async fn test_mcp_list_entities_endpoint_schema() {
     );
 
     if let Some(tool) = list_entities_tool {
-        let schema = tool.input_schema.as_ref();
-        assert!(schema.is_some(), "list_entities should have input schema");
-
+        let schema = &tool.input_schema;
+        
         // Verify schema structure
-        if let Some(props) = schema.and_then(|s| s.get("properties")) {
+        if let Some(props) = schema.get("properties") {
             assert!(
                 props.get("entity_type").is_some(),
                 "entity_type should be in schema"
@@ -265,39 +260,39 @@ async fn test_mcp_supported_entity_types() {
 
     // Verify all required tools exist
     let tools_result = server
-        .list_tools(None, Default::default())
+        .list_tools(None)
         .await
         .expect("Failed to list tools");
 
-    let tool_names: Vec<&str> = tools_result.tools.iter().map(|t| t.name.as_str()).collect();
+    let tool_names: Vec<String> = tools_result.tools.iter().map(|t| t.name.clone()).collect();
 
     // Check for essential CRUD tools
     assert!(
-        tool_names.contains(&"create_entity"),
+        tool_names.contains(&"create_entity".to_string()),
         "create_entity tool should exist"
     );
     assert!(
-        tool_names.contains(&"get_entity"),
+        tool_names.contains(&"get_entity".to_string()),
         "get_entity tool should exist"
     );
     assert!(
-        tool_names.contains(&"update_entity"),
+        tool_names.contains(&"update_entity".to_string()),
         "update_entity tool should exist"
     );
     assert!(
-        tool_names.contains(&"delete_entity"),
+        tool_names.contains(&"delete_entity".to_string()),
         "delete_entity tool should exist"
     );
     assert!(
-        tool_names.contains(&"list_entities"),
+        tool_names.contains(&"list_entities".to_string()),
         "list_entities tool should exist"
     );
     assert!(
-        tool_names.contains(&"query_context"),
+        tool_names.contains(&"query_context".to_string()),
         "query_context tool should exist"
     );
     assert!(
-        tool_names.contains(&"list_projects"),
+        tool_names.contains(&"list_projects".to_string()),
         "list_projects tool should exist"
     );
 }
@@ -321,13 +316,8 @@ async fn test_mcp_server_info() {
     );
 
     // Verify server has tools capability
-    let schema = &info.capabilities;
     assert!(
-        schema
-            .to_json()
-            .get("tools")
-            .and_then(|v| v.as_bool())
-            .unwrap_or(false),
+        info.capabilities.tools.unwrap_or(false),
         "Server should support tools"
     );
 }
@@ -342,7 +332,7 @@ async fn test_entity_type_enum_values() {
 
     // Get the create_entity tool and verify all entity types are in the enum
     let tools_result = server
-        .list_tools(None, Default::default())
+        .list_tools(None)
         .await
         .expect("Failed to list tools");
 
@@ -352,50 +342,49 @@ async fn test_entity_type_enum_values() {
         .find(|t| t.name == "create_entity");
 
     if let Some(tool) = create_entity {
-        if let Some(schema) = tool.input_schema.as_ref() {
-            if let Some(props) = schema.get("properties") {
-                if let Some(entity_type) = props.get("entity_type") {
-                    if let Some(enum_values) = entity_type.get("enum") {
-                        if let Some(arr) = enum_values.as_array() {
-                            let values: Vec<&str> = arr
-                                .iter()
-                                .filter_map(|v: &serde_json::Value| v.as_str())
-                                .collect();
+        let schema = &tool.input_schema;
+        if let Some(props) = schema.get("properties") {
+            if let Some(entity_type) = props.get("entity_type") {
+                if let Some(enum_values) = entity_type.get("enum") {
+                    if let Some(arr) = enum_values.as_array() {
+                        let values: Vec<&str> = arr
+                            .iter()
+                            .filter_map(|v: &serde_json::Value| v.as_str())
+                            .collect();
 
-                            // Verify all required entity types are supported
-                            assert!(
-                                values.contains(&"project"),
-                                "project type should be supported"
-                            );
-                            assert!(
-                                values.contains(&"business_rule"),
-                                "business_rule type should be supported"
-                            );
-                            assert!(
-                                values.contains(&"architectural_decision"),
-                                "architectural_decision type should be supported"
-                            );
-                            assert!(
-                                values.contains(&"performance_requirement"),
-                                "performance_requirement type should be supported"
-                            );
-                            assert!(
-                                values.contains(&"security_policy"),
-                                "security_policy type should be supported"
-                            );
-                            assert!(
-                                values.contains(&"framework_component"),
-                                "framework_component type should be supported"
-                            );
-                            assert!(
-                                values.contains(&"development_phase"),
-                                "development_phase type should be supported"
-                            );
-                            assert!(
-                                values.contains(&"feature_context"),
-                                "feature_context type should be supported"
-                            );
-                        }
+                        // Verify all required entity types are supported
+                        assert!(
+                            values.contains(&"project"),
+                            "project type should be supported"
+                        );
+                        assert!(
+                            values.contains(&"business_rule"),
+                            "business_rule type should be supported"
+                        );
+                        assert!(
+                            values.contains(&"architectural_decision"),
+                            "architectural_decision type should be supported"
+                        );
+                        assert!(
+                            values.contains(&"performance_requirement"),
+                            "performance_requirement type should be supported"
+                        );
+                        assert!(
+                            values.contains(&"security_policy"),
+                            "security_policy type should be supported"
+                        );
+                        assert!(
+                            values.contains(&"framework_component"),
+                            "framework_component type should be supported"
+                        );
+                        assert!(
+                            values.contains(&"development_phase"),
+                            "development_phase type should be supported"
+                        );
+                        assert!(
+                            values.contains(&"feature_context"),
+                            "feature_context type should be supported"
+                        );
                     }
                 }
             }
