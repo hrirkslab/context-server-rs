@@ -1860,6 +1860,105 @@ impl ServerHandler for EnhancedContextMcpServer {
                             McpError::internal_error(format!("Serialization error: {}", e), None)
                         })?
                     }
+                    "performance_requirement" => {
+                        let project_id = data
+                            .get("project_id")
+                            .and_then(|v| v.as_str())
+                            .ok_or_else(|| {
+                                McpError::invalid_params(
+                                    "Missing required parameter: project_id",
+                                    None,
+                                )
+                            })?;
+                        let component_area = data
+                            .get("component_area")
+                            .and_then(|v| v.as_str())
+                            .ok_or_else(|| {
+                                McpError::invalid_params(
+                                    "Missing required parameter: component_area",
+                                    None,
+                                )
+                            })?;
+                        let requirement_type = data
+                            .get("requirement_type")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("response_time");
+                        let target_value = data.get("target_value").and_then(|v| v.as_str());
+
+                        let perf_req = self
+                            .container
+                            .context_crud_service
+                            .create_performance_requirement(
+                                project_id,
+                                component_area,
+                                Some(requirement_type),
+                                target_value,
+                            )
+                            .await?;
+                        serde_json::to_value(perf_req).map_err(|e| {
+                            McpError::internal_error(format!("Serialization error: {}", e), None)
+                        })?
+                    }
+                    "security_policy" => {
+                        let project_id = data
+                            .get("project_id")
+                            .and_then(|v| v.as_str())
+                            .ok_or_else(|| {
+                                McpError::invalid_params(
+                                    "Missing required parameter: project_id",
+                                    None,
+                                )
+                            })?;
+                        let policy_name = data
+                            .get("policy_name")
+                            .and_then(|v| v.as_str())
+                            .ok_or_else(|| {
+                                McpError::invalid_params(
+                                    "Missing required parameter: policy_name",
+                                    None,
+                                )
+                            })?;
+                        let policy_area = data.get("policy_area").and_then(|v| v.as_str());
+
+                        let sec_policy = self
+                            .container
+                            .context_crud_service
+                            .create_security_policy(project_id, policy_name, policy_area)
+                            .await?;
+                        serde_json::to_value(sec_policy).map_err(|e| {
+                            McpError::internal_error(format!("Serialization error: {}", e), None)
+                        })?
+                    }
+                    "feature_context" => {
+                        let project_id = data
+                            .get("project_id")
+                            .and_then(|v| v.as_str())
+                            .ok_or_else(|| {
+                                McpError::invalid_params(
+                                    "Missing required parameter: project_id",
+                                    None,
+                                )
+                            })?;
+                        let feature_name = data
+                            .get("feature_name")
+                            .and_then(|v| v.as_str())
+                            .ok_or_else(|| {
+                                McpError::invalid_params(
+                                    "Missing required parameter: feature_name",
+                                    None,
+                                )
+                            })?;
+                        let business_purpose = data.get("business_purpose").and_then(|v| v.as_str());
+
+                        let feature_ctx = self
+                            .container
+                            .context_crud_service
+                            .create_feature_context(project_id, feature_name, business_purpose)
+                            .await?;
+                        serde_json::to_value(feature_ctx).map_err(|e| {
+                            McpError::internal_error(format!("Serialization error: {}", e), None)
+                        })?
+                    }
                     // Add more entity types as needed
                     _ => {
                         return Err(McpError::invalid_params(
@@ -2074,6 +2173,191 @@ impl ServerHandler for EnhancedContextMcpServer {
                             McpError::internal_error(format!("Serialization error: {}", e), None)
                         })?
                     }
+                    "architectural_decision" => {
+                        use crate::models::context::ArchitecturalDecision;
+
+                        let decision_title = data
+                            .get("decision_title")
+                            .and_then(|v| v.as_str())
+                            .ok_or_else(|| {
+                                McpError::invalid_params(
+                                    "Missing required parameter: decision_title",
+                                    None,
+                                )
+                            })?;
+
+                        let decision = ArchitecturalDecision {
+                            id: id.to_string(),
+                            project_id: data
+                                .get("project_id")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("")
+                                .to_string(),
+                            decision_title: decision_title.to_string(),
+                            context: data
+                                .get("context")
+                                .and_then(|v| v.as_str())
+                                .map(|s| s.to_string()),
+                            decision: data
+                                .get("decision")
+                                .and_then(|v| v.as_str())
+                                .map(|s| s.to_string()),
+                            consequences: data
+                                .get("consequences")
+                                .and_then(|v| v.as_str())
+                                .map(|s| s.to_string()),
+                            alternatives_considered: data
+                                .get("alternatives_considered")
+                                .and_then(|v| v.as_str())
+                                .map(|s| s.to_string()),
+                            status: data
+                                .get("status")
+                                .and_then(|v| v.as_str())
+                                .map(|s| s.to_string()),
+                            created_at: None,
+                        };
+
+                        let updated_decision = self
+                            .container
+                            .context_crud_service
+                            .update_architectural_decision(&decision)
+                            .await?;
+                        serde_json::to_value(updated_decision).map_err(|e| {
+                            McpError::internal_error(format!("Serialization error: {}", e), None)
+                        })?
+                    }
+                    "performance_requirement" => {
+                        use crate::models::context::PerformanceRequirement;
+
+                        let perf_req = PerformanceRequirement {
+                            id: id.to_string(),
+                            project_id: data
+                                .get("project_id")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("")
+                                .to_string(),
+                            component_area: data
+                                .get("component_area")
+                                .and_then(|v| v.as_str())
+                                .map(|s| s.to_string()),
+                            requirement_type: data
+                                .get("requirement_type")
+                                .and_then(|v| v.as_str())
+                                .map(|s| s.to_string()),
+                            target_value: data
+                                .get("target_value")
+                                .and_then(|v| v.as_str())
+                                .map(|s| s.to_string()),
+                            optimization_patterns: data
+                                .get("optimization_patterns")
+                                .and_then(|v| v.as_str())
+                                .map(|s| s.to_string()),
+                            avoid_patterns: data
+                                .get("avoid_patterns")
+                                .and_then(|v| v.as_str())
+                                .map(|s| s.to_string()),
+                            created_at: None,
+                        };
+
+                        let updated_perf = self
+                            .container
+                            .context_crud_service
+                            .update_performance_requirement(&perf_req)
+                            .await?;
+                        serde_json::to_value(updated_perf).map_err(|e| {
+                            McpError::internal_error(format!("Serialization error: {}", e), None)
+                        })?
+                    }
+                    "security_policy" => {
+                        use crate::models::context::SecurityPolicy;
+
+                        let security_policy = SecurityPolicy {
+                            id: id.to_string(),
+                            project_id: data
+                                .get("project_id")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("")
+                                .to_string(),
+                            policy_name: data
+                                .get("policy_name")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("")
+                                .to_string(),
+                            policy_area: data
+                                .get("policy_area")
+                                .and_then(|v| v.as_str())
+                                .map(|s| s.to_string()),
+                            requirements: data
+                                .get("requirements")
+                                .and_then(|v| v.as_str())
+                                .map(|s| s.to_string()),
+                            implementation_pattern: data
+                                .get("implementation_pattern")
+                                .and_then(|v| v.as_str())
+                                .map(|s| s.to_string()),
+                            forbidden_patterns: data
+                                .get("forbidden_patterns")
+                                .and_then(|v| v.as_str())
+                                .map(|s| s.to_string()),
+                            compliance_notes: data
+                                .get("compliance_notes")
+                                .and_then(|v| v.as_str())
+                                .map(|s| s.to_string()),
+                            created_at: None,
+                        };
+
+                        let updated_policy = self
+                            .container
+                            .context_crud_service
+                            .update_security_policy(&security_policy)
+                            .await?;
+                        serde_json::to_value(updated_policy).map_err(|e| {
+                            McpError::internal_error(format!("Serialization error: {}", e), None)
+                        })?
+                    }
+                    "development_phase" => {
+                        use crate::models::context::DevelopmentPhase;
+
+                        let phase_name = data
+                            .get("phase_name")
+                            .and_then(|v| v.as_str())
+                            .ok_or_else(|| {
+                                McpError::invalid_params(
+                                    "Missing required parameter: phase_name",
+                                    None,
+                                )
+                            })?;
+
+                        let phase_order = data
+                            .get("phase_order")
+                            .and_then(|v| v.as_i64())
+                            .unwrap_or(0) as i32;
+
+                        let phase = DevelopmentPhase {
+                            id: id.to_string(),
+                            project_id: data
+                                .get("project_id")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or("")
+                                .to_string(),
+                            phase_name: phase_name.to_string(),
+                            phase_order,
+                            description: data
+                                .get("description")
+                                .and_then(|v| v.as_str())
+                                .map(|s| s.to_string()),
+                            created_at: None,
+                        };
+
+                        let updated_phase = self
+                            .container
+                            .development_phase_service
+                            .update_phase(&phase)
+                            .await?;
+                        serde_json::to_value(updated_phase).map_err(|e| {
+                            McpError::internal_error(format!("Serialization error: {}", e), None)
+                        })?
+                    }
                     // Add more entity types as needed
                     _ => {
                         return Err(McpError::invalid_params(
@@ -2137,6 +2421,30 @@ impl ServerHandler for EnhancedContextMcpServer {
                             .delete_phase(id)
                             .await?;
                         serde_json::json!({"deleted": deleted, "phase_id": id})
+                    }
+                    "performance_requirement" => {
+                        let deleted = self
+                            .container
+                            .context_crud_service
+                            .delete_performance_requirement(id)
+                            .await?;
+                        serde_json::json!({"deleted": deleted, "requirement_id": id})
+                    }
+                    "security_policy" => {
+                        let deleted = self
+                            .container
+                            .context_crud_service
+                            .delete_security_policy(id)
+                            .await?;
+                        serde_json::json!({"deleted": deleted, "policy_id": id})
+                    }
+                    "feature_context" => {
+                        let deleted = self
+                            .container
+                            .context_crud_service
+                            .delete_feature_context(id)
+                            .await?;
+                        serde_json::json!({"deleted": deleted, "context_id": id})
                     }
                     // Add more entity types as needed
                     _ => {
@@ -2249,6 +2557,57 @@ impl ServerHandler for EnhancedContextMcpServer {
                             })?
                         } else {
                             return Err(McpError::invalid_params("Missing required parameter: project_id for development_phase listing", None));
+                        }
+                    }
+                    "performance_requirement" => {
+                        if let Some(pid) = project_id {
+                            let requirements = self
+                                .container
+                                .context_crud_service
+                                .list_performance_requirements(pid)
+                                .await?;
+                            serde_json::to_value(requirements).map_err(|e| {
+                                McpError::internal_error(
+                                    format!("Serialization error: {}", e),
+                                    None,
+                                )
+                            })?
+                        } else {
+                            return Err(McpError::invalid_params("Missing required parameter: project_id for performance_requirement listing", None));
+                        }
+                    }
+                    "security_policy" => {
+                        if let Some(pid) = project_id {
+                            let policies = self
+                                .container
+                                .context_crud_service
+                                .list_security_policies(pid)
+                                .await?;
+                            serde_json::to_value(policies).map_err(|e| {
+                                McpError::internal_error(
+                                    format!("Serialization error: {}", e),
+                                    None,
+                                )
+                            })?
+                        } else {
+                            return Err(McpError::invalid_params("Missing required parameter: project_id for security_policy listing", None));
+                        }
+                    }
+                    "feature_context" => {
+                        if let Some(pid) = project_id {
+                            let contexts = self
+                                .container
+                                .context_crud_service
+                                .list_feature_contexts(pid)
+                                .await?;
+                            serde_json::to_value(contexts).map_err(|e| {
+                                McpError::internal_error(
+                                    format!("Serialization error: {}", e),
+                                    None,
+                                )
+                            })?
+                        } else {
+                            return Err(McpError::invalid_params("Missing required parameter: project_id for feature_context listing", None));
                         }
                     }
                     // Add more entity types as needed

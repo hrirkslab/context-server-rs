@@ -18,10 +18,7 @@ impl SqliteSecurityPolicyRepository {
 #[async_trait]
 impl SecurityPolicyRepository for SqliteSecurityPolicyRepository {
     async fn create(&self, security_policy: &SecurityPolicy) -> Result<SecurityPolicy, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
         db.execute(
             "INSERT INTO security_policies (id, project_id, policy_name, policy_area, requirements, implementation_pattern, forbidden_patterns, compliance_notes, created_at) 
@@ -37,27 +34,18 @@ impl SecurityPolicyRepository for SqliteSecurityPolicyRepository {
                 security_policy.compliance_notes,
                 security_policy.created_at
             ],
-        ).map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to create security policy: {}", e),
-        })?;
+        ).map_err(|e| McpError::internal_error(format!("Failed to create security policy: {}", e), None))?;
 
         Ok(security_policy.clone())
     }
 
     async fn get_by_id(&self, id: &str) -> Result<Option<SecurityPolicy>, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
         let mut stmt = db.prepare(
             "SELECT id, project_id, policy_name, policy_area, requirements, implementation_pattern, forbidden_patterns, compliance_notes, created_at 
              FROM security_policies WHERE id = ?1"
-        ).map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to prepare statement: {}", e),
-        })?;
+        ).map_err(|e| McpError::internal_error(format!("Failed to prepare statement: {}", e), None))?;
 
         let security_policy_result = stmt.query_row(params![id], |row| {
             Ok(SecurityPolicy {
@@ -76,18 +64,12 @@ impl SecurityPolicyRepository for SqliteSecurityPolicyRepository {
         match security_policy_result {
             Ok(security_policy) => Ok(Some(security_policy)),
             Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
-            Err(e) => Err(McpError {
-                code: -1,
-                message: format!("Failed to get security policy: {}", e),
-            }),
+            Err(e) => Err(McpError::internal_error(format!("Failed to get security policy: {}", e), None)),
         }
     }
 
     async fn update(&self, security_policy: &SecurityPolicy) -> Result<SecurityPolicy, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
         db.execute(
             "UPDATE security_policies SET project_id = ?2, policy_name = ?3, policy_area = ?4, requirements = ?5, implementation_pattern = ?6, forbidden_patterns = ?7, compliance_notes = ?8, updated_at = CURRENT_TIMESTAMP WHERE id = ?1",
@@ -102,42 +84,27 @@ impl SecurityPolicyRepository for SqliteSecurityPolicyRepository {
                 security_policy.compliance_notes,
                 security_policy.created_at
             ],
-        ).map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to update security policy: {}", e),
-        })?;
+        ).map_err(|e| McpError::internal_error(format!("Failed to update security policy: {}", e), None))?;
 
         Ok(security_policy.clone())
     }
 
     async fn delete(&self, id: &str) -> Result<bool, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
         let rows_affected = db.execute("DELETE FROM security_policies WHERE id = ?1", params![id])
-            .map_err(|e| McpError {
-                code: -1,
-                message: format!("Failed to delete security policy: {}", e),
-            })?;
+            .map_err(|e| McpError::internal_error(format!("Failed to delete security policy: {}", e), None))?;
 
         Ok(rows_affected > 0)
     }
 
     async fn list_by_project(&self, project_id: &str) -> Result<Vec<SecurityPolicy>, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
         let mut stmt = db.prepare(
             "SELECT id, project_id, policy_name, policy_area, requirements, implementation_pattern, forbidden_patterns, compliance_notes, created_at 
              FROM security_policies WHERE project_id = ?1 ORDER BY created_at DESC"
-        ).map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to prepare statement: {}", e),
-        })?;
+        ).map_err(|e| McpError::internal_error(format!("Failed to prepare statement: {}", e), None))?;
 
         let security_policy_iter = stmt.query_map(params![project_id], |row| {
             Ok(SecurityPolicy {
@@ -151,35 +118,23 @@ impl SecurityPolicyRepository for SqliteSecurityPolicyRepository {
                 compliance_notes: row.get(7)?,
                 created_at: row.get(8)?,
             })
-        }).map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to query security policies: {}", e),
-        })?;
+        }).map_err(|e| McpError::internal_error(format!("Failed to query security policies: {}", e), None))?;
 
         let mut security_policies = Vec::new();
         for security_policy in security_policy_iter {
-            security_policies.push(security_policy.map_err(|e| McpError {
-                code: -1,
-                message: format!("Failed to process security policy row: {}", e),
-            })?);
+            security_policies.push(security_policy.map_err(|e| McpError::internal_error(format!("Failed to process security policy row: {}", e), None))?);
         }
 
         Ok(security_policies)
     }
 
     async fn list_by_policy_area(&self, project_id: &str, policy_area: &str) -> Result<Vec<SecurityPolicy>, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
         let mut stmt = db.prepare(
             "SELECT id, project_id, policy_name, policy_area, requirements, implementation_pattern, forbidden_patterns, compliance_notes, created_at 
              FROM security_policies WHERE project_id = ?1 AND policy_area = ?2 ORDER BY created_at DESC"
-        ).map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to prepare statement: {}", e),
-        })?;
+        ).map_err(|e| McpError::internal_error(format!("Failed to prepare statement: {}", e), None))?;
 
         let security_policy_iter = stmt.query_map(params![project_id, policy_area], |row| {
             Ok(SecurityPolicy {
@@ -193,32 +148,20 @@ impl SecurityPolicyRepository for SqliteSecurityPolicyRepository {
                 compliance_notes: row.get(7)?,
                 created_at: row.get(8)?,
             })
-        }).map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to query security policies: {}", e),
-        })?;
+        }).map_err(|e| McpError::internal_error(format!("Failed to query security policies: {}", e), None))?;
 
         let mut security_policies = Vec::new();
         for security_policy in security_policy_iter {
-            security_policies.push(security_policy.map_err(|e| McpError {
-                code: -1,
-                message: format!("Failed to process security policy row: {}", e),
-            })?);
+            security_policies.push(security_policy.map_err(|e| McpError::internal_error(format!("Failed to process security policy row: {}", e), None))?);
         }
 
         Ok(security_policies)
     }
 
     async fn bulk_create(&self, security_policies: &[SecurityPolicy]) -> Result<Vec<SecurityPolicy>, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
-        let tx = db.unchecked_transaction().map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to start transaction: {}", e),
-        })?;
+        let tx = db.unchecked_transaction().map_err(|e| McpError::internal_error(format!("Failed to start transaction: {}", e), None))?;
 
         for security_policy in security_policies {
             tx.execute(
@@ -235,30 +178,18 @@ impl SecurityPolicyRepository for SqliteSecurityPolicyRepository {
                     security_policy.compliance_notes,
                     security_policy.created_at
                 ],
-            ).map_err(|e| McpError {
-                code: -1,
-                message: format!("Failed to insert security policy: {}", e),
-            })?;
+            ).map_err(|e| McpError::internal_error(format!("Failed to insert security policy: {}", e), None))?;
         }
 
-        tx.commit().map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to commit transaction: {}", e),
-        })?;
+        tx.commit().map_err(|e| McpError::internal_error(format!("Failed to commit transaction: {}", e), None))?;
 
         Ok(security_policies.to_vec())
     }
 
     async fn bulk_update(&self, security_policies: &[SecurityPolicy]) -> Result<Vec<SecurityPolicy>, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
-        let tx = db.unchecked_transaction().map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to start transaction: {}", e),
-        })?;
+        let tx = db.unchecked_transaction().map_err(|e| McpError::internal_error(format!("Failed to start transaction: {}", e), None))?;
 
         for security_policy in security_policies {
             tx.execute(
@@ -274,45 +205,27 @@ impl SecurityPolicyRepository for SqliteSecurityPolicyRepository {
                     security_policy.compliance_notes,
                     security_policy.created_at
                 ],
-            ).map_err(|e| McpError {
-                code: -1,
-                message: format!("Failed to update security policy: {}", e),
-            })?;
+            ).map_err(|e| McpError::internal_error(format!("Failed to update security policy: {}", e), None))?;
         }
 
-        tx.commit().map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to commit transaction: {}", e),
-        })?;
+        tx.commit().map_err(|e| McpError::internal_error(format!("Failed to commit transaction: {}", e), None))?;
 
         Ok(security_policies.to_vec())
     }
 
     async fn bulk_delete(&self, ids: &[String]) -> Result<usize, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
-        let tx = db.unchecked_transaction().map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to start transaction: {}", e),
-        })?;
+        let tx = db.unchecked_transaction().map_err(|e| McpError::internal_error(format!("Failed to start transaction: {}", e), None))?;
 
         let mut total_deleted = 0;
         for id in ids {
             let rows_affected = tx.execute("DELETE FROM security_policies WHERE id = ?1", params![id])
-                .map_err(|e| McpError {
-                    code: -1,
-                    message: format!("Failed to delete security policy: {}", e),
-                })?;
+                .map_err(|e| McpError::internal_error(format!("Failed to delete security policy: {}", e), None))?;
             total_deleted += rows_affected;
         }
 
-        tx.commit().map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to commit transaction: {}", e),
-        })?;
+        tx.commit().map_err(|e| McpError::internal_error(format!("Failed to commit transaction: {}", e), None))?;
 
         Ok(total_deleted)
     }

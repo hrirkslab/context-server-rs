@@ -45,18 +45,12 @@ impl ProjectConventionRepository for SqliteProjectConventionRepository {
     }
 
     async fn get_by_id(&self, id: &str) -> Result<Option<ProjectConvention>, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
         let mut stmt = db.prepare(
             "SELECT id, project_id, convention_type, convention_rule, good_examples, bad_examples, rationale, created_at 
              FROM project_conventions WHERE id = ?1"
-        ).map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to prepare statement: {}", e),
-        })?;
+        ).map_err(|e| McpError::internal_error(format!("Failed to prepare statement: {}", e), None))?;
 
         let convention_result = stmt.query_row(params![id], |row| {
             Ok(ProjectConvention {
@@ -74,18 +68,12 @@ impl ProjectConventionRepository for SqliteProjectConventionRepository {
         match convention_result {
             Ok(convention) => Ok(Some(convention)),
             Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
-            Err(e) => Err(McpError {
-                code: -1,
-                message: format!("Failed to get project convention: {}", e),
-            }),
+            Err(e) => Err(McpError::internal_error(format!("Failed to get project convention: {}", e), None)),
         }
     }
 
     async fn update(&self, convention: &ProjectConvention) -> Result<ProjectConvention, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
         db.execute(
             "UPDATE project_conventions SET project_id = ?2, convention_type = ?3, convention_rule = ?4, good_examples = ?5, bad_examples = ?6, rationale = ?7, created_at = ?8 WHERE id = ?1",
@@ -99,42 +87,27 @@ impl ProjectConventionRepository for SqliteProjectConventionRepository {
                 convention.rationale,
                 convention.created_at
             ],
-        ).map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to update project convention: {}", e),
-        })?;
+        ).map_err(|e| McpError::internal_error(format!("Failed to update project convention: {}", e), None))?;
 
         Ok(convention.clone())
     }
 
     async fn delete(&self, id: &str) -> Result<bool, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
         let rows_affected = db.execute("DELETE FROM project_conventions WHERE id = ?1", params![id])
-            .map_err(|e| McpError {
-                code: -1,
-                message: format!("Failed to delete project convention: {}", e),
-            })?;
+            .map_err(|e| McpError::internal_error(format!("Failed to delete project convention: {}", e), None))?;
 
         Ok(rows_affected > 0)
     }
 
     async fn list_by_project(&self, project_id: &str) -> Result<Vec<ProjectConvention>, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
         let mut stmt = db.prepare(
             "SELECT id, project_id, convention_type, convention_rule, good_examples, bad_examples, rationale, created_at 
              FROM project_conventions WHERE project_id = ?1 ORDER BY created_at DESC"
-        ).map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to prepare statement: {}", e),
-        })?;
+        ).map_err(|e| McpError::internal_error(format!("Failed to prepare statement: {}", e), None))?;
 
         let convention_iter = stmt.query_map(params![project_id], |row| {
             Ok(ProjectConvention {
@@ -147,35 +120,17 @@ impl ProjectConventionRepository for SqliteProjectConventionRepository {
                 rationale: row.get(6)?,
                 created_at: row.get(7)?,
             })
-        }).map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to query project conventions: {}", e),
-        })?;
+        }).map_err(|e| McpError::internal_error(format!("Failed to query project conventions: {}", e), None))?;
 
         let mut conventions = Vec::new();
         for convention in convention_iter {
-            conventions.push(convention.map_err(|e| McpError {
-                code: -1,
-                message: format!("Failed to process project convention row: {}", e),
-            })?);
-        }
-
-        Ok(conventions)
-    }
-
-    async fn list_by_convention_type(&self, project_id: &str, convention_type: &str) -> Result<Vec<ProjectConvention>, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+            conventions.push(convention.map_err(|e| McpError::internal_error(format!("Failed to process project convention row: {}", e), None))?);_by_convention_type(&self, project_id: &str, convention_type: &str) -> Result<Vec<ProjectConvention>, McpError> {
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
         let mut stmt = db.prepare(
             "SELECT id, project_id, convention_type, convention_rule, good_examples, bad_examples, rationale, created_at 
              FROM project_conventions WHERE project_id = ?1 AND convention_type = ?2 ORDER BY created_at DESC"
-        ).map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to prepare statement: {}", e),
-        })?;
+        ).map_err(|e| McpError::internal_error(format!("Failed to prepare statement: {}", e), None))?;
 
         let convention_iter = stmt.query_map(params![project_id, convention_type], |row| {
             Ok(ProjectConvention {
@@ -205,15 +160,9 @@ impl ProjectConventionRepository for SqliteProjectConventionRepository {
     }
 
     async fn bulk_create(&self, conventions: &[ProjectConvention]) -> Result<Vec<ProjectConvention>, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
-        let tx = db.unchecked_transaction().map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to start transaction: {}", e),
-        })?;
+        let tx = db.unchecked_transaction().map_err(|e| McpError::internal_error(format!("Failed to start transaction: {}", e), None))?;
 
         for convention in conventions {
             tx.execute(
@@ -229,30 +178,18 @@ impl ProjectConventionRepository for SqliteProjectConventionRepository {
                     convention.rationale,
                     convention.created_at
                 ],
-            ).map_err(|e| McpError {
-                code: -1,
-                message: format!("Failed to insert project convention: {}", e),
-            })?;
+            ].map_err(|e| McpError::internal_error(format!("Failed to insert project convention: {}", e), None))?;
         }
 
-        tx.commit().map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to commit transaction: {}", e),
-        })?;
+        tx.commit().map_err(|e| McpError::internal_error(format!("Failed to commit transaction: {}", e), None))?;
 
         Ok(conventions.to_vec())
     }
 
     async fn bulk_update(&self, conventions: &[ProjectConvention]) -> Result<Vec<ProjectConvention>, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
-        let tx = db.unchecked_transaction().map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to start transaction: {}", e),
-        })?;
+        let tx = db.unchecked_transaction().map_err(|e| McpError::internal_error(format!("Failed to start transaction: {}", e), None))?;
 
         for convention in conventions {
             tx.execute(
@@ -267,45 +204,27 @@ impl ProjectConventionRepository for SqliteProjectConventionRepository {
                     convention.rationale,
                     convention.created_at
                 ],
-            ).map_err(|e| McpError {
-                code: -1,
-                message: format!("Failed to update project convention: {}", e),
-            })?;
+            ).map_err(|e| McpError::internal_error(format!("Failed to update project convention: {}", e), None))?;
         }
 
-        tx.commit().map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to commit transaction: {}", e),
-        })?;
+        tx.commit().map_err(|e| McpError::internal_error(format!("Failed to commit transaction: {}", e), None))?;
 
         Ok(conventions.to_vec())
     }
 
     async fn bulk_delete(&self, ids: &[String]) -> Result<usize, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
-        let tx = db.unchecked_transaction().map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to start transaction: {}", e),
-        })?;
+        let tx = db.unchecked_transaction().map_err(|e| McpError::internal_error(format!("Failed to start transaction: {}", e), None))?;
 
         let mut total_deleted = 0;
         for id in ids {
             let rows_affected = tx.execute("DELETE FROM project_conventions WHERE id = ?1", params![id])
-                .map_err(|e| McpError {
-                    code: -1,
-                    message: format!("Failed to delete project convention: {}", e),
-                })?;
+                .map_err(|e| McpError::internal_error(format!("Failed to delete project convention: {}", e), None))?;
             total_deleted += rows_affected;
         }
 
-        tx.commit().map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to commit transaction: {}", e),
-        })?;
+        tx.commit().map_err(|e| McpError::internal_error(format!("Failed to commit transaction: {}", e), None))?;
 
         Ok(total_deleted)
     }
@@ -325,10 +244,7 @@ impl SqliteFeatureContextRepository {
 #[async_trait]
 impl FeatureContextRepository for SqliteFeatureContextRepository {
     async fn create(&self, feature_context: &FeatureContext) -> Result<FeatureContext, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
         db.execute(
             "INSERT INTO feature_context (id, project_id, feature_name, business_purpose, user_personas, key_workflows, integration_points, edge_cases, created_at) 
@@ -344,27 +260,18 @@ impl FeatureContextRepository for SqliteFeatureContextRepository {
                 feature_context.edge_cases,
                 feature_context.created_at
             ],
-        ).map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to create feature context: {}", e),
-        })?;
+        ).map_err(|e| McpError::internal_error(format!("Failed to create feature context: {}", e), None))?;
 
         Ok(feature_context.clone())
     }
 
     async fn get_by_id(&self, id: &str) -> Result<Option<FeatureContext>, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
         let mut stmt = db.prepare(
             "SELECT id, project_id, feature_name, business_purpose, user_personas, key_workflows, integration_points, edge_cases, created_at 
              FROM feature_context WHERE id = ?1"
-        ).map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to prepare statement: {}", e),
-        })?;
+        ).map_err(|e| McpError::internal_error(format!("Failed to prepare statement: {}", e), None))?;
 
         let feature_result = stmt.query_row(params![id], |row| {
             Ok(FeatureContext {
@@ -383,18 +290,12 @@ impl FeatureContextRepository for SqliteFeatureContextRepository {
         match feature_result {
             Ok(feature_context) => Ok(Some(feature_context)),
             Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
-            Err(e) => Err(McpError {
-                code: -1,
-                message: format!("Failed to get feature context: {}", e),
-            }),
+            Err(e) => Err(McpError::internal_error(format!("Failed to get feature context: {}", e), None)),
         }
     }
 
     async fn update(&self, feature_context: &FeatureContext) -> Result<FeatureContext, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
         db.execute(
             "UPDATE feature_context SET project_id = ?2, feature_name = ?3, business_purpose = ?4, user_personas = ?5, key_workflows = ?6, integration_points = ?7, edge_cases = ?8, created_at = ?9 WHERE id = ?1",
@@ -409,42 +310,27 @@ impl FeatureContextRepository for SqliteFeatureContextRepository {
                 feature_context.edge_cases,
                 feature_context.created_at
             ],
-        ).map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to update feature context: {}", e),
-        })?;
+        ).map_err(|e| McpError::internal_error(format!("Failed to update feature context: {}", e), None))?;
 
         Ok(feature_context.clone())
     }
 
     async fn delete(&self, id: &str) -> Result<bool, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
         let rows_affected = db.execute("DELETE FROM feature_context WHERE id = ?1", params![id])
-            .map_err(|e| McpError {
-                code: -1,
-                message: format!("Failed to delete feature context: {}", e),
-            })?;
+            .map_err(|e| McpError::internal_error(format!("Failed to delete feature context: {}", e), None))?;
 
         Ok(rows_affected > 0)
     }
 
     async fn list_by_project(&self, project_id: &str) -> Result<Vec<FeatureContext>, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
         let mut stmt = db.prepare(
             "SELECT id, project_id, feature_name, business_purpose, user_personas, key_workflows, integration_points, edge_cases, created_at 
              FROM feature_context WHERE project_id = ?1 ORDER BY created_at DESC"
-        ).map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to prepare statement: {}", e),
-        })?;
+        ).map_err(|e| McpError::internal_error(format!("Failed to prepare statement: {}", e), None))?;
 
         let feature_iter = stmt.query_map(params![project_id], |row| {
             Ok(FeatureContext {
@@ -458,35 +344,23 @@ impl FeatureContextRepository for SqliteFeatureContextRepository {
                 edge_cases: row.get(7)?,
                 created_at: row.get(8)?,
             })
-        }).map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to query feature contexts: {}", e),
-        })?;
+        }).map_err(|e| McpError::internal_error(format!("Failed to query feature contexts: {}", e), None))?;
 
         let mut features = Vec::new();
         for feature in feature_iter {
-            features.push(feature.map_err(|e| McpError {
-                code: -1,
-                message: format!("Failed to process feature context row: {}", e),
-            })?);
+            features.push(feature.map_err(|e| McpError::internal_error(format!("Failed to process feature context row: {}", e), None))?);
         }
 
         Ok(features)
     }
 
     async fn get_by_feature_name(&self, project_id: &str, feature_name: &str) -> Result<Option<FeatureContext>, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
         let mut stmt = db.prepare(
             "SELECT id, project_id, feature_name, business_purpose, user_personas, key_workflows, integration_points, edge_cases, created_at 
              FROM feature_context WHERE project_id = ?1 AND feature_name = ?2"
-        ).map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to prepare statement: {}", e),
-        })?;
+        ).map_err(|e| McpError::internal_error(format!("Failed to prepare statement: {}", e), None))?;
 
         let feature_result = stmt.query_row(params![project_id, feature_name], |row| {
             Ok(FeatureContext {
@@ -505,23 +379,14 @@ impl FeatureContextRepository for SqliteFeatureContextRepository {
         match feature_result {
             Ok(feature_context) => Ok(Some(feature_context)),
             Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
-            Err(e) => Err(McpError {
-                code: -1,
-                message: format!("Failed to get feature context by name: {}", e),
-            }),
+            Err(e) => Err(McpError::internal_error(format!("Failed to get feature context by name: {}", e), None)),
         }
     }
 
     async fn bulk_create(&self, feature_contexts: &[FeatureContext]) -> Result<Vec<FeatureContext>, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
-        let tx = db.unchecked_transaction().map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to start transaction: {}", e),
-        })?;
+        let tx = db.unchecked_transaction().map_err(|e| McpError::internal_error(format!("Failed to start transaction: {}", e), None))?;
 
         for feature_context in feature_contexts {
             tx.execute(
@@ -538,30 +403,18 @@ impl FeatureContextRepository for SqliteFeatureContextRepository {
                     feature_context.edge_cases,
                     feature_context.created_at
                 ],
-            ).map_err(|e| McpError {
-                code: -1,
-                message: format!("Failed to insert feature context: {}", e),
-            })?;
+            ).map_err(|e| McpError::internal_error(format!("Failed to insert feature context: {}", e), None))?;
         }
 
-        tx.commit().map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to commit transaction: {}", e),
-        })?;
+        tx.commit().map_err(|e| McpError::internal_error(format!("Failed to commit transaction: {}", e), None))?;
 
         Ok(feature_contexts.to_vec())
     }
 
     async fn bulk_update(&self, feature_contexts: &[FeatureContext]) -> Result<Vec<FeatureContext>, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
-        let tx = db.unchecked_transaction().map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to start transaction: {}", e),
-        })?;
+        let tx = db.unchecked_transaction().map_err(|e| McpError::internal_error(format!("Failed to start transaction: {}", e), None))?;
 
         for feature_context in feature_contexts {
             tx.execute(
@@ -577,45 +430,27 @@ impl FeatureContextRepository for SqliteFeatureContextRepository {
                     feature_context.edge_cases,
                     feature_context.created_at
                 ],
-            ).map_err(|e| McpError {
-                code: -1,
-                message: format!("Failed to update feature context: {}", e),
-            })?;
+            ).map_err(|e| McpError::internal_error(format!("Failed to update feature context: {}", e), None))?;
         }
 
-        tx.commit().map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to commit transaction: {}", e),
-        })?;
+        tx.commit().map_err(|e| McpError::internal_error(format!("Failed to commit transaction: {}", e), None))?;
 
         Ok(feature_contexts.to_vec())
     }
 
     async fn bulk_delete(&self, ids: &[String]) -> Result<usize, McpError> {
-        let db = self.db.lock().map_err(|e| McpError {
-            code: -1,
-            message: format!("Database lock error: {}", e),
-        })?;
+        let db = self.db.lock().map_err(|e| McpError::internal_error(format!("Database lock error: {}", e), None))?;
 
-        let tx = db.unchecked_transaction().map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to start transaction: {}", e),
-        })?;
+        let tx = db.unchecked_transaction().map_err(|e| McpError::internal_error(format!("Failed to start transaction: {}", e), None))?;
 
         let mut total_deleted = 0;
         for id in ids {
             let rows_affected = tx.execute("DELETE FROM feature_context WHERE id = ?1", params![id])
-                .map_err(|e| McpError {
-                    code: -1,
-                    message: format!("Failed to delete feature context: {}", e),
-                })?;
+                .map_err(|e| McpError::internal_error(format!("Failed to delete feature context: {}", e), None))?;
             total_deleted += rows_affected;
         }
 
-        tx.commit().map_err(|e| McpError {
-            code: -1,
-            message: format!("Failed to commit transaction: {}", e),
-        })?;
+        tx.commit().map_err(|e| McpError::internal_error(format!("Failed to commit transaction: {}", e), None))?;
 
         Ok(total_deleted)
     }
