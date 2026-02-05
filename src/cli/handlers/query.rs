@@ -33,7 +33,7 @@ impl QueryCommand {
 
         // Query business rules for this project/task
         let mut stmt = conn.prepare(
-            "SELECT id, name, description, domain_area FROM business_rules
+            "SELECT id, rule_name, description, domain_area FROM business_rules
              WHERE project_id = ? OR project_id IS NULL
              ORDER BY created_at DESC"
         )?;
@@ -97,11 +97,28 @@ impl QueryCommand {
         })?
         .collect::<Result<Vec<_>, _>>()?;
 
+        // Query features
+        let mut stmt = conn.prepare(
+            "SELECT id, feature_name, description FROM features
+             WHERE project_id = ? OR project_id IS NULL
+             ORDER BY created_at DESC"
+        )?;
+
+        let features = stmt.query_map([project], |row| {
+            Ok(json!({
+                "id": row.get::<_, String>(0)?,
+                "name": row.get::<_, String>(1)?,
+                "description": row.get::<_, String>(2)?,
+            }))
+        })?
+        .collect::<Result<Vec<_>, _>>()?;
+
         if let Some(data) = results.get_mut("data").and_then(|d| d.as_object_mut()) {
             data.insert("business_rules".to_string(), Value::Array(business_rules));
             data.insert("architectural_decisions".to_string(), Value::Array(arch_decisions));
             data.insert("performance_requirements".to_string(), Value::Array(performance_reqs));
             data.insert("security_policies".to_string(), Value::Array(security_policies));
+            data.insert("features".to_string(), Value::Array(features));
         }
 
         Ok(results)

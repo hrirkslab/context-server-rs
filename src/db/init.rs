@@ -91,6 +91,16 @@ pub fn init_db(db_path: &str) -> Result<Connection> {
             FOREIGN KEY (project_id) REFERENCES projects(id)
         );
         
+        -- Features Table (used by CLI handlers)
+        CREATE TABLE IF NOT EXISTS features (
+            id TEXT PRIMARY KEY,
+            project_id TEXT NOT NULL,
+            feature_name TEXT NOT NULL,
+            description TEXT,
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (project_id) REFERENCES projects(id)
+        );
+        
         -- Framework-agnostic component tables
         CREATE TABLE IF NOT EXISTS framework_components (
             id TEXT PRIMARY KEY,

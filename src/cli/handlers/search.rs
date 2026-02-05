@@ -88,9 +88,55 @@ impl SearchCommand {
         )?
         .collect::<Result<Vec<_>, _>>()?;
 
+        // Search in performance requirements
+        let mut stmt = conn.prepare(
+            "SELECT id, component_area, requirement_type, 'performance_requirement' as type
+             FROM performance_requirements
+             WHERE (project_id = ? OR project_id IS NULL)
+             AND (component_area LIKE ? OR requirement_type LIKE ?)
+             ORDER BY created_at DESC LIMIT 20"
+        )?;
+
+        let performance = stmt.query_map(
+            [project, search_pattern.as_str(), search_pattern.as_str()],
+            |row| {
+                Ok(json!({
+                    "id": row.get::<_, String>(0)?,
+                    "name": row.get::<_, String>(1)?,
+                    "description": row.get::<_, String>(2)?,
+                    "type": row.get::<_, String>(3)?,
+                }))
+            }
+        )?
+        .collect::<Result<Vec<_>, _>>()?;
+
+        // Search in features
+        let mut stmt = conn.prepare(
+            "SELECT id, feature_name, description, 'feature' as type
+             FROM features
+             WHERE (project_id = ? OR project_id IS NULL)
+             AND (feature_name LIKE ? OR description LIKE ?)
+             ORDER BY created_at DESC LIMIT 20"
+        )?;
+
+        let features = stmt.query_map(
+            [project, search_pattern.as_str(), search_pattern.as_str()],
+            |row| {
+                Ok(json!({
+                    "id": row.get::<_, String>(0)?,
+                    "name": row.get::<_, String>(1)?,
+                    "description": row.get::<_, String>(2)?,
+                    "type": row.get::<_, String>(3)?,
+                }))
+            }
+        )?
+        .collect::<Result<Vec<_>, _>>()?;
+
         let mut all_results = business_rules;
         all_results.extend(arch_decisions);
         all_results.extend(security);
+        all_results.extend(performance);
+        all_results.extend(features);
 
         Ok(json!({
             "status": "success",

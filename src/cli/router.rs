@@ -11,6 +11,7 @@ use crate::cli::output::get_formatter;
 #[command(name = "context-server-rs")]
 #[command(about = "Context Server for AI Agents and IDEs", long_about = None)]
 #[command(version)]
+#[command(after_help = "EXAMPLES:\n  # Query all contexts for a project\n  context-server-rs query -p myproject\n\n  # List business rules for a project\n  context-server-rs list business_rule -p myproject\n\n  # Search across all contexts\n  context-server-rs search payment -p myproject\n\n  # Get specific context by ID\n  context-server-rs get rule-001 -p myproject\n\n  # Output in different formats\n  context-server-rs query -f yaml -p myproject\n  context-server-rs list security_policy -f text -p myproject")]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
@@ -21,44 +22,44 @@ pub struct Cli {
     #[arg(global = true, short, long, default_value = "json", help = "Output format: json, text, yaml")]
     pub format: String,
 
-    #[arg(global = true, short, long, help = "Project name")]
+    #[arg(global = true, short, long, help = "Project name (required for CLI commands, defaults to 'default' if not specified)")]
     pub project: Option<String>,
 }
 
 #[derive(Subcommand)]
 pub enum Commands {
     /// Serve as HTTP/MCP server
-    #[command(about = "Start MCP server")]
+    #[command(about = "Start MCP server (default mode)")]
     Serve {
         #[arg(short, long, default_value = "9000")]
         port: u16,
     },
 
-    /// Query contexts by task and project
-    #[command(about = "Query contexts by task")]
+    /// Query all contexts for a project
+    #[command(about = "Query all contexts (business rules, architectural decisions, performance requirements, security policies, features)")]
     Query {
-        #[arg(short, long, help = "Task name")]
+        #[arg(short, long, help = "Optional task name to filter by")]
         task: Option<String>,
     },
 
-    /// List all contexts of a type
-    #[command(about = "List contexts by type")]
+    /// List contexts by type
+    #[command(about = "List contexts of a specific type")]
     List {
-        #[arg(help = "Entity type: business_rule, architectural_decision, performance_requirement, security_policy, feature")]
+        #[arg(help = "Entity type: business_rule | architectural_decision | performance_requirement | security_policy | feature")]
         r#type: String,
     },
 
-    /// Search across all contexts
-    #[command(about = "Search contexts")]
+    /// Full-text search across all contexts
+    #[command(about = "Search across all contexts - searches names, descriptions, and titles")]
     Search {
-        #[arg(help = "Search query")]
+        #[arg(help = "Search query (case-insensitive)")]
         query: String,
     },
 
     /// Get a specific context by ID
-    #[command(about = "Get context by ID")]
+    #[command(about = "Retrieve a specific context by its ID")]
     Get {
-        #[arg(help = "Entity ID")]
+        #[arg(help = "Entity ID (e.g., rule-001, ad-002, perf-003)")]
         id: String,
     },
 }
