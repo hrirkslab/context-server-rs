@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#357ABD;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="url(#gradient)" stroke="#2C5282" stroke-width="2"/>
+  
+  <!-- Database/Context symbol -->
+  <ellipse cx="64" cy="45" rx="25" ry="8" fill="#FFFFFF" opacity="0.9"/>
+  <ellipse cx="64" cy="64" rx="25" ry="8" fill="#FFFFFF" opacity="0.7"/>
+  <ellipse cx="64" cy="83" rx="25" ry="8" fill="#FFFFFF" opacity="0.5"/>
+  
+  <!-- Connection lines -->
+  <line x1="39" y1="45" x2="39" y2="83" stroke="#FFFFFF" stroke-width="2" opacity="0.8"/>
+  <line x1="89" y1="45" x2="89" y2="83" stroke="#FFFFFF" stroke-width="2" opacity="0.8"/>
+  
+  <!-- AI/Intelligence indicator -->
+  <circle cx="90" cy="38" r="12" fill="#FFD700" stroke="#FFA500" stroke-width="1"/>
+  <text x="90" y="43" text-anchor="middle" fill="#333" font-family="Arial" font-size="10" font-weight="bold">AI</text>
+</svg>

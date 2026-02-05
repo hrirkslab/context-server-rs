@@ -8,7 +8,7 @@ use async_trait::async_trait;
 use rmcp::model::ErrorData as McpError;
 
 /// Result of context query
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ContextQueryResult {
     pub business_rules: Vec<BusinessRule>,
     pub architectural_decisions: Vec<ArchitecturalDecision>,

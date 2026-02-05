@@ -1,21 +1,111 @@
 // Service layer modules following SOLID principles
 
+pub mod advanced_query_service;
+pub mod analytics_helper;
+pub mod analytics_service;
 pub mod architecture_validation_service;
 pub mod context_crud_service;
+pub mod context_intelligence_service;
+pub mod context_quality_service;
 pub mod context_query_service;
+pub mod context_relationship_engine;
 pub mod development_phase_service;
+pub mod embedding_service;
 pub mod extended_context_crud_service;
 pub mod framework_service;
 pub mod project_service;
+pub mod semantic_search_service;
+pub mod hybrid_search_service;
+pub mod search_index_manager;
+pub mod specification_parser;
+pub mod specification_service;
+pub mod specification_import_service;
+pub mod specification_versioning_service;
+pub mod specification_context_linking_service;
+pub mod specification_analytics_service;
+pub mod vector_embedding_integration;
+pub mod websocket_manager;
+pub mod websocket_server;
+pub mod websocket_types;
+pub mod change_broadcaster;
+pub mod change_detection_service;
+pub mod sync_engine;
+pub mod conflict_resolution_engine;
+pub mod conflict_resolution_ui;
+pub mod plugin_manager;
+pub mod plugin_discovery;
+pub mod plugin_security;
+pub mod plugin_configuration;
+pub mod plugin_service;
+pub mod plugin_event_system;
+pub mod plugin_api;
+pub mod plugin_error_handler;
+pub mod plugin_testing;
+pub mod plugins;
+// #[cfg(test)]
+// pub mod advanced_query_service_test;
+#[cfg(test)]
+pub mod advanced_query_service_simple_test;
+#[cfg(test)]
+pub mod semantic_search_integration_test;
+#[cfg(test)]
+pub mod search_index_manager_test;
+#[cfg(test)]
+pub mod websocket_manager_test;
+#[cfg(test)]
+pub mod change_broadcaster_test;
+#[cfg(test)]
+pub mod change_broadcasting_integration_test;
+#[cfg(test)]
+pub mod analytics_integration_test;
+#[cfg(test)]
+pub mod conflict_resolution_integration_test;
+#[cfg(test)]
+pub mod specification_import_integration_test;
 // Note: component_service removed as it was identical to framework_service
 // Note: flutter_service and flutter_advanced_crud_service modules don't exist yet
 
 // Re-export service traits
+// Temporarily commented out to debug compilation issues
+// pub use advanced_query_service::AdvancedQueryConfig;
+pub use analytics_helper::AnalyticsHelper;
+pub use analytics_service::{AnalyticsService, DefaultAnalyticsService, AnalyticsEvent, AnalyticsEventType, UsageStatistics, ProjectInsights};
 pub use architecture_validation_service::ArchitectureValidationService;
+pub use context_intelligence_service::{ContextIntelligenceService, DefaultContextIntelligenceService};
+pub use context_quality_service::{ContextQualityService, DefaultContextQualityService};
 pub use context_query_service::ContextQueryService;
+pub use context_relationship_engine::{ContextRelationshipEngine, DefaultContextRelationshipEngine};
 pub use development_phase_service::DevelopmentPhaseService;
+pub use embedding_service::{EmbeddingService, EmbeddingServiceFactory};
 pub use framework_service::FrameworkService;
 pub use project_service::ProjectService;
+pub use semantic_search_service::SemanticSearchService;
+pub use hybrid_search_service::{HybridSearchService, HybridSearchServiceImpl};
+pub use search_index_manager::{SearchIndexManager, SearchIndexManagerImpl, IndexManagerConfig};
+pub use specification_parser::SpecificationParser;
+pub use plugin_manager::{PluginManager, DefaultPluginManager};
+pub use plugin_discovery::{PluginDiscovery, DefaultPluginDiscovery, PluginLoader};
+pub use plugin_security::{PluginSecurity, DefaultPluginSecurity, ResourceMonitor, PermissionValidator};
+pub use plugin_configuration::{PluginConfigurationManager, DefaultPluginConfigurationManager, ConfigurationTemplateManager};
+pub use plugin_service::{PluginService, DefaultPluginService};
+pub use plugin_event_system::{PluginEventSystem, DefaultPluginEventSystem, EventType, EventStats, PluginEventListener, EventFilter};
+pub use plugin_api::{PluginApi, DefaultPluginApi, PluginApiClient, LogLevel};
+pub use plugin_error_handler::{PluginErrorHandler, DefaultPluginErrorHandler, PluginError, RecoveryStrategy, ErrorRecoveryCoordinator};
+pub use plugin_testing::{PluginTestFramework, DefaultPluginTestFramework, PluginTestCase, TestResult, TestSuiteResult, MockPluginBehavior};
+pub use plugins::{GitIntegrationPlugin, KiroIntegrationPlugin, IdeIntegrationPlugin};
+pub use specification_import_service::{SpecificationImportService, DefaultSpecificationImportService, SpecificationChange, ChangeType};
+pub use specification_versioning_service::{SpecificationVersioningService, SqliteSpecificationVersioningService, SpecificationVersion, VersionChangeType, VersionComparison, VersionDifference, DifferenceType};
+pub use specification_service::{SpecificationService, DefaultSpecificationService};
+pub use specification_context_linking_service::{SpecificationContextLinkingService, DefaultSpecificationContextLinkingService};
+pub use specification_analytics_service::{SpecificationAnalyticsService, DefaultSpecificationAnalyticsService};
+pub use websocket_manager::WebSocketManager;
+pub use websocket_server::{WebSocketServer, WebSocketService, WebSocketConfig};
+pub use websocket_types::*;
+pub use change_broadcaster::{ChangeBroadcaster, ChangeEvent, BroadcastMetrics, QueuedChange};
+pub use change_detection_service::{ChangeDetectionService, ChangeEmitter};
+pub use sync_engine::{SyncEngine, SyncStream, SyncConflict, Resolution};
+pub use conflict_resolution_engine::{ConflictResolutionEngine, ConflictInfo, ConflictType, ManualResolutionRequest, ConflictResolutionResult};
+pub use conflict_resolution_ui::{ConflictResolutionUI, ConflictResolutionSession, StartResolutionRequest, StartResolutionResponse, UpdateUIStateRequest, UpdateUIStateResponse};
 // Note: ComponentService removed as it was identical to FrameworkService
 // The following services are currently commented out because their corresponding endpoints
 // have not yet been implemented. These services will be re-enabled once the necessary

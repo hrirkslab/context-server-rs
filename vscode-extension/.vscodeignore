@@ -1,0 +1,36 @@
+# Source files
+src/**
+**/*.ts
+**/*.map
+
+# Build and development files
+.vscode/**
+.vscode-test/**
+node_modules/**
+.gitignore
+.yarnrc
+vsc-extension-quickstart.md
+**/tsconfig.json
+**/.eslintrc.json
+*.vsix
+.build-info*
+package-lock.json
+
+# Documentation that shouldn't be in package
+PRODUCTION_CHECKLIST.md
+DEPLOYMENT_INSTRUCTIONS.md
+deploy.sh
+deploy.ps1
+scripts/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.log
+
+# Test files
+**/test/**
+**/*.test.js
+
+# Development scripts
+scripts/**

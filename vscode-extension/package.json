@@ -1,0 +1,422 @@
+{
+  "name": "professional-context-engine",
+  "displayName": "Professional Context Engine",
+  "description": "VS Code extension for intelligent context management and AI-powered development assistance",
+  "version": "1.0.0",
+  "publisher": "context-engine",
+  "author": {
+    "name": "Context Engine Team"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/context-engine/professional-context-engine",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/context-engine/professional-context-engine.git"
+  },
+  "bugs": {
+    "url": "https://github.com/context-engine/professional-context-engine/issues"
+  },
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other",
+    "Machine Learning",
+    "Snippets",
+    "Linters"
+  ],
+  "keywords": [
+    "context",
+    "ai",
+    "development",
+    "assistance",
+    "intelligent",
+    "code-analysis",
+    "suggestions",
+    "productivity",
+    "collaboration",
+    "documentation"
+  ],
+
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "contextEngine.showSuggestions",
+        "title": "Show Context Suggestions",
+        "category": "Context Engine",
+        "icon": "$(lightbulb)"
+      },
+      {
+        "command": "contextEngine.refreshContext",
+        "title": "Refresh Context Analysis",
+        "category": "Context Engine",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "contextEngine.openSettings",
+        "title": "Open Context Engine Settings",
+        "category": "Context Engine",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "contextEngine.createContext",
+        "title": "Create Context Entry",
+        "category": "Context Engine",
+        "icon": "$(add)"
+      },
+      {
+        "command": "contextEngine.analyzeFile",
+        "title": "Analyze Current File",
+        "category": "Context Engine",
+        "icon": "$(search)"
+      },
+      {
+        "command": "contextEngine.configureAnalysisRules",
+        "title": "Configure Analysis Rules",
+        "category": "Context Engine",
+        "icon": "$(law)"
+      },
+      {
+        "command": "contextEngine.configureSuggestionTriggers",
+        "title": "Configure Suggestion Triggers",
+        "category": "Context Engine",
+        "icon": "$(trigger-auto)"
+      },
+      {
+        "command": "contextEngine.showContextHealth",
+        "title": "Show Context Health",
+        "category": "Context Engine",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "contextEngine.showProjectInsights",
+        "title": "Show Project Insights",
+        "category": "Context Engine",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "contextEngine.queryContext",
+        "title": "Query Context",
+        "category": "Context Engine",
+        "icon": "$(search)"
+      },
+      {
+        "command": "contextEngine.testConnection",
+        "title": "Test Connection",
+        "category": "Context Engine",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "contextEngine.exportConfiguration",
+        "title": "Export Configuration",
+        "category": "Context Engine",
+        "icon": "$(export)"
+      },
+      {
+        "command": "contextEngine.importConfiguration",
+        "title": "Import Configuration",
+        "category": "Context Engine",
+        "icon": "$(import)"
+      },
+      {
+        "command": "contextEngine.openContextWizard",
+        "title": "Open Context Creation Wizard",
+        "category": "Context Engine",
+        "icon": "$(wand)"
+      },
+      {
+        "command": "contextEngine.showTeamActivity",
+        "title": "Show Team Activity",
+        "category": "Context Engine",
+        "icon": "$(organization)"
+      },
+      {
+        "command": "contextEngine.showPerformanceMetrics",
+        "title": "Show Performance Metrics",
+        "category": "Context Engine",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "contextEngine.toggleSyncIndicator",
+        "title": "Toggle Sync Indicator",
+        "category": "Context Engine",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "contextEngine.showRelationshipGraph",
+        "title": "Show Context Relationships",
+        "category": "Context Engine",
+        "icon": "$(graph-scatter)"
+      },
+      {
+        "command": "contextEngine.filterContextTree",
+        "title": "Filter Context Tree",
+        "category": "Context Engine",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "contextEngine.searchContextTree",
+        "title": "Search Context Tree",
+        "category": "Context Engine",
+        "icon": "$(search)"
+      }
+    ],
+    "configuration": {
+      "title": "Professional Context Engine",
+      "properties": {
+        "contextEngine.serverUrl": {
+          "type": "string",
+          "default": "http://localhost:3000",
+          "description": "URL of the Context Engine server"
+        },
+        "contextEngine.autoAnalyzeOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically analyze files when saved"
+        },
+        "contextEngine.realTimeSuggestions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show real-time context suggestions"
+        },
+        "contextEngine.enableHoverSuggestions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show context suggestions on hover"
+        },
+        "contextEngine.enableCodeActions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable context-aware code actions"
+        },
+        "contextEngine.supportedLanguages": {
+          "type": "array",
+          "default": [
+            "rust",
+            "typescript",
+            "javascript",
+            "python",
+            "java",
+            "cpp",
+            "csharp"
+          ],
+          "description": "List of supported programming languages"
+        },
+        "contextEngine.analysisRules": {
+          "type": "array",
+          "default": [],
+          "description": "Custom analysis rules for context extraction"
+        },
+        "contextEngine.suggestionTriggers": {
+          "type": "array",
+          "default": [],
+          "description": "Custom triggers for context suggestions"
+        },
+        "contextEngine.debugMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug logging"
+        },
+        "contextEngine.connectionTimeout": {
+          "type": "number",
+          "default": 10000,
+          "description": "Connection timeout in milliseconds"
+        },
+        "contextEngine.maxSuggestions": {
+          "type": "number",
+          "default": 10,
+          "description": "Maximum number of suggestions to display"
+        },
+        "contextEngine.cacheTimeout": {
+          "type": "number",
+          "default": 30000,
+          "description": "Cache timeout in milliseconds"
+        },
+        "contextEngine.enableWebSocketSync": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time WebSocket synchronization"
+        },
+        "contextEngine.teamMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable team collaboration features"
+        },
+        "contextEngine.showSyncIndicators": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show real-time sync status indicators"
+        },
+        "contextEngine.enablePerformanceMonitoring": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable performance monitoring and analytics"
+        },
+        "contextEngine.contextTreeDepth": {
+          "type": "number",
+          "default": 3,
+          "description": "Maximum depth for context tree visualization"
+        },
+        "contextEngine.enableIntelligentSuggestions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable AI-powered intelligent code suggestions"
+        },
+        "contextEngine.debugIntegration": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable context-enhanced debugging features"
+        }
+      }
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "contextEngine.createContext",
+          "group": "context@1",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "contextEngine.analyzeFile",
+          "group": "context@2"
+        },
+        {
+          "command": "contextEngine.showSuggestions",
+          "group": "context@3"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "contextEngine.refreshContext",
+          "group": "context@1"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "contextEngine.refreshContext",
+          "when": "view == contextSuggestions",
+          "group": "navigation"
+        },
+        {
+          "command": "contextEngine.filterContextTree",
+          "when": "view == contextTree",
+          "group": "navigation@1"
+        },
+        {
+          "command": "contextEngine.searchContextTree",
+          "when": "view == contextTree",
+          "group": "navigation@2"
+        },
+        {
+          "command": "contextEngine.openContextWizard",
+          "when": "view == contextOverview",
+          "group": "navigation"
+        },
+        {
+          "command": "contextEngine.showPerformanceMetrics",
+          "when": "view == performanceMetrics",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "contextEngine.showSuggestions",
+          "when": "editorIsOpen"
+        },
+        {
+          "command": "contextEngine.createContext",
+          "when": "editorIsOpen"
+        },
+        {
+          "command": "contextEngine.analyzeFile",
+          "when": "editorIsOpen"
+        }
+      ]
+    },
+    "views": {
+      "contextEngine": [
+        {
+          "id": "contextOverview",
+          "name": "Project Overview",
+          "when": "contextEngine.enabled"
+        },
+        {
+          "id": "contextTree",
+          "name": "Context Tree",
+          "when": "contextEngine.enabled"
+        },
+        {
+          "id": "contextSuggestions",
+          "name": "Suggestions",
+          "when": "contextEngine.enabled"
+        },
+        {
+          "id": "contextHealth",
+          "name": "Health Dashboard",
+          "when": "contextEngine.enabled"
+        },
+        {
+          "id": "teamActivity",
+          "name": "Team Activity",
+          "when": "contextEngine.enabled && contextEngine.teamMode"
+        },
+        {
+          "id": "performanceMetrics",
+          "name": "Performance",
+          "when": "contextEngine.enabled"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "contextEngine",
+          "title": "Context Engine",
+          "icon": "$(database)"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package",
+    "publish": "vsce publish",
+    "build:production": "node scripts/build-production.js",
+    "clean": "rimraf out *.vsix",
+    "install:local": "code --install-extension $(ls *.vsix | head -1)",
+    "uninstall:local": "code --uninstall-extension context-engine.professional-context-engine"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "16.x",
+    "@types/vscode": "^1.74.0",
+    "@types/ws": "^8.18.1",
+    "@typescript-eslint/eslint-plugin": "^5.45.0",
+    "@typescript-eslint/parser": "^5.45.0",
+    "@vscode/test-electron": "^2.2.0",
+    "@vscode/vsce": "^2.15.0",
+    "eslint": "^8.28.0",
+    "glob": "^8.0.3",
+    "mocha": "^10.1.0",
+    "rimraf": "^3.0.2",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "ws": "^8.14.2"
+  }
+}

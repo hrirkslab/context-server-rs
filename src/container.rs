@@ -5,17 +5,21 @@ use std::sync::{Arc, Mutex};
 
 // Infrastructure layer
 use crate::infrastructure::{
+    SqliteAnalyticsRepository,
     SqliteArchitecturalDecisionRepository,
     SqliteBusinessRuleRepository,
     SqliteDevelopmentPhaseRepository,
+    SqliteEnhancedContextRepository,
     SqliteFrameworkRepository,
     // Note: SqliteComponentRepository removed as it was identical to SqliteFrameworkRepository
     SqlitePerformanceRequirementRepository,
     SqliteProjectRepository,
+    SqliteSpecificationRepository,
 };
 
 // Service layer
 use crate::services::{
+    analytics_service::{AnalyticsService, DefaultAnalyticsService},
     architecture_validation_service::ArchitectureValidationServiceImpl,
     context_crud_service::{ContextCrudService, ContextCrudServiceImpl},
     context_query_service::ContextQueryServiceImpl,
@@ -23,11 +27,22 @@ use crate::services::{
     framework_service::FrameworkServiceImpl,
     // Note: ComponentService removed as it was identical to FrameworkService
     project_service::ProjectServiceImpl,
+    specification_analytics_service::{SpecificationAnalyticsService, DefaultSpecificationAnalyticsService},
     ArchitectureValidationService,
     ContextQueryService,
     DevelopmentPhaseService,
     FrameworkService,
     ProjectService,
+    DefaultSpecificationService,
+    SpecificationService,
+    DefaultSpecificationImportService,
+    SpecificationImportService,
+    SqliteSpecificationVersioningService,
+    SpecificationVersioningService,
+    DefaultSpecificationContextLinkingService,
+    SpecificationContextLinkingService,
+    PluginService,
+    DefaultPluginService,
 };
 
 /// Application container holding all dependencies
@@ -40,6 +55,13 @@ pub struct AppContainer {
     pub architecture_validation_service: Box<dyn ArchitectureValidationService>,
     pub context_crud_service: Box<dyn ContextCrudService>,
     pub framework_service: Box<dyn FrameworkService>,
+    pub analytics_service: Box<dyn AnalyticsService>,
+    pub specification_service: Arc<dyn SpecificationService>,
+    pub specification_import_service: Arc<dyn SpecificationImportService>,
+    pub specification_versioning_service: Arc<dyn SpecificationVersioningService>,
+    pub specification_context_linking_service: Arc<dyn SpecificationContextLinkingService>,
+    pub specification_analytics_service: Arc<dyn SpecificationAnalyticsService>,
+    pub plugin_service: Arc<dyn PluginService>,
     // Note: component_service removed as it was identical to framework_service
 }
 
@@ -91,6 +113,59 @@ impl AppContainer {
         let framework_repository = SqliteFrameworkRepository::new(db.clone());
         let framework_service = Box::new(FrameworkServiceImpl::new(framework_repository));
 
+        // Create analytics service
+        let analytics_repository = SqliteAnalyticsRepository::new(db.clone());
+        // Initialize analytics tables
+        analytics_repository.init_tables()?;
+        let analytics_service = Box::new(DefaultAnalyticsService::new(Box::new(analytics_repository)));
+
+        // Create specification services
+        let specification_repository = Arc::new(SqliteSpecificationRepository::new(db.clone()));
+        specification_repository.initialize_tables()?;
+        
+        let specification_service = Arc::new(DefaultSpecificationService::new(specification_repository.clone()));
+        
+        let specification_import_service = Arc::new(DefaultSpecificationImportService::new(
+            specification_service.clone(),
+            specification_repository.clone(),
+        ));
+        
+        let specification_versioning_service = Arc::new(SqliteSpecificationVersioningService::new(db.clone()));
+        specification_versioning_service.initialize_tables()?;
+
+        // Create enhanced context repository and service
+        let enhanced_context_repository = Arc::new(SqliteEnhancedContextRepository::new(db.clone()));
+        enhanced_context_repository.initialize_tables()?;
+        
+        let specification_context_linking_service = Arc::new(DefaultSpecificationContextLinkingService::new(
+            specification_repository.clone(),
+            enhanced_context_repository,
+            Arc::new(ContextQueryServiceImpl::new(
+                SqliteBusinessRuleRepository::new(db.clone()),
+                SqliteArchitecturalDecisionRepository::new(db.clone()),
+                SqlitePerformanceRequirementRepository::new(db.clone()),
+            )),
+        ));
+
+        // Create specification analytics service
+        let specification_analytics_service = Arc::new(DefaultSpecificationAnalyticsService::new(
+            specification_repository.clone(),
+            Arc::new(DefaultAnalyticsService::new(Box::new(SqliteAnalyticsRepository::new(db.clone())))),
+        ));
+
+        // Create plugin service
+        let plugin_install_dir = std::env::current_dir()?.join("plugins");
+        let plugin_data_dir = std::env::current_dir()?.join("plugin_data");
+        let temp_dir = std::env::temp_dir().join("context_server_plugins");
+        let marketplace_url = std::env::var("PLUGIN_MARKETPLACE_URL").ok();
+        
+        let plugin_service = Arc::new(DefaultPluginService::new(
+            plugin_install_dir,
+            plugin_data_dir,
+            temp_dir,
+            marketplace_url,
+        ));
+
         // Note: component_service removed as it was identical to framework_service
 
         Ok(AppContainer {
@@ -100,6 +175,13 @@ impl AppContainer {
             architecture_validation_service,
             context_crud_service,
             framework_service,
+            analytics_service,
+            specification_service,
+            specification_import_service,
+            specification_versioning_service,
+            specification_context_linking_service,
+            specification_analytics_service,
+            plugin_service,
             // Note: component_service removed
         })
     }
