@@ -30,13 +30,13 @@ Query contexts directly via CLI:
 context-server-rs query --task "authentication" --project "my-app"
 
 # List all business rules
-context-server-rs list business_rule
+context-server-rs list business_rule --project my-app
 
 # Search for "pagination" across all contexts
-context-server-rs search "pagination"
+context-server-rs search "pagination" --project my-app
 
 # Get specific context by ID
-context-server-rs get "rule-123"
+context-server-rs get "rule-123" --project my-app
 ```
 
 ## Command Reference

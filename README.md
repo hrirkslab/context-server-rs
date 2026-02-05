@@ -223,14 +223,14 @@ npm test
 
 ## 📚 Documentation
 
-- [MCP Server API Documentation](docs/API.md)
 - [CLI Usage Guide](docs/CLI_USAGE.md) - Complete CLI command reference
 - [CLI Quick Reference](docs/CLI_QUICK_REFERENCE.md) - One-liners and common workflows
 - [OpenClaw Integration Guide](docs/OPENCLAW_CLI_INTEGRATION.md) - Setup with Telegram & AI agents
-- [VS Code Extension Guide](vscode-extension/README.md)
-- [Plugin Development Guide](docs/PLUGINS.md)
+- [Dual-Mode Operation Guide](docs/DUAL_MODE_OPERATION.md) - MCP server and CLI usage
 - [Deployment Guide](docs/DEPLOYMENT.md)
-- [Troubleshooting Guide](docs/TROUBLESHOOTING.md)
+- [Shipping Guide](docs/SHIPPING_GUIDE.md)
+- [Production Readiness](docs/PRODUCTION_READINESS.md)
+- [VS Code Extension Guide](vscode-extension/README.md)
 
 ## 🤝 Contributing
 

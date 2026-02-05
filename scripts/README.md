@@ -53,4 +53,4 @@ cargo build --release && cargo test --all
 # 3. Done! ✅
 ```
 
-See [START_CLEANUP.md](../START_CLEANUP.md) for full details.
+See the project README for build and usage details.
