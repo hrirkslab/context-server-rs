@@ -1,6 +1,6 @@
 /// SQLite repository for constraints and dependencies
 use crate::models::constraint::{ComponentDependency, Constraint, ConstraintType, DependencyType};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 pub trait ConstraintRepository: Send {
     fn create_constraint(&self, constraint: &Constraint) -> anyhow::Result<()>;
@@ -13,16 +13,17 @@ pub trait ConstraintRepository: Send {
 }
 
 pub struct SqliteConstraintRepository {
-    conn: Arc<rusqlite::Connection>,
+    conn: Arc<Mutex<rusqlite::Connection>>,
 }
 
 impl SqliteConstraintRepository {
-    pub fn new(conn: Arc<rusqlite::Connection>) -> Self {
+    pub fn new(conn: Arc<Mutex<rusqlite::Connection>>) -> Self {
         Self { conn }
     }
 
     pub fn init_table(&self) -> anyhow::Result<()> {
-        self.conn.execute(
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
             "CREATE TABLE IF NOT EXISTS constraints (
                 id TEXT PRIMARY KEY,
                 project_id TEXT NOT NULL,
@@ -42,15 +43,15 @@ impl SqliteConstraintRepository {
             [],
         )?;
 
-        let _ = self.conn.execute(
+        let _ = conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_constraint_project ON constraints(project_id)",
             [],
         );
-        let _ = self.conn.execute(
+        let _ = conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_constraint_type ON constraints(constraint_type)",
             [],
         );
-        let _ = self.conn.execute(
+        let _ = conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_constraint_target ON constraints(target)",
             [],
         );
@@ -62,8 +63,9 @@ impl SqliteConstraintRepository {
 impl ConstraintRepository for SqliteConstraintRepository {
     fn create_constraint(&self, constraint: &Constraint) -> anyhow::Result<()> {
         let tags_json = serde_json::to_string(&constraint.tags)?;
+        let conn = self.conn.lock().unwrap();
         
-        self.conn.execute(
+        conn.execute(
             "INSERT INTO constraints (id, project_id, constraint_type, name, description, target, 
              value, severity, enabled, created_at, last_modified_at, tags, enforcement_action)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -88,7 +90,8 @@ impl ConstraintRepository for SqliteConstraintRepository {
     }
 
     fn get_constraint(&self, id: &str) -> anyhow::Result<Option<Constraint>> {
-        let mut stmt = self.conn.prepare(
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
             "SELECT id, project_id, constraint_type, name, description, target, value, 
              severity, enabled, created_at, last_modified_at, tags, enforcement_action
              FROM constraints WHERE id = ? LIMIT 1",
@@ -148,7 +151,8 @@ impl ConstraintRepository for SqliteConstraintRepository {
     }
 
     fn list_constraints(&self, project_id: &str) -> anyhow::Result<Vec<Constraint>> {
-        let mut stmt = self.conn.prepare(
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
             "SELECT id, project_id, constraint_type, name, description, target, value, 
              severity, enabled, created_at, last_modified_at, tags, enforcement_action
              FROM constraints WHERE project_id = ? ORDER BY severity DESC",
@@ -209,7 +213,8 @@ impl ConstraintRepository for SqliteConstraintRepository {
     }
 
     fn list_constraints_by_type(&self, project_id: &str, constraint_type: &str) -> anyhow::Result<Vec<Constraint>> {
-        let mut stmt = self.conn.prepare(
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
             "SELECT id, project_id, constraint_type, name, description, target, value, 
              severity, enabled, created_at, last_modified_at, tags, enforcement_action
              FROM constraints WHERE project_id = ? AND constraint_type = ? ORDER BY severity DESC",
@@ -270,7 +275,8 @@ impl ConstraintRepository for SqliteConstraintRepository {
     }
 
     fn list_constraints_by_target(&self, project_id: &str, target: &str) -> anyhow::Result<Vec<Constraint>> {
-        let mut stmt = self.conn.prepare(
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
             "SELECT id, project_id, constraint_type, name, description, target, value, 
              severity, enabled, created_at, last_modified_at, tags, enforcement_action
              FROM constraints WHERE project_id = ? AND target = ? ORDER BY severity DESC",
@@ -332,8 +338,9 @@ impl ConstraintRepository for SqliteConstraintRepository {
 
     fn update_constraint(&self, constraint: &Constraint) -> anyhow::Result<()> {
         let tags_json = serde_json::to_string(&constraint.tags)?;
+        let conn = self.conn.lock().unwrap();
         
-        self.conn.execute(
+        conn.execute(
             "UPDATE constraints SET constraint_type = ?, name = ?, description = ?, target = ?, 
              value = ?, severity = ?, enabled = ?, last_modified_at = ?, tags = ?, enforcement_action = ?
              WHERE id = ?",
@@ -356,7 +363,8 @@ impl ConstraintRepository for SqliteConstraintRepository {
     }
 
     fn delete_constraint(&self, id: &str) -> anyhow::Result<()> {
-        self.conn.execute("DELETE FROM constraints WHERE id = ?", rusqlite::params![id])?;
+        let conn = self.conn.lock().unwrap();
+        conn.execute("DELETE FROM constraints WHERE id = ?", rusqlite::params![id])?;
         Ok(())
     }
 }
@@ -372,16 +380,17 @@ pub trait DependencyRepository: Send {
 }
 
 pub struct SqliteDependencyRepository {
-    conn: Arc<rusqlite::Connection>,
+    conn: Arc<Mutex<rusqlite::Connection>>,
 }
 
 impl SqliteDependencyRepository {
-    pub fn new(conn: Arc<rusqlite::Connection>) -> Self {
+    pub fn new(conn: Arc<Mutex<rusqlite::Connection>>) -> Self {
         Self { conn }
     }
 
     pub fn init_table(&self) -> anyhow::Result<()> {
-        self.conn.execute(
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
             "CREATE TABLE IF NOT EXISTS component_dependencies (
                 id TEXT PRIMARY KEY,
                 project_id TEXT NOT NULL,
@@ -399,15 +408,15 @@ impl SqliteDependencyRepository {
             [],
         )?;
 
-        let _ = self.conn.execute(
+        let _ = conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_dependency_project ON component_dependencies(project_id)",
             [],
         );
-        let _ = self.conn.execute(
+        let _ = conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_dependency_source ON component_dependencies(source_component)",
             [],
         );
-        let _ = self.conn.execute(
+        let _ = conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_dependency_target ON component_dependencies(target_component)",
             [],
         );
@@ -418,7 +427,8 @@ impl SqliteDependencyRepository {
 
 impl DependencyRepository for SqliteDependencyRepository {
     fn create_dependency(&self, dependency: &ComponentDependency) -> anyhow::Result<()> {
-        self.conn.execute(
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
             "INSERT INTO component_dependencies (id, project_id, source_component, source_type, 
              target_component, target_type, dependency_type, description, criticality, impact_on_failure, created_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -441,7 +451,8 @@ impl DependencyRepository for SqliteDependencyRepository {
     }
 
     fn get_dependency(&self, id: &str) -> anyhow::Result<Option<ComponentDependency>> {
-        let mut stmt = self.conn.prepare(
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
             "SELECT id, project_id, source_component, source_type, target_component, target_type, 
              dependency_type, description, criticality, impact_on_failure, created_at
              FROM component_dependencies WHERE id = ? LIMIT 1",
@@ -495,7 +506,8 @@ impl DependencyRepository for SqliteDependencyRepository {
     }
 
     fn list_dependencies(&self, project_id: &str) -> anyhow::Result<Vec<ComponentDependency>> {
-        let mut stmt = self.conn.prepare(
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
             "SELECT id, project_id, source_component, source_type, target_component, target_type, 
              dependency_type, description, criticality, impact_on_failure, created_at
              FROM component_dependencies WHERE project_id = ? ORDER BY criticality DESC",
@@ -550,7 +562,8 @@ impl DependencyRepository for SqliteDependencyRepository {
     }
 
     fn get_dependencies_of(&self, project_id: &str, component: &str) -> anyhow::Result<Vec<ComponentDependency>> {
-        let mut stmt = self.conn.prepare(
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
             "SELECT id, project_id, source_component, source_type, target_component, target_type, 
              dependency_type, description, criticality, impact_on_failure, created_at
              FROM component_dependencies WHERE project_id = ? AND source_component = ?",
@@ -605,7 +618,8 @@ impl DependencyRepository for SqliteDependencyRepository {
     }
 
     fn get_dependents_of(&self, project_id: &str, component: &str) -> anyhow::Result<Vec<ComponentDependency>> {
-        let mut stmt = self.conn.prepare(
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
             "SELECT id, project_id, source_component, source_type, target_component, target_type, 
              dependency_type, description, criticality, impact_on_failure, created_at
              FROM component_dependencies WHERE project_id = ? AND target_component = ?",
@@ -660,7 +674,8 @@ impl DependencyRepository for SqliteDependencyRepository {
     }
 
     fn delete_dependency(&self, id: &str) -> anyhow::Result<()> {
-        self.conn.execute("DELETE FROM component_dependencies WHERE id = ?", rusqlite::params![id])?;
+        let conn = self.conn.lock().unwrap();
+        conn.execute("DELETE FROM component_dependencies WHERE id = ?", rusqlite::params![id])?;
         Ok(())
     }
 }

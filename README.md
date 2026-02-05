@@ -8,7 +8,27 @@ A comprehensive context management system for AI-powered development, featuring 
 ```bash
 # Build and run the MCP server
 cargo run --release
+
+# Or simply run (default mode)
+context-server-rs
 ```
+
+### CLI Mode (OpenClaw Integration)
+```bash
+# Query contexts by task
+context-server-rs query --task auth --project myapp --format json
+
+# List all business rules
+context-server-rs list business_rule
+
+# Search for "pagination"
+context-server-rs search "pagination"
+
+# Get specific context by ID
+context-server-rs get "rule-123"
+```
+
+See [CLI Usage Guide](docs/CLI_USAGE.md) for complete documentation. Perfect for **OpenClaw agent integration** and **programmatic access**.
 
 ### VS Code Extension
 ```bash
@@ -53,6 +73,16 @@ code --install-extension vscode-extension/professional-context-engine-1.0.0.vsix
 - **Advanced search** - Semantic and full-text search capabilities
 - **Plugin architecture** - Extensible with custom plugins
 - **Multi-project support** - Manage context across multiple projects
+
+### CLI Interface (NEW!)
+- **Dual-mode binary** - Runs as MCP server or CLI tool automatically
+- **OpenClaw integration** - Designed for autonomous agent workflows
+- **Multiple output formats** - JSON (programmatic), Text (terminal), YAML (config)
+- **Fast query execution** - ~10-500ms per context query from database
+- **SOLID architecture** - Trait-based design for extensibility
+- **Command types** - Query (task-based), List (type-based), Search (full-text), Get (ID-based)
+
+See [CLI Quick Reference](docs/CLI_QUICK_REFERENCE.md) and [OpenClaw Integration Guide](docs/OPENCLAW_CLI_INTEGRATION.md)
 
 ### VS Code Extension
 - **Real-time context suggestions** - Hover and code action providers
@@ -193,6 +223,9 @@ npm test
 ## 📚 Documentation
 
 - [MCP Server API Documentation](docs/API.md)
+- [CLI Usage Guide](docs/CLI_USAGE.md) - Complete CLI command reference
+- [CLI Quick Reference](docs/CLI_QUICK_REFERENCE.md) - One-liners and common workflows
+- [OpenClaw Integration Guide](docs/OPENCLAW_CLI_INTEGRATION.md) - Setup with Telegram & AI agents
 - [VS Code Extension Guide](vscode-extension/README.md)
 - [Plugin Development Guide](docs/PLUGINS.md)
 - [Deployment Guide](docs/DEPLOYMENT.md)

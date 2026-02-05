@@ -1,6 +1,6 @@
 /// SQLite repository for audit trails
 use crate::models::audit_log::{AuditEventType, AuditTrail};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 pub trait AuditTrailRepository: Send {
     fn log_event(&self, audit: &AuditTrail) -> anyhow::Result<()>;
@@ -11,16 +11,17 @@ pub trait AuditTrailRepository: Send {
 }
 
 pub struct SqliteAuditTrailRepository {
-    conn: Arc<rusqlite::Connection>,
+    conn: Arc<Mutex<rusqlite::Connection>>,
 }
 
 impl SqliteAuditTrailRepository {
-    pub fn new(conn: Arc<rusqlite::Connection>) -> Self {
+    pub fn new(conn: Arc<Mutex<rusqlite::Connection>>) -> Self {
         Self { conn }
     }
 
     pub fn init_table(&self) -> anyhow::Result<()> {
-        self.conn.execute(
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
             "CREATE TABLE IF NOT EXISTS audit_trails (
                 id TEXT PRIMARY KEY,
                 timestamp TEXT NOT NULL,
@@ -39,15 +40,15 @@ impl SqliteAuditTrailRepository {
         )?;
 
         // Create index for faster queries
-        let _ = self.conn.execute(
+        let _ = conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_trails(entity_type, entity_id)",
             [],
         );
-        let _ = self.conn.execute(
+        let _ = conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_audit_project ON audit_trails(project_id)",
             [],
         );
-        let _ = self.conn.execute(
+        let _ = conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_audit_initiator ON audit_trails(initiator)",
             [],
         );
@@ -62,7 +63,8 @@ impl AuditTrailRepository for SqliteAuditTrailRepository {
         let new_state = audit.new_state.as_ref().map(|v| v.to_string());
         let metadata = audit.metadata.as_ref().map(|v| v.to_string());
 
-        self.conn.execute(
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
             "INSERT INTO audit_trails (id, timestamp, event_type, entity_type, entity_id, initiator, 
              previous_state, new_state, change_summary, project_id, metadata)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -85,7 +87,8 @@ impl AuditTrailRepository for SqliteAuditTrailRepository {
     }
 
     fn get_audit_trail(&self, id: &str) -> anyhow::Result<Option<AuditTrail>> {
-        let mut stmt = self.conn.prepare(
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
             "SELECT id, timestamp, event_type, entity_type, entity_id, initiator, 
              previous_state, new_state, change_summary, project_id, metadata 
              FROM audit_trails WHERE id = ? LIMIT 1",
@@ -144,7 +147,8 @@ impl AuditTrailRepository for SqliteAuditTrailRepository {
     }
 
     fn get_entity_history(&self, entity_type: &str, entity_id: &str) -> anyhow::Result<Vec<AuditTrail>> {
-        let mut stmt = self.conn.prepare(
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
             "SELECT id, timestamp, event_type, entity_type, entity_id, initiator, 
              previous_state, new_state, change_summary, project_id, metadata 
              FROM audit_trails 
@@ -204,7 +208,8 @@ impl AuditTrailRepository for SqliteAuditTrailRepository {
     }
 
     fn get_project_audit_log(&self, project_id: &str, limit: i64) -> anyhow::Result<Vec<AuditTrail>> {
-        let mut stmt = self.conn.prepare(
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
             "SELECT id, timestamp, event_type, entity_type, entity_id, initiator, 
              previous_state, new_state, change_summary, project_id, metadata 
              FROM audit_trails 
@@ -265,7 +270,8 @@ impl AuditTrailRepository for SqliteAuditTrailRepository {
     }
 
     fn get_initiator_actions(&self, initiator: &str, limit: i64) -> anyhow::Result<Vec<AuditTrail>> {
-        let mut stmt = self.conn.prepare(
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
             "SELECT id, timestamp, event_type, entity_type, entity_id, initiator, 
              previous_state, new_state, change_summary, project_id, metadata 
              FROM audit_trails 
