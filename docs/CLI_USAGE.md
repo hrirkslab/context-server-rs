@@ -68,17 +68,21 @@ context-server-rs query --format text
 **Output (JSON):**
 ```json
 {
-  "business_rules": [
-    {
-      "id": "br-001",
-      "name": "User Authentication",
-      "description": "All users must be authenticated",
-      "project_id": "myapp"
-    }
-  ],
-  "architectural_decisions": [...],
-  "performance_requirements": [...],
-  "security_policies": [...]
+  "status": "success",
+  "data": {
+    "business_rules": [
+      {
+        "id": "br-001",
+        "name": "User Authentication",
+        "description": "All users must be authenticated",
+        "domain": "auth"
+      }
+    ],
+    "architectural_decisions": [],
+    "performance_requirements": [],
+    "security_policies": [],
+    "features": []
+  }
 }
 ```
 
@@ -120,13 +124,13 @@ context-server-rs list feature --format yaml
 **Output (JSON):**
 ```json
 {
+  "status": "success",
   "entity_type": "business_rule",
   "count": 3,
-  "items": [
+  "data": [
     {
       "id": "br-001",
-      "name": "User Authentication",
-      "description": "All users must be authenticated"
+      "name": "User Authentication"
     }
   ]
 }
@@ -136,7 +140,7 @@ context-server-rs list feature --format yaml
 
 ### Search Command
 
-Full-text search across business rules, architectural decisions, and security policies.
+Full-text search across business rules, architectural decisions, security policies, performance requirements, and features.
 
 **Usage:**
 ```bash
@@ -163,13 +167,15 @@ context-server-rs search "authentication" --format text
 **Output (JSON):**
 ```json
 {
+  "status": "success",
   "query": "pagination",
-  "results": [
+  "count": 1,
+  "data": [
     {
-      "entity_type": "performance_requirement",
       "id": "perf-001",
       "name": "Pagination Performance",
-      "description": "Search results must paginate with < 100ms response time"
+      "description": "Search results must paginate with < 100ms response time",
+      "type": "performance_requirement"
     }
   ]
 }
@@ -202,10 +208,13 @@ context-server-rs get "br-001" --format yaml
 **Output (JSON):**
 ```json
 {
+  "status": "success",
   "entity_type": "business_rule",
-  "id": "rule-123",
-  "name": "Rate Limiting",
-  "description": "API endpoints must enforce rate limits"
+  "data": {
+    "id": "rule-123",
+    "name": "Rate Limiting",
+    "description": "API endpoints must enforce rate limits"
+  }
 }
 ```
 
@@ -295,10 +304,13 @@ Machine-readable JSON for programmatic access:
 
 ```json
 {
+  "status": "success",
   "entity_type": "business_rule",
-  "id": "rule-001",
-  "name": "Principle",
-  "description": "..."
+  "data": {
+    "id": "rule-001",
+    "name": "Principle",
+    "description": "..."
+  }
 }
 ```
 
@@ -405,7 +417,7 @@ context-server-rs query --task "feature-planning" --project myapp
 
 3. **Search for similar features:**
 ```bash
-context-server-rs search "dashboard" --format json | jq '.results'
+context-server-rs search "dashboard" --format json | jq '.data'
 ```
 
 ### Scenario: OpenClaw integration flow
@@ -431,11 +443,11 @@ Extract specific fields from JSON output:
 
 ```bash
 # Get all business rule names
-context-server-rs list business_rule --format json | jq '.items[].name'
+context-server-rs list business_rule --format json | jq '.data[].name'
 
 # Get security policies for specific project
 context-server-rs list security_policy --project myapp --format json | \
-  jq '.items[] | select(.project == "myapp")'
+  jq '.data[] | select(.project == "myapp")'
 ```
 
 ### Scripting

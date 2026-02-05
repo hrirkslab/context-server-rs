@@ -9,7 +9,7 @@ context-server-rs query --task auth --project myapp --format json
 
 **Search for "pagination":**
 ```bash
-context-server-rs search "pagination" --format json
+context-server-rs search "pagination" --project myapp --format json
 ```
 
 **List all security policies:**
@@ -56,16 +56,16 @@ COMMANDS:
 context-server-rs query --task auth --project myapp --format json
 
 # Filter with jq
-context-server-rs query --task auth --format json | jq '.business_rules'
+context-server-rs query --task auth --format json | jq '.data.business_rules'
 ```
 
 ### 2. Search for Examples
 ```bash
 # Find similar implementations
-context-server-rs search "caching" --format json
+context-server-rs search "caching" --project myapp --format json
 
 # Extract result IDs
-context-server-rs search "pagination" --format json | jq '.results[].id'
+context-server-rs search "pagination" --format json | jq '.data[].id'
 ```
 
 ### 3. List Entity Types
@@ -234,7 +234,7 @@ context-server-rs list feature | grep "name"  # Bad parsing
 
 ✅ **Right:** Parse JSON properly
 ```bash
-context-server-rs list feature --format json | jq '.items[] | .name'
+context-server-rs list feature --format json | jq '.data[] | .name'
 ```
 
 ---

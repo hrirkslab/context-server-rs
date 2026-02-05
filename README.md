@@ -19,13 +19,13 @@ context-server-rs
 context-server-rs query --task auth --project myapp --format json
 
 # List all business rules
-context-server-rs list business_rule
+context-server-rs list business_rule --project myapp
 
 # Search for "pagination"
-context-server-rs search "pagination"
+context-server-rs search "pagination" --project myapp
 
 # Get specific context by ID
-context-server-rs get "rule-123"
+context-server-rs get "rule-123" --project myapp
 ```
 
 See [CLI Usage Guide](docs/CLI_USAGE.md) for complete documentation. Perfect for **OpenClaw agent integration** and **programmatic access**.
@@ -33,9 +33,9 @@ See [CLI Usage Guide](docs/CLI_USAGE.md) for complete documentation. Perfect for
 ### VS Code Extension
 ```bash
 # Build the VS Code extension
-./build-extension.sh  # Linux/Mac
+./scripts/build-extension.sh  # Linux/Mac
 # or
-.\build-extension.ps1  # Windows
+.\scripts\build-extension.ps1  # Windows
 
 # Install the extension
 code --install-extension vscode-extension/professional-context-engine-1.0.0.vsix
@@ -59,8 +59,9 @@ code --install-extension vscode-extension/professional-context-engine-1.0.0.vsix
 ├── docs/                         # Project documentation
 ├── examples/                     # Usage examples
 ├── tests/                        # Integration tests
-├── build-extension.sh            # Extension build script (Linux/Mac)
-├── build-extension.ps1           # Extension build script (Windows)
+├── scripts/                      # Build and utility scripts
+│   ├── build-extension.sh         # Extension build script (Linux/Mac)
+│   ├── build-extension.ps1        # Extension build script (Windows)
 └── README.md                     # This file
 ```
 
@@ -120,10 +121,10 @@ See [CLI Quick Reference](docs/CLI_QUICK_REFERENCE.md) and [OpenClaw Integration
 1. **Build the extension**:
    ```bash
    # Linux/Mac
-   ./build-extension.sh
+   ./scripts/build-extension.sh
    
    # Windows
-   .\build-extension.ps1
+   .\scripts\build-extension.ps1
    ```
 
 2. **Install in VS Code**:

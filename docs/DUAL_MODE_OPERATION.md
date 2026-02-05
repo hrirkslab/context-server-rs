@@ -132,7 +132,8 @@ context-server-rs query --task auth --format yaml
     "business_rules": [...],
     "architectural_decisions": [...],
     "performance_requirements": [...],
-    "security_policies": [...]
+    "security_policies": [...],
+    "features": [...]
   }
 }
 ```
@@ -155,13 +156,13 @@ context-server-rs list feature --format json | jq '.count'
 **Output:**
 ```json
 {
+  "status": "success",
   "entity_type": "business_rule",
   "count": 5,
-  "items": [
+  "data": [
     {
       "id": "rule-001",
-      "name": "User Authentication",
-      "description": "All users must be authenticated"
+      "name": "User Authentication"
     }
   ]
 }
@@ -179,7 +180,7 @@ context-server-rs search "pagination"
 context-server-rs search "cache" --project myapp
 
 # Get JSON for parsing
-context-server-rs search "api" --format json | jq '.results'
+context-server-rs search "api" --format json | jq '.data'
 ```
 
 ### Get Mode
@@ -308,7 +309,7 @@ echo "Backup complete in $BACKUP_DIR"
 ```bash
 #!/bin/bash
 context-server-rs search "auth" --format json | \
-  jq '.results[] | {type: .entity_type, name: .name}'
+  jq '.data[] | {type: .type, name: .name}'
 ```
 
 ---
